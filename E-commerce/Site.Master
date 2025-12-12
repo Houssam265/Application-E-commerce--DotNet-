@@ -1,0 +1,66 @@
+<%@ Master Language="C#" AutoEventWireup="true" CodeBehind="Site.master.cs" Inherits="Ecommerce.SiteMaster" %>
+
+<!DOCTYPE html>
+<html lang="fr">
+<head runat="server">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%: Page.Title %> - LuxuryStore</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link href="~/Assets/Styles/main.css" rel="stylesheet" />
+    
+    <asp:ContentPlaceHolder ID="HeadContent" runat="server">
+    </asp:ContentPlaceHolder>
+</head>
+<body>
+    <form runat="server">
+        <header>
+            <div class="container nav-wrapper">
+                <a href="/" class="logo">LUXURY<span style="color:var(--accent)">Store</span></a>
+                
+                <nav>
+                    <ul class="nav-links">
+                        <li><a href="/">Accueil</a></li>
+                        <li><a href="/Pages/Public/Shop.aspx">Boutique</a></li>
+                        <li><a href="/Pages/Public/Cart.aspx">🛒 Panier</a></li>
+                        <% if (Session["Role"] != null && Session["Role"].ToString() == "Admin") { %>
+                            <li><a href="/Pages/Admin/Dashboard.aspx" style="color: var(--gold)">⚙️ Admin</a></li>
+                        <% } %>
+                    </ul>
+                </nav>
+                
+                <div class="nav-actions">
+                    <% if (Session["UserEmail"] == null) { %>
+                        <a href="/Pages/Public/Login.aspx" class="btn btn-primary">Connexion</a>
+                    <% } else { %>
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <div style="text-align: right;">
+                                <div style="font-weight: 600; color: var(--text-primary);"><%: Session["FullName"] %></div>
+                                <div style="font-size: 0.85rem; color: var(--text-muted);"><%: Session["Email"] %></div>
+                            </div>
+                            <asp:LinkButton ID="LogoutBtn" runat="server" OnClick="Logout_Click" CssClass="btn" style="background: rgba(239,68,68,0.1); color: #ef4444;">Déconnexion</asp:LinkButton>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </header>
+
+        <main class="container">
+            <asp:ContentPlaceHolder ID="MainContent" runat="server">
+            </asp:ContentPlaceHolder>
+        </main>
+
+        <footer style="margin-top: 4rem; padding: 2rem 0; border-top: 1px solid var(--glass-border); text-align: center; color: var(--text-muted);">
+            <div class="container">
+                <p>&copy; <%: DateTime.Now.Year %> - LuxuryStore. All rights reserved.</p>
+            </div>
+        </footer>
+    </form>
+</body>
+</html>
