@@ -5,8 +5,11 @@
     <style>
         .shop-header {
             margin-bottom: 2rem;
-            padding-bottom: 1rem;
-            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 1.5rem;
+            border-bottom: 3px solid var(--primary-color);
+            background: linear-gradient(135deg, rgba(40, 167, 69, 0.05) 0%, transparent 100%);
+            padding: 2rem;
+            border-radius: 12px;
         }
 
         .shop-container {
@@ -24,7 +27,7 @@
         .filters {
             background: var(--bg-white);
             padding: 1.5rem;
-            border-radius: 10px;
+            border-radius: 12px;
             border: 1px solid var(--border-color);
             position: sticky;
             top: 120px;
@@ -34,6 +37,12 @@
             overflow-x: hidden;
             z-index: 100;
             align-self: start;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+        }
+
+        .filters:hover {
+            box-shadow: var(--shadow-md);
         }
 
         .filters::-webkit-scrollbar {
@@ -72,22 +81,45 @@
 
         .category-link {
             display: block;
-            padding: 0.75rem 0;
+            padding: 0.75rem 1rem;
             color: var(--text-light);
             text-decoration: none;
-            transition: all 0.3s;
+            transition: var(--transition);
             border-bottom: 1px solid var(--border-color);
+            border-radius: 6px;
+            margin-bottom: 0.25rem;
+            position: relative;
         }
 
         .category-link:last-child {
             border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .category-link::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 0;
+            background: var(--primary-color);
+            border-radius: 0 3px 3px 0;
+            transition: height 0.3s ease;
         }
 
         .category-link:hover,
         .category-link.active {
             color: var(--primary-color);
-            padding-left: 0.5rem;
+            padding-left: 1.5rem;
             font-weight: 600;
+            background: rgba(40, 167, 69, 0.05);
+        }
+
+        .category-link:hover::before,
+        .category-link.active::before {
+            height: 60%;
         }
 
         .search-bar {
@@ -98,16 +130,19 @@
 
         .search-input {
             flex: 1;
-            padding: 12px 15px;
-            border-radius: 5px;
-            border: 1px solid var(--border-color);
+            padding: 14px 20px;
+            border-radius: 50px;
+            border: 2px solid var(--border-color);
             font-size: 14px;
+            transition: var(--transition);
+            background: var(--bg-white);
         }
 
         .search-input:focus {
             outline: none;
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1);
+            box-shadow: 0 0 0 4px rgba(40, 167, 69, 0.1);
+            transform: translateY(-2px);
         }
 
         .price-filter {
@@ -133,13 +168,30 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: var(--bg-light);
+            border-radius: 10px;
         }
 
         .sort-select {
-            padding: 8px 15px;
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
+            padding: 10px 20px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
             font-size: 14px;
+            background: var(--bg-white);
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+        }
+
+        .sort-select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1);
+        }
+
+        .sort-select:hover {
+            border-color: var(--primary-color);
         }
 
         .product-card-wrapper {

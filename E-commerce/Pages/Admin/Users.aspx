@@ -15,7 +15,12 @@
                 border-radius: 16px;
                 padding: 1.5rem;
                 overflow-x: auto;
-                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+                transition: all 0.3s ease;
+            }
+
+            .users-table-container:hover {
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
             }
 
             .grid-view {
@@ -87,6 +92,31 @@
             .status-badge.inactive {
                 background: rgba(148, 163, 184, 0.15);
                 color: #64748b;
+            }
+
+            .role-badge, .status-badge {
+                transition: all 0.3s ease;
+                cursor: default;
+            }
+
+            .role-badge:hover, .status-badge:hover {
+                transform: scale(1.05);
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            }
+
+            .empty-state i {
+                animation: pulse 2s infinite;
+            }
+
+            @keyframes pulse {
+                0%, 100% {
+                    opacity: 0.5;
+                    transform: scale(1);
+                }
+                50% {
+                    opacity: 0.8;
+                    transform: scale(1.1);
+                }
             }
 
             .empty-state {

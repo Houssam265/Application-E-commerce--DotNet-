@@ -23,7 +23,12 @@
                 border-radius: 16px;
                 padding: 1.5rem;
                 overflow-x: auto;
-                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+                transition: all 0.3s ease;
+            }
+
+            .categories-table-container:hover {
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
             }
 
             .grid-view {
@@ -125,7 +130,24 @@
                 padding: 2rem;
                 max-width: 700px;
                 margin-top: 2rem;
-                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+                transition: all 0.3s ease;
+                animation: fadeInUp 0.5s ease-out;
+            }
+
+            .form-container:hover {
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            }
+
+            @keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
             }
 
             .form-container h2 {

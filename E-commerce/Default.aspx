@@ -77,26 +77,26 @@
                 <p>Des avantages qui font la différence</p>
             </div>
             <div class="grid grid-3">
-                <div style="text-align: center; padding: 1.5rem;">
-                    <div style="font-size: 3rem; color: var(--primary-color); margin-bottom: 1rem;">
+                <div>
+                    <div style="font-size: 4rem; color: var(--primary-color); margin-bottom: 1.5rem; text-align: center;">
                         <i class="fas fa-leaf"></i>
                     </div>
-                    <h4>Produits Bio & Naturels</h4>
-                    <p>Des produits 100% biologiques et naturels</p>
+                    <h4 style="text-align: center; margin-bottom: 1rem;">Produits Bio & Naturels</h4>
+                    <p style="text-align: center; color: var(--text-light);">Des produits 100% biologiques et naturels</p>
                 </div>
-                <div style="text-align: center; padding: 1.5rem;">
-                    <div style="font-size: 3rem; color: var(--primary-color); margin-bottom: 1rem;">
+                <div>
+                    <div style="font-size: 4rem; color: var(--primary-color); margin-bottom: 1.5rem; text-align: center;">
                         <i class="fas fa-truck"></i>
                     </div>
-                    <h4>Livraison Rapide</h4>
-                    <p>Livraison partout au Maroc et à l'international</p>
+                    <h4 style="text-align: center; margin-bottom: 1rem;">Livraison Rapide</h4>
+                    <p style="text-align: center; color: var(--text-light);">Livraison partout au Maroc et à l'international</p>
                 </div>
-                <div style="text-align: center; padding: 1.5rem;">
-                    <div style="font-size: 3rem; color: var(--primary-color); margin-bottom: 1rem;">
+                <div>
+                    <div style="font-size: 4rem; color: var(--primary-color); margin-bottom: 1.5rem; text-align: center;">
                         <i class="fas fa-shield-alt"></i>
                     </div>
-                    <h4>Paiement Sécurisé</h4>
-                    <p>Transactions sécurisées et garanties</p>
+                    <h4 style="text-align: center; margin-bottom: 1rem;">Paiement Sécurisé</h4>
+                    <p style="text-align: center; color: var(--text-light);">Transactions sécurisées et garanties</p>
                 </div>
             </div>
         </div>

@@ -19,10 +19,15 @@
             border-collapse: collapse;
             margin-bottom: 2rem;
             background: var(--bg-white);
-            border-radius: 10px;
+            border-radius: 12px;
             overflow: hidden;
             border: 1px solid var(--border-color);
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            box-shadow: var(--shadow-md);
+            transition: var(--transition);
+        }
+
+        .cart-table:hover {
+            box-shadow: var(--shadow-lg);
         }
 
         .cart-table th,
@@ -42,12 +47,28 @@
             border-bottom: none;
         }
 
+        .cart-table tbody tr {
+            transition: var(--transition);
+        }
+
+        .cart-table tbody tr:hover {
+            background: rgba(40, 167, 69, 0.03);
+            transform: scale(1.01);
+        }
+
         .cart-item-img {
             width: 80px;
             height: 80px;
             object-fit: cover;
             border-radius: 8px;
             border: 1px solid var(--border-color);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .cart-item-img:hover {
+            transform: scale(1.1);
+            box-shadow: var(--shadow-sm);
         }
 
         .cart-item-info {
@@ -90,6 +111,11 @@
             background: var(--primary-color);
             color: #fff;
             border-color: var(--primary-color);
+            transform: scale(1.1);
+        }
+
+        .qty-btn:active {
+            transform: scale(0.95);
         }
 
         .qty-input {
@@ -103,9 +129,16 @@
         .cart-summary {
             background: var(--bg-white);
             padding: 2rem;
-            border-radius: 10px;
+            border-radius: 12px;
             border: 1px solid var(--border-color);
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            box-shadow: var(--shadow-md);
+            transition: var(--transition);
+            position: sticky;
+            top: 120px;
+        }
+
+        .cart-summary:hover {
+            box-shadow: var(--shadow-lg);
         }
 
         .summary-row {
@@ -132,16 +165,20 @@
         .btn-remove {
             color: var(--danger-color);
             background: none;
-            border: none;
+            border: 2px solid transparent;
             cursor: pointer;
             font-size: 0.9rem;
-            padding: 5px 10px;
-            border-radius: 5px;
-            transition: all 0.3s;
+            padding: 8px 15px;
+            border-radius: 8px;
+            transition: var(--transition);
+            font-weight: 600;
         }
 
         .btn-remove:hover {
             background: rgba(220,53,69,0.1);
+            border-color: var(--danger-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(220, 53, 69, 0.2);
         }
 
         .empty-cart {

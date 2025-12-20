@@ -22,6 +22,12 @@
                 border-radius: 16px;
                 padding: 1.5rem;
                 overflow-x: auto;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+                transition: all 0.3s ease;
+            }
+
+            .products-table-container:hover {
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
             }
 
             .grid-view {

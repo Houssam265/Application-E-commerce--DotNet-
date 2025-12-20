@@ -17,12 +17,13 @@
             overflow: hidden;
             border: 1px solid var(--border-color);
             background: var(--bg-white);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            transition: box-shadow 0.3s ease;
+            box-shadow: var(--shadow-md);
+            transition: var(--transition);
+            position: relative;
         }
 
         .product-gallery:hover {
-            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+            box-shadow: var(--shadow-lg);
         }
 
         .main-image {
@@ -31,6 +32,32 @@
             object-fit: contain;
             background: var(--bg-white);
             padding: 1rem;
+            cursor: zoom-in;
+            transition: transform 0.3s ease;
+        }
+
+        .main-image:hover {
+            transform: scale(1.05);
+        }
+
+        .image-zoom-indicator {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .product-gallery:hover .image-zoom-indicator {
+            opacity: 1;
         }
 
         .product-header {
@@ -184,8 +211,12 @@
         }
 
         .actions .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(40, 167, 69, 0.4);
+        }
+
+        .actions .btn:active {
+            transform: translateY(-1px);
         }
 
         .actions .btn-outline {
@@ -256,7 +287,9 @@
         }
 
         .review-item:hover {
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateX(5px);
+            transition: var(--transition);
         }
 
         .review-header {
@@ -276,6 +309,15 @@
             }
         }
     </style>
+    <script>
+        // Initialize image zoom on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const mainImage = document.querySelector('.main-image');
+            if (mainImage && typeof initImageZoom !== 'undefined') {
+                initImageZoom(mainImage);
+            }
+        });
+    </script>
 </asp:Content>
 
 <asp:Content ID="Content2" ContentPlaceHolderID="MainContent" runat="server">
@@ -292,7 +334,10 @@
             <div class="product-details-container">
                 <!-- Gallery -->
                 <div class="product-gallery">
-                    <asp:Image ID="imgMain" runat="server" CssClass="main-image"
+                    <div class="image-zoom-indicator">
+                        <i class="fas fa-search-plus"></i> Cliquez pour zoomer
+                    </div>
+                    <asp:Image ID="imgMain" runat="server" CssClass="main-image image-zoom-container"
                         onerror="this.src='https://via.placeholder.com/500x500/f5f5f5/051922?text=Produit'" />
                 </div>
 

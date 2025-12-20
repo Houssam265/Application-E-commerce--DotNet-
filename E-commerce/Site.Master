@@ -33,6 +33,9 @@
                     E-commerce <span>Platform</span>
                 </a>
                 
+                <button class="mobile-menu-toggle" aria-label="Menu">
+                    <i class="fas fa-bars"></i>
+                </button>
                 <nav>
                     <ul class="nav-links">
                         <li><a href="/" class='<%= Request.Path == "/" || Request.Path == "/Default.aspx" ? "active" : "" %>'>Accueil</a></li>
@@ -222,5 +225,8 @@
             banner.style.display = 'none';
         }
     </script>
+    
+    <!-- Custom JavaScript -->
+    <script src='<%= ResolveUrl("~/Assets/Js/main.js") %>'></script>
 </body>
 </html>

@@ -18,8 +18,26 @@
                 border-radius: 16px;
                 position: relative;
                 overflow: hidden;
-                transition: all 0.3s ease;
+                transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
                 cursor: pointer;
+                animation: fadeInUp 0.6s ease-out;
+                animation-fill-mode: both;
+            }
+
+            .stat-card:nth-child(1) { animation-delay: 0.1s; }
+            .stat-card:nth-child(2) { animation-delay: 0.2s; }
+            .stat-card:nth-child(3) { animation-delay: 0.3s; }
+            .stat-card:nth-child(4) { animation-delay: 0.4s; }
+
+            @keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(30px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
             }
 
             .stat-card:hover {
@@ -116,7 +134,17 @@
                 padding: 2rem;
                 height: 400px;
                 position: relative;
-                transition: all 0.3s ease;
+                transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                animation: fadeIn 0.8s ease-out;
+            }
+
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                }
+                to {
+                    opacity: 1;
+                }
             }
 
             .chart-container:hover {
@@ -201,8 +229,12 @@
             }
 
             .action-btn:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+                transform: translateY(-3px);
+                box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+            }
+
+            .action-btn:active {
+                transform: translateY(-1px);
             }
 
             .action-btn.primary:hover {
@@ -307,8 +339,8 @@
         <div class="quick-actions">
             <h3><i class="fas fa-bolt"></i> Actions Rapides</h3>
             <div class="actions-grid">
-                <a href="Products.aspx" class="action-btn primary">
-                    <i class="fas fa-plus-circle"></i>
+                <a href="Products.aspx" class="action-btn secondary">
+                    <i class="fas fa-box"></i>
                     <span>Gérer les produits</span>
                 </a>
                 <a href="Categories.aspx" class="action-btn secondary">

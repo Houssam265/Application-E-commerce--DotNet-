@@ -17,8 +17,10 @@
 
         .contact-info {
             padding: 2rem;
-            background: var(--bg-light);
-            border-radius: 10px;
+            background: var(--bg-white);
+            border-radius: 12px;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-color);
         }
 
         .contact-item {
@@ -26,19 +28,34 @@
             align-items: start;
             gap: 1rem;
             margin-bottom: 1.5rem;
+            padding: 1rem;
+            border-radius: 8px;
+            transition: var(--transition);
+        }
+
+        .contact-item:hover {
+            background: rgba(40, 167, 69, 0.05);
+            transform: translateX(5px);
         }
 
         .contact-icon {
             width: 50px;
             height: 50px;
             border-radius: 50%;
-            background: var(--primary-color);
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
             color: #fff;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 1.5rem;
             flex-shrink: 0;
+            transition: var(--transition);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .contact-item:hover .contact-icon {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: var(--shadow-md);
         }
 
         @media (max-width: 768px) {
