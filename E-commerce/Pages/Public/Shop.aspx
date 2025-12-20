@@ -245,7 +245,7 @@
     <div class="container">
         <div class="shop-header">
             <h1><i class="fas fa-store" style="color: var(--primary-color);"></i> Boutique</h1>
-            <p style="color: var(--text-light);">Découvrez nos produits des coopératives marocaines</p>
+            <p style="color: var(--text-light);">Découvrez nos produits</p>
         </div>
 
         <div class="shop-container">

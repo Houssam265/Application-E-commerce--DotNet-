@@ -69,10 +69,9 @@ namespace Ecommerce.Pages.Public
                         maxPrice = temp;
                 }
 
-                string query = @"SELECT p.*, c.Name as CooperativeName, cat.Name as CategoryName,
+                string query = @"SELECT p.*, cat.Name as CategoryName,
                                         CASE WHEN w.Id IS NOT NULL THEN 1 ELSE 0 END as IsInWishlist
                                  FROM Products p
-                                 LEFT JOIN Cooperatives c ON p.CooperativeId = c.Id
                                  LEFT JOIN Categories cat ON p.CategoryId = cat.Id
                                  LEFT JOIN Wishlist w ON p.Id = w.ProductId AND w.UserId = @UserId
                                  WHERE p.IsActive = 1";

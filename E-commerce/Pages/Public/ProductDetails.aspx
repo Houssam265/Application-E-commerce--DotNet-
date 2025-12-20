@@ -312,10 +312,6 @@
 
                     <div class="product-meta">
                         <div class="meta-item">
-                            <strong><i class="fas fa-store"></i> Coopérative</strong>
-                            <span><asp:Label ID="lblCooperative" runat="server"></asp:Label></span>
-                        </div>
-                        <div class="meta-item">
                             <strong><i class="fas fa-box"></i> Stock</strong>
                             <span><asp:Label ID="lblStock" runat="server"></asp:Label> unités</span>
                         </div>

@@ -107,7 +107,7 @@
                             </div>
                             <div>
                                 <h4 style="margin: 0 0 0.25rem 0;">Email</h4>
-                                <p style="margin: 0;">contact@cooperatives.ma</p>
+                                <p style="margin: 0;">contact@ecommerce.ma</p>
                             </div>
                         </div>
 

@@ -16,7 +16,6 @@ namespace Ecommerce.Pages.Public
         protected global::System.Web.UI.WebControls.Label lblPrice;
         protected global::System.Web.UI.WebControls.Label lblComparePrice;
         protected global::System.Web.UI.WebControls.Label lblDescription;
-        protected global::System.Web.UI.WebControls.Label lblCooperative;
         protected global::System.Web.UI.WebControls.Label lblStock;
         protected global::System.Web.UI.WebControls.Label lblCategory;
         protected global::System.Web.UI.WebControls.Label lblSKU;
@@ -99,9 +98,8 @@ namespace Ecommerce.Pages.Public
             try
             {
                 DbContext db = new DbContext();
-                string query = @"SELECT p.*, c.Name as CooperativeName, cat.Name as CategoryName
+                string query = @"SELECT p.*, cat.Name as CategoryName
                                  FROM Products p
-                                 LEFT JOIN Cooperatives c ON p.CooperativeId = c.Id
                                  LEFT JOIN Categories cat ON p.CategoryId = cat.Id
                                  WHERE p.Id = @Id AND p.IsActive = 1";
                 SqlParameter[] parameters = { new SqlParameter("@Id", id) };
@@ -122,7 +120,6 @@ namespace Ecommerce.Pages.Public
                         lblComparePrice.Visible = true;
                     }
                     
-                    lblCooperative.Text = row["CooperativeName"]?.ToString() ?? "N/A";
                     lblStock.Text = row["StockQuantity"]?.ToString() ?? "0";
                     lblCategory.Text = row["CategoryName"]?.ToString() ?? "N/A";
                     
