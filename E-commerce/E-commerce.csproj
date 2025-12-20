@@ -67,6 +67,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Global.asax" />
     <Content Include="Web.config" />
     <Content Include="Site.Master" />
     <Content Include="Admin.Master" />
@@ -86,6 +87,9 @@
     <Content Include="Database\Setup.sql" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Global.asax.cs">
+      <DependentUpon>Global.asax</DependentUpon>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="App_Code\DbContext.cs" />
     <Compile Include="App_Code\SecurityHelper.cs" />
@@ -177,7 +181,7 @@
           <AutoAssignPort>True</AutoAssignPort>
           <DevelopmentServerPort>55859</DevelopmentServerPort>
           <DevelopmentServerVPath>/</DevelopmentServerVPath>
-          <IISUrl>https://localhost:44327/</IISUrl>
+          <IISUrl>http://localhost:50500</IISUrl>
           <NTLMAuthentication>False</NTLMAuthentication>
           <UseCustomServer>False</UseCustomServer>
           <CustomServerUrl>

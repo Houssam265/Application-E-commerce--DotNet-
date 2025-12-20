@@ -14,7 +14,9 @@ namespace Ecommerce
 
         protected void Page_Load(object sender, EventArgs e)
         {
-
+            // Garantir l'encodage UTF-8 pour l'affichage des accents
+            Response.ContentEncoding = System.Text.Encoding.UTF8;
+            Response.Charset = "utf-8";
         }
 
         protected void Logout_Click(object sender, EventArgs e)
