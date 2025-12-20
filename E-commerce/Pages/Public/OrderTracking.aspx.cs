@@ -116,21 +116,20 @@ namespace Ecommerce.Pages.Public
             }
         }
 
-        protected string GetStepClass(object stepData, int index)
+        protected string GetStepClass(object status, int index)
         {
-            if (stepData == null) return "pending";
+            if (status == null) return "pending";
             
-            TrackingStep step = stepData as TrackingStep;
-            if (step == null) return "pending";
+            string stepStatus = status.ToString();
 
             if (currentStatus == "Cancelled")
             {
-                return step.Status == "Pending" ? "completed" : "pending";
+                return stepStatus == "Pending" ? "completed" : "pending";
             }
 
             string[] statusOrder = { "Pending", "Processing", "Shipped", "Delivered" };
             int currentIndex = Array.IndexOf(statusOrder, currentStatus);
-            int stepIndex = Array.IndexOf(statusOrder, step.Status);
+            int stepIndex = Array.IndexOf(statusOrder, stepStatus);
 
             if (stepIndex < currentIndex)
                 return "completed";
@@ -143,38 +142,34 @@ namespace Ecommerce.Pages.Public
         protected string GetStepIcon(int index)
         {
             string[] icons = { "fa-check-circle", "fa-box", "fa-truck", "fa-check-circle" };
-            return "<i class='fas " + icons[index] + "'></i>";
-        }
-
-        protected string GetStepTitle(object stepData)
-        {
-            if (stepData == null) return "";
-            TrackingStep step = stepData as TrackingStep;
-            return step?.Title ?? "";
-        }
-
-        protected string GetStepDescription(object stepData)
-        {
-            if (stepData == null) return "";
-            TrackingStep step = stepData as TrackingStep;
-            return step?.Description ?? "";
-        }
-
-        protected string GetStepDate(object stepData)
-        {
-            if (stepData == null) return "";
-            TrackingStep step = stepData as TrackingStep;
-            if (step?.Date != null)
+            if (index >= 0 && index < icons.Length)
             {
-                return "<p style='font-size: 0.85rem; color: var(--text-light); margin-top: 0.25rem;'>" + 
-                       step.Date.Value.ToString("dd/MM/yyyy à HH:mm") + "</p>";
+                return "<i class='fas " + icons[index] + "'></i>";
             }
+            return "<i class='fas fa-circle'></i>";
+        }
+
+        protected string GetStepDate(object dateObj)
+        {
+            if (dateObj == null || dateObj == DBNull.Value) return "";
+            
+            try
+            {
+                DateTime? date = dateObj as DateTime?;
+                if (date.HasValue)
+                {
+                    return "<p style='font-size: 0.85rem; color: var(--text-light); margin-top: 0.25rem;'>" + 
+                           date.Value.ToString("dd/MM/yyyy à HH:mm") + "</p>";
+                }
+            }
+            catch { }
+            
             return "";
         }
 
-        protected string GetStepLineClass(object stepData, int index)
+        protected string GetStepLineClass(object status, int index)
         {
-            return GetStepClass(stepData, index) == "completed" ? "completed" : "";
+            return GetStepClass(status, index) == "completed" ? "completed" : "";
         }
 
         protected int GetTotalSteps()

@@ -130,14 +130,6 @@
                     </a>
                 </div>
 
-                <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color); text-align: center;">
-                    <p style="font-size: 14px; color: var(--text-light); margin: 0;">
-                        Vous êtes une coopérative ? 
-                        <a href="RegisterCooperative.aspx" style="color: var(--primary-color); font-weight: 600;">
-                            Inscrivez-vous ici
-                        </a>
-                    </p>
-                </div>
             </div>
         </div>
     </div>

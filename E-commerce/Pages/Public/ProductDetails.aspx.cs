@@ -19,16 +19,15 @@ namespace Ecommerce.Pages.Public
         protected global::System.Web.UI.WebControls.Label lblCooperative;
         protected global::System.Web.UI.WebControls.Label lblStock;
         protected global::System.Web.UI.WebControls.Label lblCategory;
+        protected global::System.Web.UI.WebControls.Label lblSKU;
         protected global::System.Web.UI.WebControls.Panel pnlVariants;
         protected global::System.Web.UI.WebControls.DropDownList ddlVariants;
         protected global::System.Web.UI.WebControls.TextBox txtQuantity;
         protected global::System.Web.UI.WebControls.Button btnAddToCart;
         protected global::System.Web.UI.WebControls.LinkButton btnWishlist;
-        protected global::System.Web.UI.WebControls.Panel pnlMessage;
-        protected global::System.Web.UI.WebControls.Literal litMessage;
         protected global::System.Web.UI.WebControls.Panel pnlProductNotFound;
         protected global::System.Web.UI.WebControls.Panel pnlProductDetails;
-        protected global::System.Web.UI.WebControls.Panel pnlStockStatus;
+        protected global::System.Web.UI.WebControls.Literal litStockStatus;
         protected global::System.Web.UI.WebControls.Repeater rptReviews;
         protected global::System.Web.UI.WebControls.Label lblNoReviews;
 
@@ -56,6 +55,20 @@ namespace Ecommerce.Pages.Public
                 LoadProduct(productId);
                 LoadReviews(productId);
                 CheckCanAddReview(productId);
+                CheckWishlistStatus(productId);
+            }
+            else
+            {
+                // Reload productId on postback (id is already declared above)
+                if (!string.IsNullOrEmpty(id) && int.TryParse(id, out int parsedId))
+                {
+                    productId = parsedId;
+                }
+                // Check wishlist status after postback
+                if (productId > 0)
+                {
+                    CheckWishlistStatus(productId);
+                }
             }
         }
 
@@ -113,19 +126,26 @@ namespace Ecommerce.Pages.Public
                     lblStock.Text = row["StockQuantity"]?.ToString() ?? "0";
                     lblCategory.Text = row["CategoryName"]?.ToString() ?? "N/A";
                     
+                    // Set SKU
+                    if (row["SKU"] != DBNull.Value && !string.IsNullOrEmpty(row["SKU"].ToString()))
+                    {
+                        lblSKU.Text = "Réf: " + Server.HtmlEncode(row["SKU"].ToString());
+                        lblSKU.Visible = true;
+                    }
+                    else
+                    {
+                        lblSKU.Visible = false;
+                    }
+                    
                     int stockQty = Convert.ToInt32(row["StockQuantity"]);
                     if (stockQty > 0)
                     {
-                        pnlStockStatus.CssClass = "stock-status stock-in";
-                        pnlStockStatus.Controls.Clear();
-                        pnlStockStatus.Controls.Add(new LiteralControl("<i class='fas fa-check-circle'></i> En stock"));
+                        litStockStatus.Text = "<span class=\"stock-status stock-in\"><i class=\"fas fa-check-circle\"></i> En stock</span>";
                         btnAddToCart.Enabled = true;
                     }
                     else
                     {
-                        pnlStockStatus.CssClass = "stock-status stock-out";
-                        pnlStockStatus.Controls.Clear();
-                        pnlStockStatus.Controls.Add(new LiteralControl("<i class='fas fa-times-circle'></i> Rupture de stock"));
+                        litStockStatus.Text = "<span class=\"stock-status stock-out\"><i class=\"fas fa-times-circle\"></i> Rupture de stock</span>";
                         btnAddToCart.Enabled = false;
                     }
                     
@@ -145,9 +165,7 @@ namespace Ecommerce.Pages.Public
             }
             catch (Exception ex)
             {
-                litMessage.Text = "Erreur: " + Server.HtmlEncode(ex.Message);
-                pnlMessage.Visible = true;
-                pnlMessage.CssClass = "alert alert-danger";
+                ShowNotification("Erreur lors du chargement du produit: " + Server.HtmlEncode(ex.Message), "error");
             }
         }
 
@@ -205,20 +223,23 @@ namespace Ecommerce.Pages.Public
 
         protected void btnAddToCart_Click(object sender, EventArgs e)
         {
+            // Reload productId on postback
+            string id = Request.QueryString["id"];
+            if (!string.IsNullOrEmpty(id) && int.TryParse(id, out int parsedId))
+            {
+                productId = parsedId;
+            }
+
             if (productId == 0)
             {
-                litMessage.Text = "Produit invalide.";
-                pnlMessage.Visible = true;
-                pnlMessage.CssClass = "alert alert-danger";
+                ShowNotification("Produit invalide.", "error");
                 return;
             }
 
             int quantity;
             if (!int.TryParse(txtQuantity.Text, out quantity) || quantity < 1)
             {
-                litMessage.Text = "Quantité invalide.";
-                pnlMessage.Visible = true;
-                pnlMessage.CssClass = "alert alert-danger";
+                ShowNotification("Quantité invalide.", "error");
                 return;
             }
 
@@ -233,18 +254,58 @@ namespace Ecommerce.Pages.Public
             try
             {
                 CartHelper.AddToCart(productId, quantity, variantId);
-                litMessage.Text = "<i class='fas fa-check-circle'></i> Produit ajouté au panier avec succès !";
-                pnlMessage.Visible = true;
-                pnlMessage.CssClass = "alert alert-success";
+                ShowNotification("Produit ajouté au panier avec succès !", "success");
                 
                 // Update cart count in session
                 Session["CartCount"] = CartHelper.GetCartItemCount();
             }
             catch (Exception ex)
             {
-                litMessage.Text = "Erreur lors de l'ajout au panier: " + Server.HtmlEncode(ex.Message);
-                pnlMessage.Visible = true;
-                pnlMessage.CssClass = "alert alert-danger";
+                ShowNotification("Erreur lors de l'ajout au panier: " + Server.HtmlEncode(ex.Message), "error");
+            }
+        }
+
+        private void CheckWishlistStatus(int productId)
+        {
+            if (Session["UserId"] == null)
+            {
+                // Not logged in - show empty heart
+                btnWishlist.CssClass = "btn btn-outline";
+                btnWishlist.Controls.Clear();
+                btnWishlist.Controls.Add(new LiteralControl("<i class='far fa-heart'></i>"));
+                return;
+            }
+
+            try
+            {
+                int userId = Convert.ToInt32(Session["UserId"]);
+                DbContext db = new DbContext();
+                
+                string checkQuery = "SELECT COUNT(*) FROM Wishlist WHERE UserId = @UserId AND ProductId = @ProductId";
+                SqlParameter[] checkParams = {
+                    new SqlParameter("@UserId", userId),
+                    new SqlParameter("@ProductId", productId)
+                };
+                
+                int count = (int)db.ExecuteScalar(checkQuery, checkParams);
+                
+                btnWishlist.CssClass = count > 0 ? "btn btn-outline active" : "btn btn-outline";
+                btnWishlist.Controls.Clear();
+                if (count > 0)
+                {
+                    btnWishlist.Controls.Add(new LiteralControl("<i class='fas fa-heart'></i>"));
+                }
+                else
+                {
+                    btnWishlist.Controls.Add(new LiteralControl("<i class='far fa-heart'></i>"));
+                }
+            }
+            catch
+            {
+                // On error, show empty heart
+                btnWishlist.CssClass = "btn btn-outline";
+                btnWishlist.Controls.Clear();
+                btnWishlist.Controls.Add(new LiteralControl("<i class='far fa-heart'></i>"));
             }
         }
 
@@ -254,6 +315,13 @@ namespace Ecommerce.Pages.Public
             {
                 Response.Redirect("Login.aspx?returnUrl=" + Server.UrlEncode(Request.RawUrl));
                 return;
+            }
+
+            // Reload productId on postback
+            string id = Request.QueryString["id"];
+            if (!string.IsNullOrEmpty(id) && int.TryParse(id, out int parsedId))
+            {
+                productId = parsedId;
             }
 
             if (productId == 0) return;
@@ -274,27 +342,33 @@ namespace Ecommerce.Pages.Public
                 
                 if (count > 0)
                 {
-                    // Remove from wishlist
+                    // Remove from wishlist - create new parameters
                     string deleteQuery = "DELETE FROM Wishlist WHERE UserId = @UserId AND ProductId = @ProductId";
-                    db.ExecuteNonQuery(deleteQuery, checkParams);
-                    litMessage.Text = "<i class='fas fa-heart-broken'></i> Retiré de la liste de souhaits";
+                    SqlParameter[] deleteParams = new SqlParameter[] {
+                        new SqlParameter("@UserId", userId),
+                        new SqlParameter("@ProductId", productId)
+                    };
+                    db.ExecuteNonQuery(deleteQuery, deleteParams);
+                    ShowNotification("Retiré de la liste de souhaits", "success");
                 }
                 else
                 {
-                    // Add to wishlist
+                    // Add to wishlist - create new parameters
                     string insertQuery = "INSERT INTO Wishlist (UserId, ProductId) VALUES (@UserId, @ProductId)";
-                    db.ExecuteNonQuery(insertQuery, checkParams);
-                    litMessage.Text = "<i class='fas fa-heart'></i> Ajouté à la liste de souhaits";
+                    SqlParameter[] insertParams = new SqlParameter[] {
+                        new SqlParameter("@UserId", userId),
+                        new SqlParameter("@ProductId", productId)
+                    };
+                    db.ExecuteNonQuery(insertQuery, insertParams);
+                    ShowNotification("Ajouté à la liste de souhaits", "success");
                 }
                 
-                pnlMessage.Visible = true;
-                pnlMessage.CssClass = "alert alert-success";
+                // Update wishlist icon
+                CheckWishlistStatus(productId);
             }
             catch (Exception ex)
             {
-                litMessage.Text = "Erreur: " + Server.HtmlEncode(ex.Message);
-                pnlMessage.Visible = true;
-                pnlMessage.CssClass = "alert alert-danger";
+                ShowNotification("Erreur: " + Server.HtmlEncode(ex.Message), "error");
             }
         }
 
@@ -396,9 +470,7 @@ namespace Ecommerce.Pages.Public
                 db.ExecuteNonQuery(insertQuery, parameters);
 
                 pnlAddReview.Visible = false;
-                litMessage.Text = "<i class='fas fa-check-circle'></i> Merci pour votre avis !";
-                pnlMessage.Visible = true;
-                pnlMessage.CssClass = "alert alert-success";
+                ShowNotification("Merci pour votre avis !", "success");
 
                 LoadReviews(productId);
             }
@@ -412,6 +484,12 @@ namespace Ecommerce.Pages.Public
         {
             pnlReviewError.Visible = true;
             litReviewError.Text = message;
+        }
+
+        protected void ShowNotification(string message, string type)
+        {
+            string script = $"showNotification('{message.Replace("'", "\\'")}', '{type}');";
+            ClientScript.RegisterStartupScript(this.GetType(), "Notification_" + Guid.NewGuid().ToString("N"), script, true);
         }
 
         protected string GetImageUrl(object imageUrlObj)

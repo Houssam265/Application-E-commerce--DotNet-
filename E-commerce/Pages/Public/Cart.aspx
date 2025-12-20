@@ -194,7 +194,7 @@
                                 <tr>
                                     <td>
                                         <div class="cart-item-info">
-                                            <img src='<%# Eval("ImageUrl") %>' class="cart-item-img"
+                                            <img src='<%# GetImageUrl(Eval("ImageUrl")) %>' class="cart-item-img"
                                                 onerror="this.src='https://via.placeholder.com/80/f5f5f5/051922?text=Produit'" />
                                             <div>
                                                 <div class="cart-item-name"><%# Eval("Name") %></div>
@@ -214,7 +214,7 @@
                                                 <i class="fas fa-minus"></i>
                                             </asp:LinkButton>
                                             <asp:TextBox ID="txtQty" runat="server" Text='<%# Eval("Quantity") %>' 
-                                                CssClass="qty-input" ReadOnly="true" />
+                                                CssClass="qty-input" ReadOnly="true" style="pointer-events: none;" />
                                             <asp:LinkButton ID="btnIncrease" runat="server" CommandName="Increase" 
                                                 CommandArgument='<%# Eval("CartId") %>' CssClass="qty-btn">
                                                 <i class="fas fa-plus"></i>

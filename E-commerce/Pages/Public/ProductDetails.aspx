@@ -6,29 +6,54 @@
         .product-details-container {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 3rem;
+            gap: 4rem;
             margin-top: 2rem;
+            margin-bottom: 3rem;
             align-items: start;
         }
 
         .product-gallery {
-            border-radius: 10px;
+            border-radius: 12px;
             overflow: hidden;
             border: 1px solid var(--border-color);
-            background: var(--bg-light);
+            background: var(--bg-white);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: box-shadow 0.3s ease;
+        }
+
+        .product-gallery:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
         }
 
         .main-image {
             width: 100%;
-            height: 500px;
+            height: 550px;
             object-fit: contain;
             background: var(--bg-white);
+            padding: 1rem;
+        }
+
+        .product-header {
+            margin-bottom: 1rem;
         }
 
         .product-info h1 {
             font-size: 2.5rem;
-            margin-bottom: 1rem;
+            margin-bottom: 0.5rem;
             color: var(--text-dark);
+            line-height: 1.2;
+        }
+
+        .product-sku {
+            display: inline-block;
+            font-size: 0.85rem;
+            color: var(--text-light);
+            background: var(--bg-light);
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            margin-top: 0.5rem;
         }
 
         .product-price {
@@ -46,35 +71,50 @@
         }
 
         .product-description {
-            color: var(--text-light);
+            color: var(--text-dark);
             margin-bottom: 2rem;
-            line-height: 1.8;
-            font-size: 1rem;
+            line-height: 1.9;
+            font-size: 1.05rem;
+            padding: 1.5rem;
+            background: var(--bg-light);
+            border-radius: 8px;
+            border-left: 4px solid var(--primary-color);
         }
 
         .product-meta {
             display: flex;
             gap: 2rem;
             margin-bottom: 2rem;
-            padding: 1rem;
-            background: var(--bg-light);
-            border-radius: 5px;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
         }
 
         .meta-item {
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
+            flex: 1;
         }
 
         .meta-item strong {
             color: var(--text-dark);
-            font-size: 0.9rem;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
         }
 
         .meta-item span {
-            color: var(--text-light);
-            font-size: 0.9rem;
+            color: var(--text-dark);
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .meta-item i {
+            color: var(--primary-color);
+            margin-right: 0.3rem;
         }
 
         .options-group {
@@ -83,66 +123,140 @@
 
         .options-group label {
             display: block;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.75rem;
             font-weight: 600;
             color: var(--text-dark);
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.85rem;
         }
 
         .form-select {
             width: 100%;
             padding: 12px 15px;
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
-            font-size: 14px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 15px;
             background: var(--bg-white);
             cursor: pointer;
+            transition: border-color 0.3s ease;
+            font-weight: 500;
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1);
         }
 
         .qty-input {
-            width: 100px;
-            padding: 12px;
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
-            font-size: 14px;
+            width: 120px;
+            padding: 12px 15px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 16px;
             text-align: center;
+            font-weight: 600;
+            transition: border-color 0.3s ease;
+        }
+
+        .qty-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1);
         }
 
         .actions {
             display: flex;
             gap: 1rem;
             margin-top: 2rem;
+            align-items: center;
+        }
+
+        .actions .btn {
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 14px;
+        }
+
+        .actions .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        }
+
+        .actions .btn-outline {
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            background: transparent;
+        }
+
+        .actions .btn-outline:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .actions .btn-outline.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .actions .btn-outline.active:hover {
+            background: var(--danger-color);
+            border-color: var(--danger-color);
         }
 
         .stock-status {
-            padding: 0.5rem 1rem;
-            border-radius: 5px;
+            padding: 0.6rem 1.2rem;
+            border-radius: 25px;
             display: inline-block;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
             font-weight: 600;
             font-size: 0.9rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .stock-in {
-            background: #d4edda;
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
             color: #155724;
+            border: 1px solid #c3e6cb;
         }
 
         .stock-out {
-            background: #f8d7da;
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
             color: #721c24;
+            border: 1px solid #f5c6cb;
         }
 
         .reviews-section {
             margin-top: 4rem;
-            padding-top: 2rem;
+            padding-top: 3rem;
             border-top: 2px solid var(--border-color);
+        }
+
+        .reviews-section h3 {
+            font-size: 2rem;
+            color: var(--text-dark);
+            margin-bottom: 2rem;
+            font-weight: 700;
         }
 
         .review-item {
             padding: 1.5rem;
-            background: var(--bg-light);
-            border-radius: 5px;
+            background: var(--bg-white);
+            border-radius: 10px;
             margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: box-shadow 0.3s ease;
+        }
+
+        .review-item:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
 
         .review-header {
@@ -184,13 +298,12 @@
 
                 <!-- Info -->
                 <div class="product-info">
-                    <h1><asp:Label ID="lblName" runat="server"></asp:Label></h1>
+                    <div class="product-header">
+                        <h1><asp:Label ID="lblName" runat="server"></asp:Label></h1>
+                        <asp:Label ID="lblSKU" runat="server" CssClass="product-sku" Visible="false"></asp:Label>
+                    </div>
                     
-                    <asp:Panel ID="pnlStockStatus" runat="server">
-                        <span class="stock-status stock-in">
-                            <i class="fas fa-check-circle"></i> En stock
-                        </span>
-                    </asp:Panel>
+                    <asp:Literal ID="litStockStatus" runat="server"></asp:Literal>
 
                     <div class="product-price">
                         <asp:Label ID="lblPrice" runat="server"></asp:Label> MAD
@@ -226,7 +339,7 @@
                     </asp:Panel>
 
                     <div class="options-group">
-                        <label>Quantité</label>
+                        <label for="<%= txtQuantity.ClientID %>">Quantité</label>
                         <asp:TextBox ID="txtQuantity" runat="server" TextMode="Number" Text="1" min="1" CssClass="qty-input"></asp:TextBox>
                     </div>
 
@@ -235,13 +348,8 @@
                             OnClick="btnAddToCart_Click" style="flex: 1; padding: 15px; font-size: 16px;" />
                         <asp:LinkButton ID="btnWishlist" runat="server" CssClass="btn btn-outline"
                             style="padding: 15px; width: 60px;" OnClick="btnWishlist_Click">
-                            <i class="fas fa-heart"></i>
                         </asp:LinkButton>
                     </div>
-
-                    <asp:Panel ID="pnlMessage" runat="server" Visible="false" CssClass="alert alert-success" style="margin-top: 1rem;">
-                        <asp:Literal ID="litMessage" runat="server"></asp:Literal>
-                    </asp:Panel>
                 </div>
             </div>
 

@@ -61,7 +61,7 @@
             <div class="card">
                 <div class="auth-header">
                     <h2><i class="fas fa-user-plus" style="color: var(--primary-color);"></i> Créer un compte</h2>
-                    <p>Rejoignez-nous pour découvrir les produits des coopératives marocaines</p>
+                    <p>Rejoignez-nous pour découvrir nos produits</p>
                 </div>
 
                 <asp:Panel ID="pnlError" runat="server" Visible="false" CssClass="alert alert-danger">
@@ -110,14 +110,6 @@
                     </a>
                 </div>
 
-                <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color); text-align: center;">
-                    <p style="font-size: 14px; color: var(--text-light); margin: 0;">
-                        Vous représentez une coopérative ? 
-                        <a href="RegisterCooperative.aspx" style="color: var(--primary-color); font-weight: 600;">
-                            Inscrivez votre coopérative
-                        </a>
-                    </p>
-                </div>
             </div>
         </div>
     </div>

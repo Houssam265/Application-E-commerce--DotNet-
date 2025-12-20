@@ -10,39 +10,206 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;700&display=swap" rel="stylesheet">
     
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    
     <!-- Custom CSS -->
     <link href="~/Assets/Styles/main.css" rel="stylesheet" />
     
     <style>
+        :root {
+            --admin-bg: #f8fafc;
+            --admin-sidebar: #ffffff;
+            --admin-card: #ffffff;
+            --admin-border: #e2e8f0;
+            --admin-text: #1e293b;
+            --admin-text-muted: #64748b;
+            --admin-primary: #3b82f6;
+            --admin-success: #10b981;
+            --admin-warning: #f59e0b;
+            --admin-danger: #ef4444;
+            --admin-accent: #8b5cf6;
+        }
+
+        /* Amélioration de la lisibilité avec des couleurs plus claires */
+        .nav-item {
+            text-decoration: none;
+        }
+
+        .nav-item:visited {
+            color: var(--admin-text-muted);
+        }
+
+        body {
+            background: var(--admin-bg);
+            color: var(--admin-text);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
         .admin-layout {
             display: grid;
-            grid-template-columns: 250px 1fr;
+            grid-template-columns: 280px 1fr;
             min-height: 100vh;
         }
+
         .sidebar {
-            background: var(--secondary-bg);
-            border-right: 1px solid var(--glass-border);
-            padding: 2rem 1rem;
+            background: var(--admin-sidebar);
+            border-right: 1px solid var(--admin-border);
+            padding: 2rem 0;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
         }
-        .main-content {
-            padding: 2rem;
+
+        .sidebar .logo {
+            padding: 0 1.5rem;
+            margin-bottom: 2.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--admin-text);
+            font-family: 'Outfit', sans-serif;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
+
+        .sidebar .logo span span {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .sidebar nav {
+            padding: 0 1rem;
+        }
+
         .nav-item {
-            display: block;
-            padding: 1rem;
-            color: var(--text-muted);
-            border-radius: 8px;
-            margin-bottom: 0.5rem;
-        }
-        .nav-item:hover, .nav-item.active {
-            background: rgba(255,255,255,0.05);
-            color: var(--gold);
-        }
-        .stat-card {
-            background: var(--secondary-bg);
-            border: 1px solid var(--glass-border);
-            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 1.25rem;
+            color: var(--admin-text-muted);
             border-radius: 12px;
+            margin-bottom: 0.5rem;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 0.95rem;
+            position: relative;
+        }
+
+        .nav-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 0;
+            background: linear-gradient(180deg, var(--admin-primary), var(--admin-accent));
+            border-radius: 0 4px 4px 0;
+            transition: height 0.3s ease;
+        }
+
+        .nav-item:hover {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--admin-primary);
+            transform: translateX(4px);
+        }
+
+        .nav-item:hover::before {
+            height: 60%;
+        }
+
+        .nav-item.active {
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--admin-primary);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        .nav-item.active::before {
+            height: 80%;
+        }
+
+        .main-content {
+            padding: 2.5rem;
+            background: var(--admin-bg);
+            overflow-x: hidden;
+        }
+
+        .main-content h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--admin-text);
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .main-content > p {
+            color: var(--admin-text-muted);
+            margin-bottom: 2rem;
+            font-size: 1rem;
+        }
+
+        .card {
+            background: var(--admin-card);
+            border: 1px solid var(--admin-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--admin-primary), var(--admin-accent));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Scrollbar styling */
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
         }
     </style>
 
@@ -53,19 +220,38 @@
     <form runat="server">
         <div class="admin-layout">
             <aside class="sidebar">
-                <div class="logo" style="margin-bottom: 2rem; padding-left: 1rem;">
-                    Admin<span style="color:var(--gold)">Panel</span>
+                <div class="logo">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Admin<span>Panel</span></span>
                 </div>
                 
                 <nav>
-                    <a href="/Pages/Admin/Dashboard.aspx" class="nav-item">Tableau de bord</a>
-                    <a href="/Pages/Admin/Products.aspx" class="nav-item">Produits</a>
-                    <a href="/Pages/Admin/Orders.aspx" class="nav-item">Commandes</a>
-                    <a href="/Pages/Admin/Users.aspx" class="nav-item">Utilisateurs</a>
+                    <a href="/Pages/Admin/Dashboard.aspx" class="nav-item">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Tableau de bord</span>
+                    </a>
+                    <a href="/Pages/Admin/Products.aspx" class="nav-item">
+                        <i class="fas fa-box"></i>
+                        <span>Produits</span>
+                    </a>
+                    <a href="/Pages/Admin/Orders.aspx" class="nav-item">
+                        <i class="fas fa-shopping-bag"></i>
+                        <span>Commandes</span>
+                    </a>
+                    <a href="/Pages/Admin/Categories.aspx" class="nav-item">
+                        <i class="fas fa-tags"></i>
+                        <span>Catégories</span>
+                    </a>
+                    <a href="/Pages/Admin/Users.aspx" class="nav-item">
+                        <i class="fas fa-users"></i>
+                        <span>Utilisateurs</span>
+                    </a>
                     
-                    <div style="margin-top: 2rem; border-top: 1px dashed var(--glass-border); padding-top: 1rem;">
-                        <a href="/" class="nav-item">Retour au site</a>
-             
+                    <div style="margin-top: 2rem; border-top: 1px dashed #cbd5e1; padding-top: 1rem;">
+                        <a href="/" class="nav-item">
+                            <i class="fas fa-arrow-left"></i>
+                            <span>Retour au site</span>
+                        </a>
                     </div>
                 </nav>
             </aside>

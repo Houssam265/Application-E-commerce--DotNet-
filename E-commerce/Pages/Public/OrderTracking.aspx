@@ -117,15 +117,15 @@
                         <asp:Repeater ID="rptTrackingSteps" runat="server">
                             <ItemTemplate>
                                 <div class="tracking-step">
-                                    <div class='step-icon <%= GetStepClass(Container.DataItem, Container.ItemIndex) %>'>
-                                        <%= GetStepIcon(Container.ItemIndex) %>
+                                    <div class='step-icon <%# GetStepClass(Eval("Status"), Container.ItemIndex) %>'>
+                                        <%# GetStepIcon(Container.ItemIndex) %>
                                     </div>
                                     <div class="step-content">
-                                        <h4><%# GetStepTitle(Container.DataItem) %></h4>
-                                        <p><%# GetStepDescription(Container.DataItem) %></p>
-                                        <%# GetStepDate(Container.DataItem) %>
+                                        <h4><%# Eval("Title") %></h4>
+                                        <p><%# Eval("Description") %></p>
+                                        <%# GetStepDate(Eval("Date")) %>
                                     </div>
-                                    <%# Container.ItemIndex < GetTotalSteps() - 1 ? "<div class='step-line " + GetStepLineClass(Container.DataItem, Container.ItemIndex) + "'></div>" : "" %>
+                                    <%# Container.ItemIndex < GetTotalSteps() - 1 ? "<div class='step-line " + GetStepLineClass(Eval("Status"), Container.ItemIndex) + "'></div>" : "" %>
                                 </div>
                             </ItemTemplate>
                         </asp:Repeater>

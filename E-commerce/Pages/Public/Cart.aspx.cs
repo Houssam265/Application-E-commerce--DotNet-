@@ -19,10 +19,7 @@ namespace Ecommerce.Pages.Public
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            if (!IsPostBack)
-            {
-                LoadCart();
-            }
+            LoadCart();
         }
 
         private void LoadCart()
@@ -41,25 +38,52 @@ namespace Ecommerce.Pages.Public
                 pnlEmptyCart.Visible = false;
                 pnlCartItems.Visible = true;
 
+                // Create a new DataTable with additional columns
+                DataTable dtCart = cartItems.Clone();
+                dtCart.Columns.Add("UnitPrice", typeof(decimal));
+                dtCart.Columns.Add("TotalPrice", typeof(decimal));
+                dtCart.Columns.Add("VariantInfo", typeof(string));
+                dtCart.Columns.Add("CartId", typeof(int));
+
                 // Prepare data for repeater
                 foreach (DataRow row in cartItems.Rows)
                 {
+                    DataRow newRow = dtCart.NewRow();
+                    newRow["Id"] = row["Id"];
+                    newRow["CartId"] = row["Id"];
+                    newRow["ProductId"] = row["ProductId"];
+                    newRow["VariantId"] = row["VariantId"];
+                    newRow["Quantity"] = row["Quantity"];
+                    newRow["Name"] = row["Name"];
+                    newRow["Price"] = row["Price"];
+                    newRow["ImageUrl"] = row["ImageUrl"];
+                    newRow["StockQuantity"] = row["StockQuantity"];
+                    newRow["PriceAdjustment"] = row["PriceAdjustment"];
+                    newRow["VariantType"] = row["VariantType"];
+                    newRow["VariantValue"] = row["VariantValue"];
+
                     decimal unitPrice = Convert.ToDecimal(row["Price"]);
                     decimal adjustment = row["PriceAdjustment"] != DBNull.Value ? Convert.ToDecimal(row["PriceAdjustment"]) : 0;
                     unitPrice += adjustment;
-                    row["UnitPrice"] = unitPrice;
+                    newRow["UnitPrice"] = unitPrice;
                     
                     int quantity = Convert.ToInt32(row["Quantity"]);
-                    row["TotalPrice"] = unitPrice * quantity;
+                    newRow["TotalPrice"] = unitPrice * quantity;
                     
                     // Variant info
                     if (row["VariantType"] != DBNull.Value && row["VariantValue"] != DBNull.Value)
                     {
-                        row["VariantInfo"] = row["VariantType"] + ": " + row["VariantValue"];
+                        newRow["VariantInfo"] = row["VariantType"] + ": " + row["VariantValue"];
                     }
+                    else
+                    {
+                        newRow["VariantInfo"] = DBNull.Value;
+                    }
+
+                    dtCart.Rows.Add(newRow);
                 }
 
-                rptCartItems.DataSource = cartItems;
+                rptCartItems.DataSource = dtCart;
                 rptCartItems.DataBind();
 
                 // Calculate totals
@@ -76,7 +100,10 @@ namespace Ecommerce.Pages.Public
             }
             catch (Exception ex)
             {
-                // Error handling
+                // Log error and show empty cart
+                System.Diagnostics.Debug.WriteLine($"Error loading cart: {ex.Message}");
+                pnlEmptyCart.Visible = true;
+                pnlCartItems.Visible = false;
             }
         }
 
@@ -149,6 +176,49 @@ namespace Ecommerce.Pages.Public
             }
 
             Response.Redirect("Checkout.aspx");
+        }
+
+        protected string GetImageUrl(object imageUrl)
+        {
+            if (imageUrl == null || imageUrl == DBNull.Value)
+            {
+                return ResolveUrl("~/Assets/Images/Products/placeholder.jpg");
+            }
+
+            string imageUrlStr = imageUrl.ToString().Trim();
+            
+            if (string.IsNullOrEmpty(imageUrlStr))
+            {
+                return ResolveUrl("~/Assets/Images/Products/placeholder.jpg");
+            }
+
+            // Si c'est une URL absolue (http/https), la retourner telle quelle
+            if (imageUrlStr.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || 
+                imageUrlStr.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            {
+                return imageUrlStr;
+            }
+
+            // Si c'est un simple nom de fichier (sans slash), ajouter le chemin de base
+            if (!imageUrlStr.Contains("/") && !imageUrlStr.Contains("\\"))
+            {
+                return ResolveUrl("~/Assets/Images/Products/" + imageUrlStr);
+            }
+
+            // Si c'est un chemin relatif, le résoudre
+            if (imageUrlStr.StartsWith("~/") || imageUrlStr.StartsWith("../") || imageUrlStr.StartsWith("./"))
+            {
+                return ResolveUrl(imageUrlStr);
+            }
+
+            // Si le chemin commence par Assets/, le résoudre avec ~/
+            if (imageUrlStr.StartsWith("Assets/", StringComparison.OrdinalIgnoreCase))
+            {
+                return ResolveUrl("~/" + imageUrlStr);
+            }
+
+            // Sinon, essayer de résoudre tel quel
+            return ResolveUrl("~/Assets/Images/Products/" + imageUrlStr);
         }
     }
 }

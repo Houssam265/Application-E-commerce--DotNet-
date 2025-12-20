@@ -50,12 +50,16 @@
 </asp:Content>
 
 <asp:Content ID="Content2" ContentPlaceHolderID="MainContent" runat="server">
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h1>Contactez-nous</h1>
+            <p>Nous sommes là pour vous aider et répondre à vos questions</p>
+        </div>
+    </section>
+
     <div class="container">
         <div class="contact-container">
-            <div class="hero" style="margin-bottom: 4rem;">
-                <h1>Contactez-nous</h1>
-                <p>Nous sommes là pour vous aider et répondre à vos questions</p>
-            </div>
 
             <div class="contact-grid">
                 <div class="card">

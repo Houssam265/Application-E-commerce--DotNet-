@@ -17,19 +17,30 @@ namespace Ecommerce.Utils
             DbContext db = new DbContext();
             
             // Check if item already exists in cart
-            string checkQuery = @"SELECT Id, Quantity FROM ShoppingCart 
-                                  WHERE (UserId = @UserId OR SessionId = @SessionId) 
-                                  AND ProductId = @ProductId 
-                                  AND (@VariantId IS NULL OR VariantId = @VariantId)";
+            string checkQuery;
+            List<SqlParameter> checkParams = new List<SqlParameter>();
             
-            SqlParameter[] checkParams = {
-                new SqlParameter("@UserId", userId ?? (object)DBNull.Value),
-                new SqlParameter("@SessionId", sessionId),
-                new SqlParameter("@ProductId", productId),
-                new SqlParameter("@VariantId", variantId ?? (object)DBNull.Value)
-            };
+            if (userId.HasValue)
+            {
+                checkQuery = @"SELECT Id, Quantity FROM ShoppingCart 
+                              WHERE UserId = @UserId 
+                              AND ProductId = @ProductId 
+                              AND (@VariantId IS NULL OR VariantId = @VariantId)";
+                checkParams.Add(new SqlParameter("@UserId", userId.Value));
+            }
+            else
+            {
+                checkQuery = @"SELECT Id, Quantity FROM ShoppingCart 
+                              WHERE SessionId = @SessionId AND UserId IS NULL
+                              AND ProductId = @ProductId 
+                              AND (@VariantId IS NULL OR VariantId = @VariantId)";
+                checkParams.Add(new SqlParameter("@SessionId", sessionId));
+            }
+            
+            checkParams.Add(new SqlParameter("@ProductId", productId));
+            checkParams.Add(new SqlParameter("@VariantId", variantId ?? (object)DBNull.Value));
 
-            DataTable dt = db.ExecuteQuery(checkQuery, checkParams);
+            DataTable dt = db.ExecuteQuery(checkQuery, checkParams.ToArray());
 
             if (dt.Rows.Count > 0)
             {
@@ -50,14 +61,25 @@ namespace Ecommerce.Utils
                 // Insert new item
                 string insertQuery = @"INSERT INTO ShoppingCart (UserId, SessionId, ProductId, VariantId, Quantity) 
                                        VALUES (@UserId, @SessionId, @ProductId, @VariantId, @Quantity)";
-                SqlParameter[] insertParams = {
-                    new SqlParameter("@UserId", userId ?? (object)DBNull.Value),
-                    new SqlParameter("@SessionId", sessionId),
+                List<SqlParameter> insertParams = new List<SqlParameter>
+                {
                     new SqlParameter("@ProductId", productId),
                     new SqlParameter("@VariantId", variantId ?? (object)DBNull.Value),
                     new SqlParameter("@Quantity", quantity)
                 };
-                db.ExecuteNonQuery(insertQuery, insertParams);
+                
+                if (userId.HasValue)
+                {
+                    insertParams.Add(new SqlParameter("@UserId", userId.Value));
+                    insertParams.Add(new SqlParameter("@SessionId", DBNull.Value));
+                }
+                else
+                {
+                    insertParams.Add(new SqlParameter("@UserId", DBNull.Value));
+                    insertParams.Add(new SqlParameter("@SessionId", sessionId));
+                }
+                
+                db.ExecuteNonQuery(insertQuery, insertParams.ToArray());
             }
 
             UpdateCartCount();
@@ -96,21 +118,37 @@ namespace Ecommerce.Utils
             int? userId = GetUserId();
 
             DbContext db = new DbContext();
-            string query = @"SELECT c.Id, c.ProductId, c.VariantId, c.Quantity, 
-                                     p.Name, p.Price, p.ImageUrl, p.StockQuantity,
-                                     pv.PriceAdjustment, pv.VariantType, pv.VariantValue
-                              FROM ShoppingCart c
-                              INNER JOIN Products p ON c.ProductId = p.Id
-                              LEFT JOIN ProductVariants pv ON c.VariantId = pv.Id
-                              WHERE (c.UserId = @UserId OR c.SessionId = @SessionId)
-                              ORDER BY c.CreatedAt DESC";
             
-            SqlParameter[] parameters = {
-                new SqlParameter("@UserId", userId ?? (object)DBNull.Value),
-                new SqlParameter("@SessionId", sessionId)
-            };
+            // Build query based on whether user is logged in
+            string query;
+            List<SqlParameter> parameters = new List<SqlParameter>();
+            
+            if (userId.HasValue)
+            {
+                query = @"SELECT c.Id, c.ProductId, c.VariantId, c.Quantity, 
+                                 p.Name, p.Price, p.ImageUrl, p.StockQuantity,
+                                 pv.PriceAdjustment, pv.VariantType, pv.VariantValue
+                          FROM ShoppingCart c
+                          INNER JOIN Products p ON c.ProductId = p.Id
+                          LEFT JOIN ProductVariants pv ON c.VariantId = pv.Id
+                          WHERE c.UserId = @UserId
+                          ORDER BY c.CreatedAt DESC";
+                parameters.Add(new SqlParameter("@UserId", userId.Value));
+            }
+            else
+            {
+                query = @"SELECT c.Id, c.ProductId, c.VariantId, c.Quantity, 
+                                 p.Name, p.Price, p.ImageUrl, p.StockQuantity,
+                                 pv.PriceAdjustment, pv.VariantType, pv.VariantValue
+                          FROM ShoppingCart c
+                          INNER JOIN Products p ON c.ProductId = p.Id
+                          LEFT JOIN ProductVariants pv ON c.VariantId = pv.Id
+                          WHERE c.SessionId = @SessionId AND c.UserId IS NULL
+                          ORDER BY c.CreatedAt DESC";
+                parameters.Add(new SqlParameter("@SessionId", sessionId));
+            }
 
-            return db.ExecuteQuery(query, parameters);
+            return db.ExecuteQuery(query, parameters.ToArray());
         }
 
         public static decimal GetCartTotal()
@@ -135,13 +173,22 @@ namespace Ecommerce.Utils
             int? userId = GetUserId();
 
             DbContext db = new DbContext();
-            string query = "SELECT SUM(Quantity) FROM ShoppingCart WHERE (UserId = @UserId OR SessionId = @SessionId)";
-            SqlParameter[] parameters = {
-                new SqlParameter("@UserId", userId ?? (object)DBNull.Value),
-                new SqlParameter("@SessionId", sessionId)
-            };
+            
+            string query;
+            List<SqlParameter> parameters = new List<SqlParameter>();
+            
+            if (userId.HasValue)
+            {
+                query = "SELECT SUM(Quantity) FROM ShoppingCart WHERE UserId = @UserId";
+                parameters.Add(new SqlParameter("@UserId", userId.Value));
+            }
+            else
+            {
+                query = "SELECT SUM(Quantity) FROM ShoppingCart WHERE SessionId = @SessionId AND UserId IS NULL";
+                parameters.Add(new SqlParameter("@SessionId", sessionId));
+            }
 
-            object result = db.ExecuteScalar(query, parameters);
+            object result = db.ExecuteScalar(query, parameters.ToArray());
             return result != DBNull.Value && result != null ? Convert.ToInt32(result) : 0;
         }
 
@@ -151,12 +198,22 @@ namespace Ecommerce.Utils
             int? userId = GetUserId();
 
             DbContext db = new DbContext();
-            string query = "DELETE FROM ShoppingCart WHERE (UserId = @UserId OR SessionId = @SessionId)";
-            SqlParameter[] parameters = {
-                new SqlParameter("@UserId", userId ?? (object)DBNull.Value),
-                new SqlParameter("@SessionId", sessionId)
-            };
-            db.ExecuteNonQuery(query, parameters);
+            
+            string query;
+            List<SqlParameter> parameters = new List<SqlParameter>();
+            
+            if (userId.HasValue)
+            {
+                query = "DELETE FROM ShoppingCart WHERE UserId = @UserId";
+                parameters.Add(new SqlParameter("@UserId", userId.Value));
+            }
+            else
+            {
+                query = "DELETE FROM ShoppingCart WHERE SessionId = @SessionId AND UserId IS NULL";
+                parameters.Add(new SqlParameter("@SessionId", sessionId));
+            }
+            
+            db.ExecuteNonQuery(query, parameters.ToArray());
             UpdateCartCount();
         }
 

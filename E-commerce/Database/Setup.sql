@@ -1,6 +1,5 @@
 -- =============================================
 -- E-commerce Platform Database Schema
--- Pour les coopératives marocaines (multivendeurs)
 -- =============================================
 
 -- Users Table (Clients et Administrateurs)
@@ -10,30 +9,12 @@ CREATE TABLE Users (
     PasswordHash NVARCHAR(MAX) NOT NULL,
     FullName NVARCHAR(100) NOT NULL,
     Phone NVARCHAR(20),
-    Role NVARCHAR(20) DEFAULT 'Customer', -- 'Customer', 'Admin', 'Cooperative'
+    Role NVARCHAR(20) DEFAULT 'Customer', -- 'Customer', 'Admin'
     CreatedAt DATETIME DEFAULT GETDATE(),
     IsActive BIT DEFAULT 1,
     EmailVerified BIT DEFAULT 0,
     ResetPasswordToken NVARCHAR(255) NULL,
     ResetPasswordExpiry DATETIME NULL
-);
-
--- Cooperatives Table (Vendeurs/Coopératives)
-CREATE TABLE Cooperatives (
-    Id INT PRIMARY KEY IDENTITY(1,1),
-    UserId INT FOREIGN KEY REFERENCES Users(Id),
-    Name NVARCHAR(200) NOT NULL,
-    Description NVARCHAR(MAX),
-    LogoUrl NVARCHAR(500),
-    Address NVARCHAR(500),
-    City NVARCHAR(100),
-    Country NVARCHAR(100) DEFAULT 'Maroc',
-    Phone NVARCHAR(20),
-    Email NVARCHAR(255),
-    Website NVARCHAR(500),
-    CreatedAt DATETIME DEFAULT GETDATE(),
-    IsActive BIT DEFAULT 1,
-    IsVerified BIT DEFAULT 0
 );
 
 -- Addresses Table (Adresses de livraison)
@@ -65,7 +46,6 @@ CREATE TABLE Categories (
 -- Products Table
 CREATE TABLE Products (
     Id INT PRIMARY KEY IDENTITY(1,1),
-    CooperativeId INT FOREIGN KEY REFERENCES Cooperatives(Id),
     CategoryId INT FOREIGN KEY REFERENCES Categories(Id),
     Name NVARCHAR(200) NOT NULL,
     Description NVARCHAR(MAX),
@@ -223,7 +203,7 @@ CREATE TABLE Notifications (
 INSERT INTO Users (Email, PasswordHash, FullName, Role, IsActive, EmailVerified)
 VALUES ('admin@ecommerce.ma', '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918', 'Administrateur', 'Admin', 1, 1);
 
--- Categories pour coopératives marocaines
+-- Categories
 INSERT INTO Categories (Name, Description, ImageUrl, DisplayOrder) VALUES 
 ('Agriculture', 'Produits agricoles biologiques du terroir marocain', '/Assets/Images/Categories/agriculture.jpg', 1),
 ('Artisanat', 'Produits artisanaux traditionnels marocains', '/Assets/Images/Categories/artisanat.jpg', 2),
@@ -244,28 +224,17 @@ INSERT INTO ShippingMethods (Name, Description, Cost, EstimatedDays, DisplayOrde
 ('Livraison express', 'Livraison en 1-2 jours ouvrés', 60.00, 2, 2),
 ('Livraison gratuite', 'Livraison gratuite pour commandes > 500 MAD', 0.00, 5, 3);
 
--- Sample Cooperative
-INSERT INTO Users (Email, PasswordHash, FullName, Phone, Role, IsActive, EmailVerified)
-VALUES ('cooperative@example.ma', '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918', 'Coopérative Test', '0612345678', 'Cooperative', 1, 1);
-
-DECLARE @CoopUserId INT = SCOPE_IDENTITY();
-
-INSERT INTO Cooperatives (UserId, Name, Description, City, Country, Phone, Email, IsActive, IsVerified)
-VALUES (@CoopUserId, 'Coopérative Agricole du Rif', 'Coopérative spécialisée dans les produits agricoles biologiques', 'Tétouan', 'Maroc', '0612345678', 'cooperative@example.ma', 1, 1);
-
 -- Sample Products
-DECLARE @CoopId INT = SCOPE_IDENTITY();
 DECLARE @CatAgricId INT = (SELECT Id FROM Categories WHERE Name = 'Agriculture');
 DECLARE @CatTerroirId INT = (SELECT Id FROM Categories WHERE Name = 'Produits du Terroir');
 
-INSERT INTO Products (CooperativeId, CategoryId, Name, Description, ShortDescription, Price, StockQuantity, SKU, IsActive, IsFeatured)
+INSERT INTO Products (CategoryId, Name, Description, ShortDescription, Price, StockQuantity, SKU, IsActive, IsFeatured)
 VALUES 
-(@CoopId, @CatAgricId, 'Tomates Bio', 'Tomates biologiques fraîches du terroir marocain', 'Tomates biologiques cultivées sans pesticides', 15.00, 100, 'TOM-BIO-001', 1, 1),
-(@CoopId, @CatTerroirId, 'Huile d''Olive Extra Vierge', 'Huile d''olive pressée à froid, 500ml', 'Huile d''olive de première qualité', 85.00, 50, 'HUI-OLIVE-500', 1, 1),
-(@CoopId, @CatAgricId, 'Amandes du Rif', 'Amandes fraîches du Rif marocain, 500g', 'Amandes de qualité supérieure', 120.00, 75, 'AMANDE-RIF-500', 1, 0);
+(@CatAgricId, 'Tomates Bio', 'Tomates biologiques fraîches du terroir marocain', 'Tomates biologiques cultivées sans pesticides', 15.00, 100, 'TOM-BIO-001', 1, 1),
+(@CatTerroirId, 'Huile d''Olive Extra Vierge', 'Huile d''olive pressée à froid, 500ml', 'Huile d''olive de première qualité', 85.00, 50, 'HUI-OLIVE-500', 1, 1),
+(@CatAgricId, 'Amandes du Rif', 'Amandes fraîches du Rif marocain, 500g', 'Amandes de qualité supérieure', 120.00, 75, 'AMANDE-RIF-500', 1, 0);
 
 -- Indexes pour améliorer les performances
-CREATE INDEX IX_Products_CooperativeId ON Products(CooperativeId);
 CREATE INDEX IX_Products_CategoryId ON Products(CategoryId);
 CREATE INDEX IX_Products_IsActive ON Products(IsActive);
 CREATE INDEX IX_Products_IsFeatured ON Products(IsFeatured);

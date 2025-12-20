@@ -5,12 +5,16 @@
 </asp:Content>
 
 <asp:Content ID="Content2" ContentPlaceHolderID="MainContent" runat="server">
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h1>À Propos de Coopératives Maroc</h1>
+            <p>Notre mission est de promouvoir les produits authentiques des coopératives marocaines</p>
+        </div>
+    </section>
+
     <div class="container">
         <div style="max-width: 900px; margin: 2rem auto;">
-            <div class="hero" style="margin-bottom: 4rem;">
-                <h1>À Propos de Coopératives Maroc</h1>
-                <p>Notre mission est de promouvoir les produits authentiques des coopératives marocaines</p>
-            </div>
 
             <div class="card" style="margin-bottom: 2rem;">
                 <h2 style="margin-bottom: 1.5rem; color: var(--primary-color);">Notre Histoire</h2>

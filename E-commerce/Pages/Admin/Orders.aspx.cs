@@ -14,13 +14,13 @@ namespace Ecommerce.Pages.Admin
         protected global::System.Web.UI.WebControls.GridView gvOrders;
         protected global::System.Web.UI.WebControls.Panel pnlDetails;
         protected global::System.Web.UI.WebControls.Label lblOrderId;
-        protected global::System.Web.UI.WebControls.Button btnClose;
+        protected global::System.Web.UI.WebControls.LinkButton btnClose;
         protected global::System.Web.UI.WebControls.Label lblCustomer;
         protected global::System.Web.UI.WebControls.Label lblEmail;
         protected global::System.Web.UI.WebControls.Label lblAddress;
         protected global::System.Web.UI.WebControls.GridView gvItems;
         protected global::System.Web.UI.WebControls.DropDownList ddlStatus;
-        protected global::System.Web.UI.WebControls.Button btnUpdateStatus;
+        protected global::System.Web.UI.WebControls.LinkButton btnUpdateStatus;
 
         protected void Page_Load(object sender, EventArgs e)
         {

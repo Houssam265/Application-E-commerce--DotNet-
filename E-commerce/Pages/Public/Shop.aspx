@@ -14,6 +14,11 @@
             grid-template-columns: 250px 1fr;
             gap: 2rem;
             margin-top: 2rem;
+            position: relative;
+        }
+
+        .products-section {
+            margin-left: 0;
         }
 
         .filters {
@@ -21,9 +26,32 @@
             padding: 1.5rem;
             border-radius: 10px;
             border: 1px solid var(--border-color);
-            height: fit-content;
             position: sticky;
-            top: 100px;
+            top: 120px;
+            width: 100%;
+            max-height: calc(100vh - 140px);
+            overflow-y: auto;
+            overflow-x: hidden;
+            z-index: 100;
+            align-self: start;
+        }
+
+        .filters::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .filters::-webkit-scrollbar-track {
+            background: var(--bg-light);
+            border-radius: 3px;
+        }
+
+        .filters::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 3px;
+        }
+
+        .filters::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-dark);
         }
 
         .filter-section {
@@ -114,6 +142,46 @@
             font-size: 14px;
         }
 
+        .product-card-wrapper {
+            position: relative;
+        }
+
+        .product-actions {
+            display: flex;
+            gap: 0.5rem;
+            padding: 1rem;
+            background: var(--bg-white);
+            border-top: 1px solid var(--border-color);
+            border-radius: 0 0 10px 10px;
+        }
+
+        .product-actions .btn {
+            flex: 1;
+            padding: 10px;
+            font-size: 13px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .product-actions .btn-sm {
+            padding: 8px 12px;
+        }
+
+        .product-actions .wishlist-btn {
+            background: transparent;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .product-actions .wishlist-btn:hover {
+            background: var(--primary-color);
+            color: #fff;
+        }
+
+        .product-card-wrapper:hover .product-actions {
+            display: flex;
+        }
+
         @media (max-width: 768px) {
             .shop-container {
                 grid-template-columns: 1fr;
@@ -121,9 +189,56 @@
 
             .filters {
                 position: static;
+                width: 100%;
+                max-height: none;
+                left: auto;
+                top: auto;
+            }
+
+            .products-section {
+                margin-left: 0;
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .filters {
+                left: 15px;
             }
         }
     </style>
+    <script>
+        function adjustFiltersHeight() {
+            var filters = document.querySelector('.filters');
+            if (!filters) return;
+
+            var footer = document.querySelector('footer');
+            if (!footer) return;
+
+            var windowHeight = window.innerHeight;
+            var filtersTop = filters.offsetTop;
+            var footerTop = footer.getBoundingClientRect().top + window.scrollY;
+            var scrollY = window.scrollY || window.pageYOffset;
+            
+            // Calculer la distance entre le bas du filtre et le haut du footer
+            var filtersBottom = filtersTop + filters.offsetHeight;
+            var distanceToFooter = footerTop - filtersBottom;
+            
+            // Si le footer approche (moins de 50px), réduire la hauteur max
+            if (distanceToFooter < 50) {
+                var maxHeight = Math.max(300, footerTop - filtersTop - 100);
+                filters.style.maxHeight = maxHeight + 'px';
+            } else {
+                // Sinon, utiliser la hauteur maximale normale
+                var availableHeight = windowHeight - filtersTop - 100;
+                filters.style.maxHeight = Math.min(availableHeight, windowHeight - 200) + 'px';
+            }
+        }
+
+        // Ajuster au chargement et au scroll
+        window.addEventListener('load', adjustFiltersHeight);
+        window.addEventListener('scroll', adjustFiltersHeight);
+        window.addEventListener('resize', adjustFiltersHeight);
+    </script>
 </asp:Content>
 
 <asp:Content ID="Content2" ContentPlaceHolderID="MainContent" runat="server">
@@ -172,7 +287,7 @@
             </aside>
 
             <!-- Product Grid -->
-            <div>
+            <div class="products-section">
                 <div class="search-bar">
                     <asp:TextBox ID="txtSearch" runat="server" CssClass="search-input"
                         Placeholder="Rechercher un produit..."></asp:TextBox>
@@ -194,31 +309,51 @@
                     </div>
                 </div>
 
-                <asp:Repeater ID="rptProducts" runat="server">
+                <asp:Repeater ID="rptProducts" runat="server" OnItemCommand="rptProducts_ItemCommand">
                     <HeaderTemplate>
                         <div class="product-grid">
                     </HeaderTemplate>
                     <ItemTemplate>
-                        <a href='/Pages/Public/ProductDetails.aspx?id=<%# Eval("Id") %>' class="product-card">
-                            <%# GetStockBadge(Eval("StockQuantity")) %>
-                            <img src='<%# GetImageUrl(Eval("ImageUrl")) %>' alt='<%# Eval("Name") %>'
-                                onerror="this.src='https://via.placeholder.com/300x250/f5f5f5/051922?text=Produit'" loading="lazy" />
-                            <div class="product-info">
-                                <h3><%# Eval("Name") %></h3>
-                                <p><%# Eval("ShortDescription") ?? (Eval("Description") != null ? (Eval("Description").ToString().Length > 100 ? Eval("Description").ToString().Substring(0, 100) + "..." : Eval("Description")) : "") %></p>
-                                <div class="product-price">
-                                    <%# Eval("Price", "{0:F2}") %> MAD
-                                </div>
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
-                                    <span style="color: var(--text-light); font-size: 0.85rem;">
-                                        <i class="fas fa-box"></i> Stock: <%# Eval("StockQuantity") %>
-                                    </span>
-                                    <span class="btn btn-primary" style="padding: 8px 15px; font-size: 14px;">
-                                        <i class="fas fa-eye"></i> Voir
-                                    </span>
+                        <div class="product-card-wrapper">
+                            <div class="product-card">
+                                <a href='/Pages/Public/ProductDetails.aspx?id=<%# Eval("Id") %>' style="text-decoration: none; color: inherit;">
+                                    <%# GetStockBadge(Eval("StockQuantity")) %>
+                                    <img src='<%# GetImageUrl(Eval("ImageUrl")) %>' alt='<%# Eval("Name") %>'
+                                        onerror="this.src='https://via.placeholder.com/300x250/f5f5f5/051922?text=Produit'" loading="lazy" />
+                                    <div class="product-info">
+                                        <h3><%# Eval("Name") %></h3>
+                                        <p><%# Eval("ShortDescription") ?? (Eval("Description") != null ? (Eval("Description").ToString().Length > 100 ? Eval("Description").ToString().Substring(0, 100) + "..." : Eval("Description")) : "") %></p>
+                                        <div class="product-price">
+                                            <%# Eval("Price", "{0:F2}") %> MAD
+                                        </div>
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
+                                            <span style="color: var(--text-light); font-size: 0.85rem;">
+                                                <i class="fas fa-box"></i> Stock: <%# Eval("StockQuantity") %>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </a>
+                                <div class="product-actions">
+                                    <asp:LinkButton ID="btnAddToCart" runat="server" 
+                                        CommandArgument='<%# Eval("Id") %>' 
+                                        CommandName="AddToCart"
+                                        CssClass="btn btn-icon btn-primary"
+                                        Enabled='<%# IsInStock(Eval("StockQuantity")) %>'
+                                        OnClientClick="event.stopPropagation(); return true;"
+                                        title="Ajouter au panier">
+                                        <i class="fas fa-shopping-cart"></i>
+                                    </asp:LinkButton>
+                                    <asp:LinkButton ID="btnAddToWishlist" runat="server" 
+                                        CommandArgument='<%# Eval("Id") %>' 
+                                        CommandName="AddToWishlist"
+                                        CssClass='<%# "btn btn-icon btn-wishlist " + IsInWishlist(Eval("IsInWishlist")) %>'
+                                        OnClientClick="event.stopPropagation(); return true;"
+                                        title="Ajouter aux favoris">
+                                        <%# GetWishlistIcon(Eval("IsInWishlist")) %>
+                                    </asp:LinkButton>
                                 </div>
                             </div>
-                        </a>
+                        </div>
                     </ItemTemplate>
                     <FooterTemplate>
                         </div>

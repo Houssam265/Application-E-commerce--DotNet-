@@ -4,50 +4,124 @@
     <asp:Content ID="Content1" ContentPlaceHolderID="HeadContent" runat="server">
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
         <style>
-            .dashboard-grid {
-                display: grid;
-                gap: 1.5rem;
-            }
-
             .stats-row {
                 display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
                 gap: 1.5rem;
-                margin-bottom: 2rem;
+                margin-bottom: 2.5rem;
             }
 
             .stat-card {
-                background: linear-gradient(135deg, var(--secondary-bg) 0%, rgba(99, 102, 241, 0.1) 100%);
-                border: 1px solid var(--glass-border);
-                padding: 1.5rem;
+                background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+                border: 1px solid #e2e8f0;
+                padding: 2rem;
                 border-radius: 16px;
                 position: relative;
                 overflow: hidden;
+                transition: all 0.3s ease;
+                cursor: pointer;
+            }
+
+            .stat-card:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+                border-color: #cbd5e1;
             }
 
             .stat-card::before {
                 content: '';
                 position: absolute;
-                top: 0;
-                right: 0;
-                width: 100px;
-                height: 100px;
-                background: radial-gradient(circle, rgba(99, 102, 241, 0.2) 0%, transparent 70%);
+                top: -50%;
+                right: -50%;
+                width: 200px;
+                height: 200px;
+                background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
+                transition: all 0.5s ease;
+            }
+
+            .stat-card:hover::before {
+                top: -30%;
+                right: -30%;
+            }
+
+            .stat-card-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                margin-bottom: 1rem;
             }
 
             .stat-icon {
-                font-size: 2rem;
+                font-size: 2.5rem;
+                width: 60px;
+                height: 60px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 12px;
+                background: rgba(59, 130, 246, 0.1);
+                transition: all 0.3s ease;
+            }
+
+            .stat-card:hover .stat-icon {
+                transform: scale(1.1) rotate(5deg);
+            }
+
+            .stat-card.orders .stat-icon { background: rgba(59, 130, 246, 0.15); }
+            .stat-card.revenue .stat-icon { background: rgba(16, 185, 129, 0.15); }
+            .stat-card.products .stat-icon { background: rgba(139, 92, 246, 0.15); }
+            .stat-card.users .stat-icon { background: rgba(245, 158, 11, 0.15); }
+
+            .stat-label {
+                color: #64748b;
+                font-size: 0.875rem;
+                font-weight: 500;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
                 margin-bottom: 0.5rem;
-                display: inline-block;
+            }
+
+            .stat-value {
+                font-size: 2.5rem;
+                font-weight: 700;
+                color: #1e293b;
+                margin-bottom: 0.5rem;
+                font-family: 'Outfit', sans-serif;
+            }
+
+            .stat-change {
+                font-size: 0.875rem;
+                font-weight: 600;
+                display: flex;
+                align-items: center;
+                gap: 0.25rem;
+            }
+
+            .stat-change.positive {
+                color: #10b981;
+            }
+
+            .stat-change.negative {
+                color: #ef4444;
+            }
+
+            .stat-change.neutral {
+                color: #6366f1;
             }
 
             .chart-container {
-                background: var(--secondary-bg);
-                border: 1px solid var(--glass-border);
+                background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+                border: 1px solid #e2e8f0;
                 border-radius: 16px;
-                padding: 1.5rem;
-                height: 350px;
+                padding: 2rem;
+                height: 400px;
                 position: relative;
+                transition: all 0.3s ease;
+            }
+
+            .chart-container:hover {
+                border-color: #cbd5e1;
+                box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
             }
 
             .chart-grid {
@@ -64,88 +138,198 @@
             }
 
             .chart-title {
-                font-size: 1.1rem;
+                font-size: 1.25rem;
                 font-weight: 600;
-                margin-bottom: 1rem;
-                color: var(--text-primary);
+                margin-bottom: 1.5rem;
+                color: #1e293b;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+            .quick-actions {
+                background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+                border: 1px solid #e2e8f0;
+                border-radius: 16px;
+                padding: 2rem;
+                margin-top: 2rem;
+            }
+
+            .quick-actions h3 {
+                font-size: 1.5rem;
+                font-weight: 700;
+                margin-bottom: 1.5rem;
+                color: #1e293b;
+                font-family: 'Outfit', sans-serif;
+            }
+
+            .actions-grid {
+                display: flex;
+                gap: 1rem;
+                flex-wrap: wrap;
+            }
+
+            .action-btn {
+                padding: 1rem 1.5rem;
+                border-radius: 12px;
+                font-weight: 600;
+                font-size: 0.95rem;
+                border: none;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                display: inline-flex;
+                align-items: center;
+                gap: 0.75rem;
+                text-decoration: none;
+            }
+
+            .action-btn.primary {
+                background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+                color: white;
+            }
+
+            .action-btn.secondary {
+                background: #f1f5f9;
+                color: #64748b;
+                border: 1px solid #e2e8f0;
+            }
+
+            .action-btn.special {
+                background: transparent;
+                color: #f59e0b;
+                border: 2px dashed #f59e0b;
+            }
+
+            .action-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+            }
+
+            .action-btn.primary:hover {
+                box-shadow: 0 8px 16px rgba(59, 130, 246, 0.4);
             }
         </style>
     </asp:Content>
 
     <asp:Content ID="Content2" ContentPlaceHolderID="MainContent" runat="server">
-        <h1>📊 Tableau de bord</h1>
-        <p style="color: var(--text-muted); margin-bottom: 2rem;">Vue d'ensemble de la boutique.</p>
+        <div style="margin-bottom: 2rem;">
+            <h1><i class="fas fa-chart-bar"></i> Tableau de bord</h1>
+            <p style="color: #64748b; margin-top: 0.5rem;">Vue d'ensemble de la boutique et statistiques en temps réel</p>
+        </div>
 
         <!-- Stats Cards -->
         <div class="stats-row">
-            <div class="stat-card">
-                <div class="stat-icon">📦</div>
-                <h3 style="color: var(--text-muted); font-size: 0.9rem;">Commandes Totales</h3>
-                <div style="font-size: 2.5rem; font-weight: 700; margin-top: 0.5rem;">
-                    <asp:Label ID="lblTotalOrders" runat="server" Text="0"></asp:Label>
+            <div class="stat-card orders">
+                <div class="stat-card-header">
+                    <div>
+                        <div class="stat-label">Commandes Totales</div>
+                        <div class="stat-value">
+                            <asp:Label ID="lblTotalOrders" runat="server" Text="0"></asp:Label>
+                        </div>
+                    </div>
+                    <div class="stat-icon"><i class="fas fa-box"></i></div>
                 </div>
-                <div style="color: #10b981; font-size: 0.85rem; margin-top: 0.5rem;">+12% ce mois</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>+12% ce mois</span>
+                </div>
             </div>
 
-            <div class="stat-card">
-                <div class="stat-icon">💰</div>
-                <h3 style="color: var(--text-muted); font-size: 0.9rem;">Chiffre d'Affaires</h3>
-                <div style="font-size: 2.5rem; font-weight: 700; margin-top: 0.5rem; color: #10b981;">
-                    <asp:Label ID="lblRevenue" runat="server" Text="0.00 €"></asp:Label>
+            <div class="stat-card revenue">
+                <div class="stat-card-header">
+                    <div>
+                        <div class="stat-label">Chiffre d'Affaires</div>
+                        <div class="stat-value" style="color: #10b981;">
+                            <asp:Label ID="lblRevenue" runat="server" Text="0.00 MAD"></asp:Label>
+                        </div>
+                    </div>
+                    <div class="stat-icon"><i class="fas fa-money-bill-wave"></i></div>
                 </div>
-                <div style="color: #10b981; font-size: 0.85rem; margin-top: 0.5rem;">+8% ce mois</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>+8% ce mois</span>
+                </div>
             </div>
 
-            <div class="stat-card">
-                <div class="stat-icon">🏷️</div>
-                <h3 style="color: var(--text-muted); font-size: 0.9rem;">Produits Actifs</h3>
-                <div style="font-size: 2.5rem; font-weight: 700; margin-top: 0.5rem;">
-                    <asp:Label ID="lblTotalProducts" runat="server" Text="0"></asp:Label>
+            <div class="stat-card products">
+                <div class="stat-card-header">
+                    <div>
+                        <div class="stat-label">Produits Actifs</div>
+                        <div class="stat-value">
+                            <asp:Label ID="lblTotalProducts" runat="server" Text="0"></asp:Label>
+                        </div>
+                    </div>
+                    <div class="stat-icon"><i class="fas fa-tags"></i></div>
                 </div>
-                <div style="color: #6366f1; font-size: 0.85rem; margin-top: 0.5rem;">4 catégories</div>
+                <div class="stat-change neutral">
+                    <i class="fas fa-layer-group"></i>
+                    <span>4 catégories</span>
+                </div>
             </div>
 
-            <div class="stat-card">
-                <div class="stat-icon">👥</div>
-                <h3 style="color: var(--text-muted); font-size: 0.9rem;">Utilisateurs</h3>
-                <div style="font-size: 2.5rem; font-weight: 700; margin-top: 0.5rem;">
-                    <asp:Label ID="lblTotalUsers" runat="server" Text="0"></asp:Label>
+            <div class="stat-card users">
+                <div class="stat-card-header">
+                    <div>
+                        <div class="stat-label">Utilisateurs</div>
+                        <div class="stat-value">
+                            <asp:Label ID="lblTotalUsers" runat="server" Text="0"></asp:Label>
+                        </div>
+                    </div>
+                    <div class="stat-icon"><i class="fas fa-users"></i></div>
                 </div>
-                <div style="color: #f59e0b; font-size: 0.85rem; margin-top: 0.5rem;">+3 cette semaine</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-user-plus"></i>
+                    <span>+3 cette semaine</span>
+                </div>
             </div>
         </div>
 
         <!-- Charts Row -->
         <div class="chart-grid">
             <div class="chart-container">
-                <div class="chart-title">📈 Ventes des 7 derniers jours</div>
+                <div class="chart-title"><i class="fas fa-chart-line"></i> Ventes des 7 derniers jours</div>
                 <canvas id="salesChart"></canvas>
             </div>
 
             <div class="chart-container">
-                <div class="chart-title">📊 Commandes par Statut</div>
+                <div class="chart-title"><i class="fas fa-chart-pie"></i> Commandes par Statut</div>
                 <canvas id="ordersChart"></canvas>
             </div>
         </div>
 
         <!-- Products Chart -->
         <div class="chart-container" style="margin-bottom: 2rem;">
-            <div class="chart-title">🏆 Top 5 Produits</div>
+            <div class="chart-title"><i class="fas fa-trophy"></i> Top 5 Produits</div>
             <canvas id="productsChart"></canvas>
         </div>
 
         <!-- Actions Rapides -->
-        <div class="card">
-            <h3>Actions Rapides</h3>
-            <div style="display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap;">
-                <a href="Products.aspx" class="btn btn-primary">➕ Gérer les produits</a>
-                <a href="Orders.aspx" class="btn" style="background: rgba(255,255,255,0.1);">📋 Voir les commandes</a>
-                <asp:Button ID="btnSeed" runat="server" Text="🎲 Initialiser Données Démo" CssClass="btn"
-                    OnClick="btnSeed_Click"
-                    style="border: 1px dashed var(--gold); background: transparent; color: var(--gold);" />
+        <div class="quick-actions">
+            <h3><i class="fas fa-bolt"></i> Actions Rapides</h3>
+            <div class="actions-grid">
+                <a href="Products.aspx" class="action-btn primary">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>Gérer les produits</span>
+                </a>
+                <a href="Categories.aspx" class="action-btn secondary">
+                    <i class="fas fa-tags"></i>
+                    <span>Gérer les catégories</span>
+                </a>
+                <a href="Orders.aspx" class="action-btn secondary">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span>Voir les commandes</span>
+                </a>
+                <a href="Users.aspx" class="action-btn secondary">
+                    <i class="fas fa-users"></i>
+                    <span>Gérer les utilisateurs</span>
+                </a>
             </div>
-            <asp:Label ID="lblMsg" runat="server" Visible="false" Style="display:block; margin-top: 1rem;"></asp:Label>
         </div>
+
+        <!-- Hidden fields pour les données des graphiques -->
+        <asp:HiddenField ID="hfSalesData" runat="server" />
+        <asp:HiddenField ID="hfOrdersByStatus" runat="server" />
+        <asp:HiddenField ID="hfTopProducts" runat="server" />
 
         <script>
             // Chart configuration
@@ -181,14 +365,24 @@
                 }
             };
 
-            // Sales Line Chart
+            // Sales Line Chart - Données réelles
+            const salesData = JSON.parse(document.getElementById('<%= hfSalesData.ClientID %>').value || '[0,0,0,0,0,0,0]');
+            const dayLabels = [];
+            const today = new Date();
+            for (let i = 6; i >= 0; i--) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - i);
+                const dayNames = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+                dayLabels.push(dayNames[date.getDay()]);
+            }
+            
             new Chart(document.getElementById('salesChart'), {
                 type: 'line',
                 data: {
-                    labels: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'],
+                    labels: dayLabels,
                     datasets: [{
-                        label: 'Ventes (€)',
-                        data: [1200, 1900, 800, 1500, 2000, 2400, 1800],
+                        label: 'Ventes (MAD)',
+                        data: salesData,
                         borderColor: chartColors.primary,
                         backgroundColor: 'rgba(99, 102, 241, 0.1)',
                         tension: 0.4,
@@ -202,20 +396,21 @@
                         ...chartDefaults.plugins,
                         tooltip: {
                             callbacks: {
-                                label: (context) => context.parsed.y + ' €'
+                                label: (context) => context.parsed.y + ' MAD'
                             }
                         }
                     }
                 }
             });
 
-            // Orders Doughnut Chart
+            // Orders Doughnut Chart - Données réelles
+            const ordersByStatus = JSON.parse(document.getElementById('<%= hfOrdersByStatus.ClientID %>').value || '[0,0,0,0]');
             new Chart(document.getElementById('ordersChart'), {
                 type: 'doughnut',
                 data: {
                     labels: ['En attente', 'Expédié', 'Livré', 'Annulé'],
                     datasets: [{
-                        data: [3, 5, 12, 1],
+                        data: ordersByStatus,
                         backgroundColor: [
                             chartColors.warning,
                             chartColors.info,
@@ -241,14 +436,15 @@
                 }
             });
 
-            // Top Products Bar Chart
+            // Top Products Bar Chart - Données réelles
+            const topProductsData = JSON.parse(document.getElementById('<%= hfTopProducts.ClientID %>').value || '{"labels":["-","-","-","-","-"],"data":[0,0,0,0,0]}');
             new Chart(document.getElementById('productsChart'), {
                 type: 'bar',
                 data: {
-                    labels: ['Montre Chronographe', 'Sac Cuir Premium', 'Bracelet Perles', 'Lunettes Soleil', 'Collier Diamant'],
+                    labels: topProductsData.labels,
                     datasets: [{
                         label: 'Ventes',
-                        data: [45, 38, 32, 28, 25],
+                        data: topProductsData.data,
                         backgroundColor: [
                             chartColors.primary,
                             chartColors.purple,

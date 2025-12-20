@@ -84,6 +84,61 @@ namespace Ecommerce.Pages.Admin
             }
             return "return confirm('Êtes-vous sûr de vouloir activer cet utilisateur ?');";
         }
+
+        // Méthode helper pour obtenir la classe CSS complète du bouton
+        protected string GetFullButtonClass(object isActive)
+        {
+            bool active = false;
+            if (isActive != null && isActive != DBNull.Value)
+            {
+                bool.TryParse(isActive.ToString(), out active);
+            }
+            return active ? "btn btn-secondary" : "btn btn-primary";
+        }
+
+        // Méthode helper pour obtenir l'icône du bouton
+        protected string GetButtonIcon(object isActive)
+        {
+            bool active = false;
+            if (isActive != null && isActive != DBNull.Value)
+            {
+                bool.TryParse(isActive.ToString(), out active);
+            }
+            return active ? "ban" : "check";
+        }
+
+        // Méthode helper pour obtenir la classe CSS du statut
+        protected string GetStatusClass(object isActive)
+        {
+            bool active = false;
+            if (isActive != null && isActive != DBNull.Value)
+            {
+                bool.TryParse(isActive.ToString(), out active);
+            }
+            return active ? "active" : "inactive";
+        }
+
+        // Méthode helper pour obtenir le texte du statut
+        protected string GetStatusText(object isActive)
+        {
+            bool active = false;
+            if (isActive != null && isActive != DBNull.Value)
+            {
+                bool.TryParse(isActive.ToString(), out active);
+            }
+            return active ? "Actif" : "Inactif";
+        }
+
+        // Méthode helper pour obtenir le texte du bouton toggle
+        protected string GetToggleText(object isActive)
+        {
+            bool active = false;
+            if (isActive != null && isActive != DBNull.Value)
+            {
+                bool.TryParse(isActive.ToString(), out active);
+            }
+            return active ? "Désactiver" : "Activer";
+        }
     }
 }
 

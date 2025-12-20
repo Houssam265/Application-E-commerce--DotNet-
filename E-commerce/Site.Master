@@ -6,8 +6,8 @@
 <head runat="server">
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Plateforme e-commerce pour les coopératives marocaines - Agriculture, Artisanat, Produits du Terroir" />
-    <title><%: Page.Title %> - Coopératives Maroc</title>
+    <meta name="description" content="Plateforme e-commerce - Agriculture, Artisanat, Produits du Terroir" />
+    <title><%: Page.Title %> - E-commerce</title>
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -30,7 +30,7 @@
             <div class="container nav-wrapper">
                 <a href="/" class="logo">
                     <i class="fas fa-seedling" style="color: var(--primary-color);"></i>
-                    Coopératives <span>Maroc</span>
+                    E-commerce <span>Platform</span>
                 </a>
                 
                 <nav>
@@ -48,11 +48,6 @@
                         <% if (Session["Role"] != null && Session["Role"].ToString() == "Admin") { %>
                             <li><a href="/Pages/Admin/Dashboard.aspx" style="color: var(--primary-color);">
                                 <i class="fas fa-cog"></i> Admin
-                            </a></li>
-                        <% } %>
-                        <% if (Session["Role"] != null && Session["Role"].ToString() == "Cooperative") { %>
-                            <li><a href="/Pages/Cooperative/Dashboard.aspx" style="color: var(--primary-color);">
-                                <i class="fas fa-store"></i> Ma Coopérative
                             </a></li>
                         <% } %>
                     </ul>
@@ -78,25 +73,19 @@
                                 <a href="/Pages/Public/Profile.aspx" class="dropdown-item">
                                     <i class="fas fa-user"></i> Mon Profil
                                 </a>
-                                <a href="/Pages/Public/OrderTracking.aspx" class="dropdown-item">
+                                <a href="/Pages/Public/Profile.aspx?tab=orders" class="dropdown-item">
                                     <i class="fas fa-box"></i> Mes Commandes
                                 </a>
-                                <a href="/Pages/Public/Profile.aspx#wishlist" class="dropdown-item">
+                                <a href="/Pages/Public/Wishlist.aspx" class="dropdown-item">
                                     <i class="fas fa-heart"></i> Favoris
                                 </a>
-                                <a href="/Pages/Public/Addresses.aspx" class="dropdown-item">
+                                <a href="/Pages/Public/Profile.aspx?tab=addresses" class="dropdown-item">
                                     <i class="fas fa-map-marker-alt"></i> Mes Adresses
                                 </a>
                                 <% if (Session["Role"] != null && Session["Role"].ToString() == "Admin") { %>
                                     <div class="dropdown-divider"></div>
                                     <a href="/Pages/Admin/Dashboard.aspx" class="dropdown-item">
                                         <i class="fas fa-cog"></i> Administration
-                                    </a>
-                                <% } %>
-                                <% if (Session["Role"] != null && Session["Role"].ToString() == "Cooperative") { %>
-                                    <div class="dropdown-divider"></div>
-                                    <a href="/Pages/Cooperative/Dashboard.aspx" class="dropdown-item">
-                                        <i class="fas fa-store"></i> Ma Coopérative
                                     </a>
                                 <% } %>
                                 <div class="dropdown-divider"></div>
@@ -110,6 +99,17 @@
             </div>
         </header>
 
+        <!-- Notification Banner -->
+        <div id="notificationBanner" class="notification-banner" style="display: none;">
+            <div class="notification-content">
+                <span class="notification-icon"></span>
+                <span class="notification-message"></span>
+                <button class="notification-close" onclick="closeNotification()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+
         <main style="min-height: calc(100vh - 300px); padding: 2rem 0;">
             <asp:ContentPlaceHolder ID="MainContent" runat="server">
             </asp:ContentPlaceHolder>
@@ -119,8 +119,8 @@
             <div class="container">
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; margin-bottom: 2rem;">
                     <div>
-                        <h5><i class="fas fa-seedling" style="color: var(--primary-color);"></i> Coopératives Maroc</h5>
-                        <p>Plateforme e-commerce dédiée aux coopératives marocaines pour promouvoir leurs produits locaux et artisanaux.</p>
+                        <h5><i class="fas fa-seedling" style="color: var(--primary-color);"></i> E-commerce Platform</h5>
+                        <p>Plateforme e-commerce pour promouvoir les produits locaux et artisanaux.</p>
                     </div>
                     <div>
                         <h5>Liens Rapides</h5>
@@ -140,13 +140,13 @@
                     </div>
                     <div>
                         <h5>Contact</h5>
-                        <p><i class="fas fa-envelope"></i> contact@cooperatives.ma</p>
+                        <p><i class="fas fa-envelope"></i> contact@ecommerce.ma</p>
                         <p><i class="fas fa-phone"></i> +212 6XX XXX XXX</p>
                         <p><i class="fas fa-map-marker-alt"></i> Maroc</p>
                     </div>
                 </div>
                 <div class="footer-divider footer-copyright">
-                    <p>&copy; <%: DateTime.Now.Year %> Coopératives Maroc. Tous droits réservés.</p>
+                    <p>&copy; <%: DateTime.Now.Year %> E-commerce Platform. Tous droits réservés.</p>
                 </div>
             </div>
         </footer>
@@ -190,6 +190,37 @@
                 menu.classList.remove('show');
             }
         });
+
+        // Notification System
+        function showNotification(message, type) {
+            var banner = document.getElementById('notificationBanner');
+            var messageEl = banner.querySelector('.notification-message');
+            var iconEl = banner.querySelector('.notification-icon');
+            
+            messageEl.textContent = message;
+            banner.className = 'notification-banner notification-' + type;
+            
+            // Set icon based on type
+            if (type === 'success') {
+                iconEl.innerHTML = '<i class="fas fa-check-circle"></i>';
+            } else if (type === 'error') {
+                iconEl.innerHTML = '<i class="fas fa-exclamation-circle"></i>';
+            } else {
+                iconEl.innerHTML = '<i class="fas fa-info-circle"></i>';
+            }
+            
+            banner.style.display = 'block';
+            
+            // Auto close after 5 seconds
+            setTimeout(function() {
+                closeNotification();
+            }, 5000);
+        }
+
+        function closeNotification() {
+            var banner = document.getElementById('notificationBanner');
+            banner.style.display = 'none';
+        }
     </script>
 </body>
 </html>

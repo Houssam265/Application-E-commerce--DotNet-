@@ -5,6 +5,7 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 using System.Collections.Generic;
 using Ecommerce.Data;
+using Ecommerce.Utils;
 
 namespace Ecommerce.Pages.Public
 {
@@ -68,13 +69,19 @@ namespace Ecommerce.Pages.Public
                         maxPrice = temp;
                 }
 
-                string query = @"SELECT p.*, c.Name as CooperativeName, cat.Name as CategoryName
+                string query = @"SELECT p.*, c.Name as CooperativeName, cat.Name as CategoryName,
+                                        CASE WHEN w.Id IS NOT NULL THEN 1 ELSE 0 END as IsInWishlist
                                  FROM Products p
                                  LEFT JOIN Cooperatives c ON p.CooperativeId = c.Id
                                  LEFT JOIN Categories cat ON p.CategoryId = cat.Id
+                                 LEFT JOIN Wishlist w ON p.Id = w.ProductId AND w.UserId = @UserId
                                  WHERE p.IsActive = 1";
                 
                 List<SqlParameter> parameters = new List<SqlParameter>();
+                
+                // Add UserId parameter for wishlist check
+                int? userId = Session["UserId"] != null ? (int?)Convert.ToInt32(Session["UserId"]) : null;
+                parameters.Add(new SqlParameter("@UserId", userId ?? (object)DBNull.Value));
 
                 if (!string.IsNullOrEmpty(catId))
                 {
@@ -183,6 +190,139 @@ namespace Ecommerce.Pages.Public
                 }
             }
             return "";
+        }
+
+        protected void rptProducts_ItemCommand(object source, RepeaterCommandEventArgs e)
+        {
+            string commandName = e.CommandName;
+            int productId = Convert.ToInt32(e.CommandArgument);
+
+            if (commandName == "AddToCart")
+            {
+                try
+                {
+                    // Check if product is in stock
+                    DbContext db = new DbContext();
+                    string stockQuery = "SELECT StockQuantity FROM Products WHERE Id = @ProductId";
+                    SqlParameter[] stockParams = { new SqlParameter("@ProductId", productId) };
+                    object stockResult = db.ExecuteScalar(stockQuery, stockParams);
+                    
+                    int stockQuantity = stockResult != DBNull.Value && stockResult != null ? Convert.ToInt32(stockResult) : 0;
+                    
+                    if (stockQuantity <= 0)
+                    {
+                        ShowNotification("Ce produit n'est plus en stock.", "error");
+                        return;
+                    }
+                    
+                    CartHelper.AddToCart(productId, 1);
+                    Session["CartCount"] = CartHelper.GetCartItemCount();
+                    ShowNotification("Produit ajouté au panier avec succès !", "success");
+                    LoadProducts();
+                }
+                catch (Exception ex)
+                {
+                    ShowNotification("Erreur lors de l'ajout au panier: " + Server.HtmlEncode(ex.Message), "error");
+                }
+            }
+            else if (commandName == "AddToWishlist")
+            {
+                if (Session["UserId"] == null)
+                {
+                    Response.Redirect("Login.aspx?returnUrl=" + Server.UrlEncode(Request.RawUrl));
+                    return;
+                }
+
+                try
+                {
+                    int userId = Convert.ToInt32(Session["UserId"]);
+                    DbContext db = new DbContext();
+                    
+                    // Check if already in wishlist
+                    string checkQuery = "SELECT COUNT(*) FROM Wishlist WHERE UserId = @UserId AND ProductId = @ProductId";
+                    SqlParameter[] checkParams = {
+                        new SqlParameter("@UserId", userId),
+                        new SqlParameter("@ProductId", productId)
+                    };
+                    
+                    int count = (int)db.ExecuteScalar(checkQuery, checkParams);
+                    
+                    if (count > 0)
+                    {
+                        // Remove from wishlist
+                        string deleteQuery = "DELETE FROM Wishlist WHERE UserId = @UserId AND ProductId = @ProductId";
+                        SqlParameter[] deleteParams = {
+                            new SqlParameter("@UserId", userId),
+                            new SqlParameter("@ProductId", productId)
+                        };
+                        db.ExecuteNonQuery(deleteQuery, deleteParams);
+                        ShowNotification("Retiré de la liste de souhaits", "success");
+                    }
+                    else
+                    {
+                        // Add to wishlist
+                        string insertQuery = "INSERT INTO Wishlist (UserId, ProductId) VALUES (@UserId, @ProductId)";
+                        SqlParameter[] insertParams = {
+                            new SqlParameter("@UserId", userId),
+                            new SqlParameter("@ProductId", productId)
+                        };
+                        db.ExecuteNonQuery(insertQuery, insertParams);
+                        ShowNotification("Ajouté à la liste de souhaits", "success");
+                    }
+                    
+                    LoadProducts();
+                }
+                catch (Exception ex)
+                {
+                    ShowNotification("Erreur lors de l'ajout aux favoris: " + Server.HtmlEncode(ex.Message), "error");
+                }
+            }
+        }
+
+        protected bool IsInStock(object stockQuantity)
+        {
+            if (stockQuantity != null && stockQuantity != DBNull.Value)
+            {
+                try
+                {
+                    int stock = Convert.ToInt32(stockQuantity);
+                    return stock > 0;
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+            return false;
+        }
+
+        protected void ShowNotification(string message, string type)
+        {
+            string script = $"showNotification('{message.Replace("'", "\\'")}', '{type}');";
+            ClientScript.RegisterStartupScript(this.GetType(), "Notification_" + Guid.NewGuid().ToString("N"), script, true);
+        }
+
+        protected string IsInWishlist(object isInWishlist)
+        {
+            if (isInWishlist != null && isInWishlist != DBNull.Value)
+            {
+                int value = Convert.ToInt32(isInWishlist);
+                return value == 1 ? "active" : "";
+            }
+            return "";
+        }
+
+        protected string GetWishlistIcon(object isInWishlist)
+        {
+            if (isInWishlist != null && isInWishlist != DBNull.Value)
+            {
+                int value = Convert.ToInt32(isInWishlist);
+                if (value == 1)
+                {
+                    return "<i class='fas fa-heart'></i>";
+                }
+            }
+            return "<i class='far fa-heart'></i>";
         }
 
         protected string GetImageUrl(object imageUrl)

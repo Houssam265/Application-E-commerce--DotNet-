@@ -41,9 +41,8 @@ namespace Ecommerce
             try
             {
                 DbContext db = new DbContext();
-                string query = @"SELECT TOP 8 p.*, c.Name as CooperativeName 
+                string query = @"SELECT TOP 8 p.*
                                  FROM Products p
-                                 LEFT JOIN Cooperatives c ON p.CooperativeId = c.Id
                                  WHERE p.IsActive = 1 AND p.IsFeatured = 1
                                  ORDER BY p.CreatedAt DESC";
                 DataTable dt = db.ExecuteQuery(query);
@@ -68,6 +67,31 @@ namespace Ecommerce
                 }
             }
             return "";
+        }
+
+        protected string GetCategoryImage(object imageUrl, object categoryName)
+        {
+            string imageUrlStr = imageUrl?.ToString()?.Trim() ?? "";
+            string categoryNameStr = categoryName?.ToString() ?? "Category";
+            
+            if (!string.IsNullOrEmpty(imageUrlStr))
+            {
+                // Si c'est une URL absolue (http/https), la retourner telle quelle
+                if (imageUrlStr.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || 
+                    imageUrlStr.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                {
+                    return $"<img src='{imageUrlStr}' alt='{categoryNameStr}' onerror=\"this.style.display='none'; this.nextElementSibling.style.display='block';\">" +
+                           "<i class='fas fa-seedling category-icon' style='color: var(--primary-color); display: none;'></i>";
+                }
+                
+                // Si c'est un simple nom de fichier ou chemin relatif
+                string resolvedUrl = ResolveUrl("~/Assets/Images/Categories/" + imageUrlStr);
+                return $"<img src='{resolvedUrl}' alt='{categoryNameStr}' onerror=\"this.style.display='none'; this.nextElementSibling.style.display='block';\">" +
+                       "<i class='fas fa-seedling category-icon' style='color: var(--primary-color); display: none;'></i>";
+            }
+            
+            // Pas d'image, afficher l'icône par défaut
+            return "<i class='fas fa-seedling category-icon' style='color: var(--primary-color);'></i>";
         }
     }
 }

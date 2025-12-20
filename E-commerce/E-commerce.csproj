@@ -84,6 +84,7 @@
     <Content Include="Pages\Admin\Products.aspx" />
     <Content Include="Pages\Admin\Orders.aspx" />
     <Content Include="Pages\Admin\Users.aspx" />
+    <Content Include="Pages\Admin\Categories.aspx" />
     <Content Include="Pages\Public\Profile.aspx" />
     <Content Include="Pages\Public\Addresses.aspx" />
     <Content Include="Pages\Public\ForgotPassword.aspx" />
@@ -92,6 +93,7 @@
     <Content Include="Pages\Public\OrderTracking.aspx" />
     <Content Include="Pages\Public\About.aspx" />
     <Content Include="Pages\Public\Contact.aspx" />
+    <Content Include="Pages\Public\Wishlist.aspx" />
     <Content Include="Database\Setup.sql" />
   </ItemGroup>
   <ItemGroup>
@@ -158,6 +160,10 @@
       <DependentUpon>Users.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
+    <Compile Include="Pages\Admin\Categories.aspx.cs">
+      <DependentUpon>Categories.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
     <Compile Include="Pages\Public\Profile.aspx.cs">
       <DependentUpon>Profile.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -188,6 +194,10 @@
     </Compile>
     <Compile Include="Pages\Public\Contact.aspx.cs">
       <DependentUpon>Contact.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Public\Wishlist.aspx.cs">
+      <DependentUpon>Wishlist.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
   </ItemGroup>
