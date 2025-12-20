@@ -1,126 +1,250 @@
 <%@ Page Title="Caisse" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true"
     CodeBehind="Checkout.aspx.cs" Inherits="Ecommerce.Pages.Public.Checkout" %>
 
-    <asp:Content ID="Content1" ContentPlaceHolderID="HeadContent" runat="server">
-        <style>
+<asp:Content ID="Content1" ContentPlaceHolderID="HeadContent" runat="server">
+    <style>
+        .checkout-container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 2rem;
+        }
+
+        .checkout-header {
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .section-title {
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--primary-color);
+            color: var(--text-dark);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-dark);
+            font-weight: 600;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1);
+        }
+
+        .order-summary {
+            background: var(--bg-white);
+            padding: 2rem;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            height: fit-content;
+            position: sticky;
+            top: 100px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .summary-row:last-child {
+            border-bottom: none;
+        }
+
+        .summary-item {
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+
+        .summary-price {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .total-row {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 2px solid var(--primary-color);
+            font-weight: 700;
+            font-size: 1.3rem;
+            color: var(--primary-color);
+        }
+
+        .payment-method {
+            padding: 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .payment-method:hover {
+            border-color: var(--primary-color);
+        }
+
+        .payment-method.selected {
+            border-color: var(--primary-color);
+            background: rgba(40, 167, 69, 0.05);
+        }
+
+        @media (max-width: 768px) {
             .checkout-container {
-                max-width: 800px;
-                margin: 2rem auto;
-                display: grid;
-                grid-template-columns: 1fr 300px;
-                gap: 2rem;
-            }
-
-            .section-title {
-                margin-bottom: 1.5rem;
-                padding-bottom: 0.5rem;
-                border-bottom: 1px solid var(--glass-border);
-            }
-
-            .form-group {
-                margin-bottom: 1rem;
-            }
-
-            .form-group label {
-                display: block;
-                margin-bottom: 0.5rem;
-                color: var(--text-muted);
-            }
-
-            .form-control {
-                width: 100%;
-                padding: 0.75rem;
-                background: rgba(255, 255, 255, 0.05);
-                border: 1px solid var(--glass-border);
-                border-radius: 8px;
-                color: white;
-                font-size: 1rem;
+                grid-template-columns: 1fr;
             }
 
             .order-summary {
-                background: var(--secondary-bg);
-                padding: 1.5rem;
-                border-radius: 12px;
-                border: 1px solid var(--glass-border);
-                height: fit-content;
+                position: static;
             }
+        }
+    </style>
+</asp:Content>
 
-            .summary-row {
-                display: flex;
-                justify-content: space-between;
-                margin-bottom: 0.5rem;
-            }
-
-            .total-row {
-                margin-top: 1rem;
-                padding-top: 1rem;
-                border-top: 1px solid var(--glass-border);
-                font-weight: 700;
-                font-size: 1.2rem;
-                color: var(--accent);
-            }
-        </style>
-    </asp:Content>
-    <asp:Content ID="Content2" ContentPlaceHolderID="MainContent" runat="server">
-
-        <div class="checkout-container">
-            <!-- Form -->
-            <div class="card">
-                <h2 class="section-title">Adresse de Livraison</h2>
-
-                <asp:Panel ID="pnlError" runat="server" Visible="false" Style="color: #fca5a5; margin-bottom: 1rem;">
-                    <asp:Literal ID="litError" runat="server"></asp:Literal>
-                </asp:Panel>
-
-                <div class="form-group">
-                    <label>Rue</label>
-                    <asp:TextBox ID="txtStreet" runat="server" CssClass="form-control" Required="true"></asp:TextBox>
-                </div>
-                <div class="form-group">
-                    <label>Ville</label>
-                    <asp:TextBox ID="txtCity" runat="server" CssClass="form-control" Required="true"></asp:TextBox>
-                </div>
-                <div class="form-group">
-                    <label>Code Postal</label>
-                    <asp:TextBox ID="txtZip" runat="server" CssClass="form-control" Required="true"></asp:TextBox>
-                </div>
-                <div class="form-group">
-                    <label>Pays</label>
-                    <asp:TextBox ID="txtCountry" runat="server" CssClass="form-control" Text="France"></asp:TextBox>
-                </div>
-
-                <h2 class="section-title" style="margin-top: 2rem;">Paiement</h2>
-                <div class="form-group">
-                    <p style="color: var(--text-muted);">Paiement à la livraison (Cash on Delivery) pour cette démo.</p>
-                </div>
-            </div>
-
-            <!-- Summary -->
-            <div class="order-summary">
-                <h3>Récapitulatif</h3>
-                <div style="margin: 1rem 0;">
-                    <asp:Repeater ID="rptSummary" runat="server">
-                        <ItemTemplate>
-                            <div class="summary-row">
-                                <span style="font-size:0.9rem;">
-                                    <%# Eval("Quantity") %>x <%# Eval("Name") %>
-                                </span>
-                                <span>
-                                    <%# Eval("Total", "{0:C}" ) %>
-                                </span>
-                            </div>
-                        </ItemTemplate>
-                    </asp:Repeater>
-                </div>
-
-                <div class="summary-row total-row">
-                    <span>Total</span>
-                    <asp:Label ID="lblTotal" runat="server"></asp:Label>
-                </div>
-
-                <asp:Button ID="btnPlaceOrder" runat="server" Text="Confirmer la commande" CssClass="btn btn-primary"
-                    Style="width: 100%; margin-top: 1.5rem;" OnClick="btnPlaceOrder_Click" />
-            </div>
+<asp:Content ID="Content2" ContentPlaceHolderID="MainContent" runat="server">
+    <div class="container">
+        <div class="checkout-header">
+            <h1><i class="fas fa-shopping-bag" style="color: var(--primary-color);"></i> Finaliser la commande</h1>
         </div>
 
-    </asp:Content>
+        <asp:Panel ID="pnlEmptyCart" runat="server" Visible="false">
+            <div style="text-align: center; padding: 4rem;">
+                <h2>Votre panier est vide</h2>
+                <p style="color: var(--text-light); margin-bottom: 2rem;">Ajoutez des produits avant de passer commande.</p>
+                <a href="Cart.aspx" class="btn btn-primary">Retour au panier</a>
+            </div>
+        </asp:Panel>
+
+        <asp:Panel ID="pnlCheckout" runat="server">
+            <div class="checkout-container">
+                <!-- Form -->
+                <div>
+                    <div class="card">
+                        <h2 class="section-title"><i class="fas fa-map-marker-alt"></i> Adresse de Livraison</h2>
+
+                        <asp:Panel ID="pnlError" runat="server" Visible="false" CssClass="alert alert-danger">
+                            <i class="fas fa-exclamation-circle"></i> <asp:Literal ID="litError" runat="server"></asp:Literal>
+                        </asp:Panel>
+
+                        <div class="form-group">
+                            <label>Nom complet *</label>
+                            <asp:TextBox ID="txtFullName" runat="server" CssClass="form-control" required></asp:TextBox>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Rue *</label>
+                            <asp:TextBox ID="txtStreet" runat="server" CssClass="form-control" required></asp:TextBox>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
+                            <div class="form-group">
+                                <label>Ville *</label>
+                                <asp:TextBox ID="txtCity" runat="server" CssClass="form-control" required></asp:TextBox>
+                            </div>
+                            <div class="form-group">
+                                <label>Code Postal *</label>
+                                <asp:TextBox ID="txtZip" runat="server" CssClass="form-control" required></asp:TextBox>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Pays *</label>
+                            <asp:DropDownList ID="ddlCountry" runat="server" CssClass="form-control">
+                                <asp:ListItem Value="Maroc" Selected="True">Maroc</asp:ListItem>
+                                <asp:ListItem Value="France">France</asp:ListItem>
+                                <asp:ListItem Value="Belgique">Belgique</asp:ListItem>
+                                <asp:ListItem Value="Canada">Canada</asp:ListItem>
+                                <asp:ListItem Value="Autre">Autre</asp:ListItem>
+                            </asp:DropDownList>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Téléphone *</label>
+                            <asp:TextBox ID="txtPhone" runat="server" CssClass="form-control" TextMode="Phone" required></asp:TextBox>
+                        </div>
+                    </div>
+
+                    <div class="card" style="margin-top: 2rem;">
+                        <h2 class="section-title"><i class="fas fa-credit-card"></i> Mode de Paiement</h2>
+                        
+                        <div class="payment-method selected">
+                            <label style="cursor: pointer; display: flex; align-items: center; gap: 1rem;">
+                                <input type="radio" name="paymentMethod" value="cod" checked style="width: auto;" />
+                                <div>
+                                    <strong>Paiement à la livraison</strong>
+                                    <p style="margin: 0; color: var(--text-light); font-size: 0.9rem;">Payez en espèces à la réception</p>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="payment-method">
+                            <label style="cursor: pointer; display: flex; align-items: center; gap: 1rem;">
+                                <input type="radio" name="paymentMethod" value="bank" style="width: auto;" />
+                                <div>
+                                    <strong>Virement bancaire</strong>
+                                    <p style="margin: 0; color: var(--text-light); font-size: 0.9rem;">Virement bancaire direct</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Summary -->
+                <div class="order-summary">
+                    <h3 style="margin-bottom: 1.5rem;">Récapitulatif</h3>
+                    <div style="margin-bottom: 1.5rem;">
+                        <asp:Repeater ID="rptSummary" runat="server">
+                            <ItemTemplate>
+                                <div class="summary-row">
+                                    <span class="summary-item">
+                                        <%# Eval("Quantity") %>x <%# Eval("Name") %>
+                                    </span>
+                                    <span class="summary-price">
+                                        <%# Eval("TotalPrice", "{0:F2}") %> MAD
+                                    </span>
+                                </div>
+                            </ItemTemplate>
+                        </asp:Repeater>
+                    </div>
+
+                    <div class="summary-row">
+                        <span>Sous-total</span>
+                        <span class="summary-price"><asp:Label ID="lblSubTotal" runat="server"></asp:Label> MAD</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Livraison</span>
+                        <span class="summary-price"><asp:Label ID="lblShipping" runat="server"></asp:Label></span>
+                    </div>
+                    <div class="summary-row total-row">
+                        <span>Total</span>
+                        <span><asp:Label ID="lblTotal" runat="server"></asp:Label> MAD</span>
+                    </div>
+
+                    <asp:Button ID="btnPlaceOrder" runat="server" Text="Confirmer la commande" CssClass="btn btn-primary"
+                        Style="width: 100%; padding: 15px; font-size: 16px; margin-top: 1.5rem;" 
+                        OnClick="btnPlaceOrder_Click" />
+                </div>
+            </div>
+        </asp:Panel>
+    </div>
+</asp:Content>

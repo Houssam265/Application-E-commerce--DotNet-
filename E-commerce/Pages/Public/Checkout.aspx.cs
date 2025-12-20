@@ -1,115 +1,236 @@
 using System;
-using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
-using System.Linq;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 using Ecommerce.Data;
+using Ecommerce.Utils;
 
 namespace Ecommerce.Pages.Public
 {
     public partial class Checkout : Page
     {
-        // Controls
+        protected global::System.Web.UI.WebControls.TextBox txtFullName;
         protected global::System.Web.UI.WebControls.TextBox txtStreet;
         protected global::System.Web.UI.WebControls.TextBox txtCity;
         protected global::System.Web.UI.WebControls.TextBox txtZip;
-        protected global::System.Web.UI.WebControls.TextBox txtCountry;
+        protected global::System.Web.UI.WebControls.DropDownList ddlCountry;
+        protected global::System.Web.UI.WebControls.TextBox txtPhone;
         protected global::System.Web.UI.WebControls.Panel pnlError;
         protected global::System.Web.UI.WebControls.Literal litError;
         protected global::System.Web.UI.WebControls.Repeater rptSummary;
+        protected global::System.Web.UI.WebControls.Label lblSubTotal;
+        protected global::System.Web.UI.WebControls.Label lblShipping;
         protected global::System.Web.UI.WebControls.Label lblTotal;
         protected global::System.Web.UI.WebControls.Button btnPlaceOrder;
+        protected global::System.Web.UI.WebControls.Panel pnlEmptyCart;
+        protected global::System.Web.UI.WebControls.Panel pnlCheckout;
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            if (Session["UserEmail"] == null)
+            if (Session["UserId"] == null)
             {
-                Response.Redirect("Login.aspx?returnUrl=Checkout.aspx");
+                Response.Redirect("Login.aspx?returnUrl=" + Server.UrlEncode(Request.RawUrl));
                 return;
             }
 
             if (!IsPostBack)
             {
-                LoadSummary();
+                LoadCheckoutData();
             }
         }
 
-        private void LoadSummary()
+        private void LoadCheckoutData()
         {
-            List<CartItem> cart = Session["Cart"] as List<CartItem>;
-            if (cart == null || cart.Count == 0)
+            try
             {
-                Response.Redirect("Cart.aspx");
-                return;
-            }
+                DataTable cartItems = CartHelper.GetCartItems();
+                
+                if (cartItems.Rows.Count == 0)
+                {
+                    pnlEmptyCart.Visible = true;
+                    pnlCheckout.Visible = false;
+                    return;
+                }
 
-            rptSummary.DataSource = cart;
-            rptSummary.DataBind();
-            lblTotal.Text = cart.Sum(i => i.Total).ToString("C");
+                pnlEmptyCart.Visible = false;
+                pnlCheckout.Visible = true;
+
+                // Load user info
+                int userId = Convert.ToInt32(Session["UserId"]);
+                DbContext db = new DbContext();
+                string userQuery = "SELECT FullName, Phone FROM Users WHERE Id = @UserId";
+                SqlParameter[] userParams = { new SqlParameter("@UserId", userId) };
+                DataTable userDt = db.ExecuteQuery(userQuery, userParams);
+                
+                if (userDt.Rows.Count > 0)
+                {
+                    txtFullName.Text = userDt.Rows[0]["FullName"].ToString();
+                    if (userDt.Rows[0]["Phone"] != DBNull.Value)
+                        txtPhone.Text = userDt.Rows[0]["Phone"].ToString();
+                }
+
+                // Load default address if exists
+                string addrQuery = "SELECT TOP 1 * FROM Addresses WHERE UserId = @UserId AND IsDefault = 1 ORDER BY Id DESC";
+                SqlParameter[] addrParams = { new SqlParameter("@UserId", userId) };
+                DataTable addrDt = db.ExecuteQuery(addrQuery, addrParams);
+                if (addrDt.Rows.Count > 0)
+                {
+                    txtStreet.Text = addrDt.Rows[0]["Street"].ToString();
+                    txtCity.Text = addrDt.Rows[0]["City"].ToString();
+                    txtZip.Text = addrDt.Rows[0]["ZipCode"].ToString();
+                    ddlCountry.SelectedValue = addrDt.Rows[0]["Country"].ToString();
+                }
+
+                // Prepare cart items for summary
+                foreach (DataRow row in cartItems.Rows)
+                {
+                    decimal unitPrice = Convert.ToDecimal(row["Price"]);
+                    decimal adjustment = row["PriceAdjustment"] != DBNull.Value ? Convert.ToDecimal(row["PriceAdjustment"]) : 0;
+                    unitPrice += adjustment;
+                    int quantity = Convert.ToInt32(row["Quantity"]);
+                    row["TotalPrice"] = unitPrice * quantity;
+                }
+
+                rptSummary.DataSource = cartItems;
+                rptSummary.DataBind();
+
+                // Calculate totals
+                decimal subTotal = CartHelper.GetCartTotal();
+                decimal shippingCost = CalculateShipping(subTotal);
+                decimal total = subTotal + shippingCost;
+
+                lblSubTotal.Text = subTotal.ToString("F2");
+                lblShipping.Text = shippingCost > 0 ? shippingCost.ToString("F2") + " MAD" : "Gratuit";
+                lblTotal.Text = total.ToString("F2");
+            }
+            catch (Exception ex)
+            {
+                litError.Text = "Erreur lors du chargement: " + Server.HtmlEncode(ex.Message);
+                pnlError.Visible = true;
+            }
+        }
+
+        private decimal CalculateShipping(decimal subTotal)
+        {
+            // Free shipping for orders over 500 MAD
+            if (subTotal >= 500)
+                return 0;
+
+            // Standard shipping cost
+            return 30.00m;
         }
 
         protected void btnPlaceOrder_Click(object sender, EventArgs e)
         {
             try
             {
-                int userId = Convert.ToInt32(Session["UserId"]);
-                List<CartItem> cart = Session["Cart"] as List<CartItem>;
-                decimal total = cart.Sum(i => i.Total);
+                // Validate form
+                if (string.IsNullOrEmpty(txtFullName.Text) || string.IsNullOrEmpty(txtStreet.Text) || 
+                    string.IsNullOrEmpty(txtCity.Text) || string.IsNullOrEmpty(txtZip.Text))
+                {
+                    litError.Text = "Veuillez remplir tous les champs obligatoires.";
+                    pnlError.Visible = true;
+                    return;
+                }
 
-                string street = txtStreet.Text;
-                string city = txtCity.Text;
-                string zip = txtZip.Text;
-                string country = txtCountry.Text;
+                int userId = Convert.ToInt32(Session["UserId"]);
+                DataTable cartItems = CartHelper.GetCartItems();
+                
+                if (cartItems.Rows.Count == 0)
+                {
+                    litError.Text = "Votre panier est vide.";
+                    pnlError.Visible = true;
+                    return;
+                }
 
                 DbContext db = new DbContext();
-                string addrQuery = "INSERT INTO Addresses (UserId, Street, City, ZipCode, Country) OUTPUT INSERTED.Id VALUES (@UserId, @Street, @City, @Zip, @Country)";
+
+                // Create address
+                string addrQuery = @"INSERT INTO Addresses (UserId, FullName, Street, City, ZipCode, Country, Phone, IsDefault) 
+                                     OUTPUT INSERTED.Id 
+                                     VALUES (@UserId, @FullName, @Street, @City, @Zip, @Country, @Phone, 1)";
                 SqlParameter[] addrParams = {
                     new SqlParameter("@UserId", userId),
-                    new SqlParameter("@Street", street),
-                    new SqlParameter("@City", city),
-                    new SqlParameter("@Zip", zip),
-                    new SqlParameter("@Country", country)
+                    new SqlParameter("@FullName", Server.HtmlEncode(txtFullName.Text.Trim())),
+                    new SqlParameter("@Street", Server.HtmlEncode(txtStreet.Text.Trim())),
+                    new SqlParameter("@City", Server.HtmlEncode(txtCity.Text.Trim())),
+                    new SqlParameter("@Zip", Server.HtmlEncode(txtZip.Text.Trim())),
+                    new SqlParameter("@Country", ddlCountry.SelectedValue),
+                    new SqlParameter("@Phone", Server.HtmlEncode(txtPhone.Text.Trim()))
                 };
 
                 int addrId = (int)db.ExecuteScalar(addrQuery, addrParams);
 
-                string orderQuery = "INSERT INTO Orders (UserId, TotalAmount, Status, ShippingAddressId) OUTPUT INSERTED.Id VALUES (@UserId, @Total, 'Pending', @AddrId)";
+                // Calculate totals
+                decimal subTotal = CartHelper.GetCartTotal();
+                decimal shippingCost = CalculateShipping(subTotal);
+                decimal total = subTotal + shippingCost;
+
+                // Generate order number
+                string orderNumber = "CMD-" + DateTime.Now.ToString("yyyyMMdd") + "-" + Guid.NewGuid().ToString().Substring(0, 8).ToUpper();
+
+                // Create order
+                string orderQuery = @"INSERT INTO Orders (OrderNumber, UserId, TotalAmount, SubTotal, ShippingCost, Status, ShippingAddressId, ShippingMethod) 
+                                      OUTPUT INSERTED.Id 
+                                      VALUES (@OrderNumber, @UserId, @Total, @SubTotal, @Shipping, 'Pending', @AddrId, 'Standard')";
                 SqlParameter[] orderParams = {
+                    new SqlParameter("@OrderNumber", orderNumber),
                     new SqlParameter("@UserId", userId),
                     new SqlParameter("@Total", total),
+                    new SqlParameter("@SubTotal", subTotal),
+                    new SqlParameter("@Shipping", shippingCost),
                     new SqlParameter("@AddrId", addrId)
                 };
 
                 int orderId = (int)db.ExecuteScalar(orderQuery, orderParams);
 
-                foreach (var item in cart)
+                // Create order items
+                foreach (DataRow row in cartItems.Rows)
                 {
-                    string itemQuery = "INSERT INTO OrderItems (OrderId, ProductId, Quantity, UnitPrice, VariantId) VALUES (@OrderId, @ProductId, @Qty, @Price, @VarId)";
-                   
-                    List<SqlParameter> itemParams = new List<SqlParameter> {
+                    int productId = Convert.ToInt32(row["ProductId"]);
+                    int? variantId = row["VariantId"] != DBNull.Value ? (int?)Convert.ToInt32(row["VariantId"]) : null;
+                    int quantity = Convert.ToInt32(row["Quantity"]);
+                    decimal unitPrice = Convert.ToDecimal(row["Price"]);
+                    decimal adjustment = row["PriceAdjustment"] != DBNull.Value ? Convert.ToDecimal(row["PriceAdjustment"]) : 0;
+                    unitPrice += adjustment;
+                    decimal totalPrice = unitPrice * quantity;
+                    string productName = row["Name"].ToString();
+
+                    string itemQuery = @"INSERT INTO OrderItems (OrderId, ProductId, VariantId, ProductName, Quantity, UnitPrice, TotalPrice) 
+                                        VALUES (@OrderId, @ProductId, @VariantId, @ProductName, @Qty, @UnitPrice, @TotalPrice)";
+                    SqlParameter[] itemParams = {
                         new SqlParameter("@OrderId", orderId),
-                        new SqlParameter("@ProductId", item.ProductId),
-                        new SqlParameter("@Qty", item.Quantity),
-                        new SqlParameter("@Price", item.Price)
+                        new SqlParameter("@ProductId", productId),
+                        new SqlParameter("@VariantId", variantId ?? (object)DBNull.Value),
+                        new SqlParameter("@ProductName", Server.HtmlEncode(productName)),
+                        new SqlParameter("@Qty", quantity),
+                        new SqlParameter("@UnitPrice", unitPrice),
+                        new SqlParameter("@TotalPrice", totalPrice)
                     };
 
-                    if (!string.IsNullOrEmpty(item.VariantId))
-                        itemParams.Add(new SqlParameter("@VarId", item.VariantId));
-                    else
-                        itemParams.Add(new SqlParameter("@VarId", DBNull.Value));
+                    db.ExecuteNonQuery(itemQuery, itemParams);
 
-                    db.ExecuteNonQuery(itemQuery, itemParams.ToArray());
+                    // Update product stock
+                    string updateStockQuery = "UPDATE Products SET StockQuantity = StockQuantity - @Qty WHERE Id = @ProductId";
+                    SqlParameter[] stockParams = {
+                        new SqlParameter("@Qty", quantity),
+                        new SqlParameter("@ProductId", productId)
+                    };
+                    db.ExecuteNonQuery(updateStockQuery, stockParams);
                 }
 
-                Session["Cart"] = null;
-                Response.Redirect("OrderConfirmation.aspx?id=" + orderId);
+                // Clear cart
+                CartHelper.ClearCart();
+                Session["CartCount"] = 0;
 
+                // Redirect to confirmation
+                Response.Redirect("OrderConfirmation.aspx?id=" + orderId);
             }
             catch (Exception ex)
             {
+                litError.Text = "Erreur lors de la commande: " + Server.HtmlEncode(ex.Message);
                 pnlError.Visible = true;
-                litError.Text = "Erreur lors de la commande: " + ex.Message;
             }
         }
     }

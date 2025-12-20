@@ -2,12 +2,12 @@ using System;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
+using Ecommerce.Utils;
 
 namespace Ecommerce
 {
     public partial class SiteMaster : MasterPage
     {
-        // Controls
         protected global::System.Web.UI.WebControls.ContentPlaceHolder HeadContent;
         protected global::System.Web.UI.WebControls.ContentPlaceHolder MainContent;
         protected global::System.Web.UI.WebControls.LinkButton LogoutBtn;
@@ -17,6 +17,20 @@ namespace Ecommerce
             // Garantir l'encodage UTF-8 pour l'affichage des accents
             Response.ContentEncoding = System.Text.Encoding.UTF8;
             Response.Charset = "utf-8";
+
+            // Update cart count in session if not set
+            if (Session["CartCount"] == null)
+            {
+                Session["CartCount"] = CartHelper.GetCartItemCount();
+            }
+
+            // Merge cart on login
+            if (Session["UserId"] != null && Session["CartMerged"] == null)
+            {
+                int userId = Convert.ToInt32(Session["UserId"]);
+                CartHelper.MergeCartOnLogin(userId);
+                Session["CartMerged"] = true;
+            }
         }
 
         protected void Logout_Click(object sender, EventArgs e)

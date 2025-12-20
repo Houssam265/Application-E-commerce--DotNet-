@@ -58,29 +58,43 @@ namespace Ecommerce.Pages.Admin
             DbContext db = new DbContext();
             
             string query = @"
-                SELECT O.*, U.FullName, U.Email, A.Street, A.City, A.ZipCode, A.Country 
+                SELECT O.*, U.FullName, U.Email, A.Street, A.City, A.ZipCode, A.Country, A.FullName as AddressName
                 FROM Orders O 
                 INNER JOIN Users U ON O.UserId = U.Id 
                 LEFT JOIN Addresses A ON O.ShippingAddressId = A.Id 
-                WHERE O.Id = " + id;
+                WHERE O.Id = @Id";
             
-            DataTable dt = db.ExecuteQuery(query);
+            SqlParameter[] parameters = { new SqlParameter("@Id", id) };
+            DataTable dt = db.ExecuteQuery(query, parameters);
             if (dt.Rows.Count > 0)
             {
                 DataRow row = dt.Rows[0];
                 lblOrderId.Text = row["Id"].ToString();
-                lblCustomer.Text = row["FullName"].ToString();
-                lblEmail.Text = row["Email"].ToString();
-                lblAddress.Text = $"{row["Street"]}, {row["ZipCode"]} {row["City"]}, {row["Country"]}";
+                lblCustomer.Text = Server.HtmlEncode(row["FullName"].ToString());
+                lblEmail.Text = Server.HtmlEncode(row["Email"].ToString());
+                
+                if (row["Street"] != DBNull.Value)
+                {
+                    string addressName = row["AddressName"] != DBNull.Value ? row["AddressName"].ToString() + "<br/>" : "";
+                    lblAddress.Text = addressName + Server.HtmlEncode(row["Street"].ToString()) + ", " +
+                                     Server.HtmlEncode(row["ZipCode"].ToString()) + " " +
+                                     Server.HtmlEncode(row["City"].ToString()) + ", " +
+                                     Server.HtmlEncode(row["Country"].ToString());
+                }
+                else
+                {
+                    lblAddress.Text = "Adresse non disponible";
+                }
+                
                 ddlStatus.SelectedValue = row["Status"].ToString();
 
                 string itemsQuery = @"
-                    SELECT OI.Quantity, OI.UnitPrice, P.Name 
+                    SELECT OI.ProductName as Name, OI.Quantity, OI.UnitPrice, OI.TotalPrice
                     FROM OrderItems OI 
-                    INNER JOIN Products P ON OI.ProductId = P.Id 
-                    WHERE OI.OrderId = " + id;
+                    WHERE OI.OrderId = @OrderId";
                 
-                DataTable dtItems = db.ExecuteQuery(itemsQuery);
+                SqlParameter[] itemParams = { new SqlParameter("@OrderId", id) };
+                DataTable dtItems = db.ExecuteQuery(itemsQuery, itemParams);
                 gvItems.DataSource = dtItems;
                 gvItems.DataBind();
 
@@ -109,6 +123,17 @@ namespace Ecommerce.Pages.Admin
             LoadOrders();
             pnlDetails.Visible = false;
             pnlList.Visible = true;
+        }
+
+        protected string GetItemTotal(object unitPrice, object quantity)
+        {
+            if (unitPrice != null && unitPrice != DBNull.Value && quantity != null && quantity != DBNull.Value)
+            {
+                decimal price = Convert.ToDecimal(unitPrice);
+                int qty = Convert.ToInt32(quantity);
+                return (price * qty).ToString("C");
+            }
+            return "0.00 €";
         }
     }
 }

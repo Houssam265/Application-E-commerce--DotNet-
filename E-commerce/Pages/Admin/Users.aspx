@@ -25,7 +25,8 @@
     <asp:Content ID="Content2" ContentPlaceHolderID="MainContent" runat="server">
         <h1>Utilisateurs</h1>
 
-        <asp:GridView ID="gvUsers" runat="server" CssClass="grid-view" AutoGenerateColumns="False" GridLines="None">
+        <asp:GridView ID="gvUsers" runat="server" CssClass="grid-view" AutoGenerateColumns="False" 
+            GridLines="None" OnRowCommand="gvUsers_RowCommand" DataKeyNames="Id">
             <Columns>
                 <asp:BoundField DataField="Id" HeaderText="#" />
                 <asp:BoundField DataField="FullName" HeaderText="Nom" />
@@ -34,8 +35,17 @@
                 <asp:BoundField DataField="CreatedAt" HeaderText="Inscrit le" DataFormatString="{0:d}" />
                 <asp:TemplateField HeaderText="Actif">
                     <ItemTemplate>
-                        <%# Convert.ToBoolean(Eval("IsActive")) ? "<span style='color:#10b981'>Oui</span>"
-                            : "<span style='color:#ef4444'>Non</span>" %>
+                        <%# GetActiveStatus(Eval("IsActive")) %>
+                    </ItemTemplate>
+                </asp:TemplateField>
+                <asp:TemplateField HeaderText="Actions">
+                    <ItemTemplate>
+                        <asp:LinkButton ID="btnToggle" runat="server" CommandName="ToggleActive"
+                            CommandArgument='<%# Eval("Id") %>' 
+                            CssClass="btn" 
+                            OnClientClick='<%# GetConfirmMessage(Eval("IsActive")) %>'>
+                            <%# GetToggleButtonText(Eval("IsActive")) %>
+                        </asp:LinkButton>
                     </ItemTemplate>
                 </asp:TemplateField>
             </Columns>

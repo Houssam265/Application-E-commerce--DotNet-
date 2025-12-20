@@ -30,17 +30,23 @@ namespace Ecommerce.Pages.Admin
             try
             {
                 DbContext db = new DbContext();
+                
+                // Total orders
                 object orderCount = db.ExecuteScalar("SELECT COUNT(*) FROM Orders");
-                lblTotalOrders.Text = orderCount.ToString();
+                lblTotalOrders.Text = orderCount?.ToString() ?? "0";
                 
-                object rev = db.ExecuteScalar("SELECT SUM(TotalAmount) FROM Orders");
-                lblRevenue.Text = (rev != DBNull.Value ? Convert.ToDecimal(rev) : 0).ToString("C");
+                // Revenue
+                object rev = db.ExecuteScalar("SELECT SUM(TotalAmount) FROM Orders WHERE Status != 'Cancelled'");
+                decimal revenue = (rev != null && rev != DBNull.Value) ? Convert.ToDecimal(rev) : 0;
+                lblRevenue.Text = revenue.ToString("F2") + " MAD";
                 
+                // Active products
                 object prodCount = db.ExecuteScalar("SELECT COUNT(*) FROM Products WHERE IsActive = 1");
-                lblTotalProducts.Text = prodCount.ToString();
+                lblTotalProducts.Text = prodCount?.ToString() ?? "0";
                 
-                object userCount = db.ExecuteScalar("SELECT COUNT(*) FROM Users");
-                lblTotalUsers.Text = userCount.ToString();
+                // Total users (excluding admins)
+                object userCount = db.ExecuteScalar("SELECT COUNT(*) FROM Users WHERE Role != 'Admin'");
+                lblTotalUsers.Text = userCount?.ToString() ?? "0";
             }
             catch { }
         }

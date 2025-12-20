@@ -6,12 +6,17 @@
 <head runat="server">
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title><%: Page.Title %> - LuxuryStore</title>
+    <meta name="description" content="Plateforme e-commerce pour les coopératives marocaines - Agriculture, Artisanat, Produits du Terroir" />
+    <title><%: Page.Title %> - Coopératives Maroc</title>
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,700" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Poppins:400,700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <!-- Custom CSS -->
     <link href="~/Assets/Styles/main.css" rel="stylesheet" />
@@ -23,45 +28,121 @@
     <form runat="server">
         <header>
             <div class="container nav-wrapper">
-                <a href="/" class="logo">LUXURY<span style="color:var(--accent)">Store</span></a>
+                <a href="/" class="logo">
+                    <i class="fas fa-seedling" style="color: var(--primary-color);"></i>
+                    Coopératives <span>Maroc</span>
+                </a>
                 
                 <nav>
                     <ul class="nav-links">
-                        <li><a href="/">Accueil</a></li>
-                        <li><a href="/Pages/Public/Shop.aspx">Boutique</a></li>
-                        <li><a href="/Pages/Public/Cart.aspx">🛒 Panier</a></li>
+                        <li><a href="/" class='<%= Request.Path == "/" || Request.Path == "/Default.aspx" ? "active" : "" %>'>Accueil</a></li>
+                        <li><a href="/Pages/Public/Shop.aspx" class='<%= Request.Path.Contains("Shop.aspx") ? "active" : "" %>'>Boutique</a></li>
+                        <li><a href="/Pages/Public/Cart.aspx" class='<%= Request.Path.Contains("Cart.aspx") ? "active" : "" %>'>
+                            <i class="fas fa-shopping-cart"></i> Panier
+                            <% if (Session["CartCount"] != null && Convert.ToInt32(Session["CartCount"]) > 0) { %>
+                                <span class="badge badge-primary" style="margin-left: 5px;"><%: Session["CartCount"] %></span>
+                            <% } %>
+                        </a></li>
                         <% if (Session["Role"] != null && Session["Role"].ToString() == "Admin") { %>
-                            <li><a href="/Pages/Admin/Dashboard.aspx" style="color: var(--gold)">⚙️ Admin</a></li>
+                            <li><a href="/Pages/Admin/Dashboard.aspx" style="color: var(--primary-color);">
+                                <i class="fas fa-cog"></i> Admin
+                            </a></li>
+                        <% } %>
+                        <% if (Session["Role"] != null && Session["Role"].ToString() == "Cooperative") { %>
+                            <li><a href="/Pages/Cooperative/Dashboard.aspx" style="color: var(--primary-color);">
+                                <i class="fas fa-store"></i> Ma Coopérative
+                            </a></li>
                         <% } %>
                     </ul>
                 </nav>
                 
                 <div class="nav-actions">
                     <% if (Session["UserEmail"] == null) { %>
-                        <a href="/Pages/Public/Login.aspx" class="btn btn-primary">Connexion</a>
+                        <a href="/Pages/Public/Login.aspx" class="btn btn-primary">
+                            <i class="fas fa-sign-in-alt"></i> Connexion
+                        </a>
+                        <a href="/Pages/Public/Register.aspx" class="btn btn-secondary">
+                            <i class="fas fa-user-plus"></i> Inscription
+                        </a>
                     <% } else { %>
                         <div style="display: flex; align-items: center; gap: 1rem;">
                             <div style="text-align: right;">
-                                <div style="font-weight: 600; color: var(--text-primary);"><%: Session["FullName"] %></div>
-                                <div style="font-size: 0.85rem; color: var(--text-muted);"><%: Session["Email"] %></div>
+                                <div style="font-weight: 600; color: var(--text-dark);">
+                                    <i class="fas fa-user"></i> <%: Session["FullName"] %>
+                                </div>
+                                <div style="font-size: 0.85rem; color: var(--text-light);"><%: Session["UserEmail"] %></div>
                             </div>
-                            <asp:LinkButton ID="LogoutBtn" runat="server" OnClick="Logout_Click" CssClass="btn" style="background: rgba(239,68,68,0.1); color: #ef4444;">Déconnexion</asp:LinkButton>
+                            <a href="/Pages/Public/Profile.aspx" class="btn btn-outline" style="padding: 8px 15px;">
+                                <i class="fas fa-user-circle"></i> Mon Compte
+                            </a>
+                            <asp:LinkButton ID="LogoutBtn" runat="server" OnClick="Logout_Click" CssClass="btn" 
+                                style="background: rgba(220,53,69,0.1); color: var(--danger-color); padding: 8px 15px;">
+                                <i class="fas fa-sign-out-alt"></i> Déconnexion
+                            </asp:LinkButton>
                         </div>
                     <% } %>
                 </div>
             </div>
         </header>
 
-        <main class="container">
+        <main style="min-height: calc(100vh - 300px); padding: 2rem 0;">
             <asp:ContentPlaceHolder ID="MainContent" runat="server">
             </asp:ContentPlaceHolder>
         </main>
 
-        <footer style="margin-top: 4rem; padding: 2rem 0; border-top: 1px solid var(--glass-border); text-align: center; color: var(--text-muted);">
+        <footer>
             <div class="container">
-                <p>&copy; <%: DateTime.Now.Year %> - LuxuryStore. All rights reserved.</p>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; margin-bottom: 2rem;">
+                    <div>
+                        <h5><i class="fas fa-seedling" style="color: var(--primary-color);"></i> Coopératives Maroc</h5>
+                        <p>Plateforme e-commerce dédiée aux coopératives marocaines pour promouvoir leurs produits locaux et artisanaux.</p>
+                    </div>
+                    <div>
+                        <h5>Liens Rapides</h5>
+                        <ul style="list-style: none; padding: 0;">
+                            <li style="margin-bottom: 0.5rem;"><a href="/Pages/Public/Shop.aspx">Boutique</a></li>
+                            <li style="margin-bottom: 0.5rem;"><a href="/Pages/Public/About.aspx">À Propos</a></li>
+                            <li style="margin-bottom: 0.5rem;"><a href="/Pages/Public/Contact.aspx">Contact</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h5>Catégories</h5>
+                        <ul style="list-style: none; padding: 0;">
+                            <li style="margin-bottom: 0.5rem;"><a href="/Pages/Public/Shop.aspx?cat=1">Agriculture</a></li>
+                            <li style="margin-bottom: 0.5rem;"><a href="/Pages/Public/Shop.aspx?cat=2">Artisanat</a></li>
+                            <li style="margin-bottom: 0.5rem;"><a href="/Pages/Public/Shop.aspx?cat=3">Produits du Terroir</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h5>Contact</h5>
+                        <p><i class="fas fa-envelope"></i> contact@cooperatives.ma</p>
+                        <p><i class="fas fa-phone"></i> +212 6XX XXX XXX</p>
+                        <p><i class="fas fa-map-marker-alt"></i> Maroc</p>
+                    </div>
+                </div>
+                <div class="footer-divider footer-copyright">
+                    <p>&copy; <%: DateTime.Now.Year %> Coopératives Maroc. Tous droits réservés.</p>
+                </div>
             </div>
         </footer>
+
+        <!-- Loading Spinner -->
+        <div class="loader" id="pageLoader">
+            <div class="spinner"></div>
+        </div>
     </form>
+
+    <!-- Scripts -->
+    <script>
+        // Hide loader when page is loaded
+        window.addEventListener('load', function() {
+            document.getElementById('pageLoader').classList.remove('active');
+        });
+
+        // Show loader on form submit
+        document.querySelector('form').addEventListener('submit', function() {
+            document.getElementById('pageLoader').classList.add('active');
+        });
+    </script>
 </body>
 </html>

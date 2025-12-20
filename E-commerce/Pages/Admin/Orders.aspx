@@ -126,8 +126,7 @@
                     <asp:BoundField DataField="UnitPrice" HeaderText="Prix Unitaire" DataFormatString="{0:C}" />
                     <asp:TemplateField HeaderText="Total">
                         <ItemTemplate>
-                            <%# (Convert.ToDecimal(Eval("UnitPrice")) * Convert.ToInt32(Eval("Quantity"))).ToString("C")
-                                %>
+                            <%# GetItemTotal(Eval("UnitPrice"), Eval("Quantity")) %>
                         </ItemTemplate>
                     </asp:TemplateField>
                 </Columns>

@@ -84,6 +84,14 @@
     <Content Include="Pages\Admin\Products.aspx" />
     <Content Include="Pages\Admin\Orders.aspx" />
     <Content Include="Pages\Admin\Users.aspx" />
+    <Content Include="Pages\Public\Profile.aspx" />
+    <Content Include="Pages\Public\Addresses.aspx" />
+    <Content Include="Pages\Public\ForgotPassword.aspx" />
+    <Content Include="Pages\Public\ResetPassword.aspx" />
+    <Content Include="Pages\Public\OrderDetails.aspx" />
+    <Content Include="Pages\Public\OrderTracking.aspx" />
+    <Content Include="Pages\Public\About.aspx" />
+    <Content Include="Pages\Public\Contact.aspx" />
     <Content Include="Database\Setup.sql" />
   </ItemGroup>
   <ItemGroup>
@@ -93,6 +101,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="App_Code\DbContext.cs" />
     <Compile Include="App_Code\SecurityHelper.cs" />
+    <Compile Include="App_Code\CartHelper.cs" />
     <Compile Include="Site.Master.cs">
       <DependentUpon>Site.Master</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -147,6 +156,38 @@
     </Compile>
     <Compile Include="Pages\Admin\Users.aspx.cs">
       <DependentUpon>Users.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Public\Profile.aspx.cs">
+      <DependentUpon>Profile.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Public\Addresses.aspx.cs">
+      <DependentUpon>Addresses.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Public\ForgotPassword.aspx.cs">
+      <DependentUpon>ForgotPassword.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Public\ResetPassword.aspx.cs">
+      <DependentUpon>ResetPassword.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Public\OrderDetails.aspx.cs">
+      <DependentUpon>OrderDetails.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Public\OrderTracking.aspx.cs">
+      <DependentUpon>OrderTracking.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Public\About.aspx.cs">
+      <DependentUpon>About.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Public\Contact.aspx.cs">
+      <DependentUpon>Contact.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
   </ItemGroup>

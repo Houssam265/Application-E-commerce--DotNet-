@@ -5,158 +5,416 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 using System.Collections.Generic;
 using Ecommerce.Data;
+using Ecommerce.Utils;
 
 namespace Ecommerce.Pages.Public
 {
     public partial class ProductDetails : Page
     {
-        // Controls
         protected global::System.Web.UI.WebControls.Image imgMain;
         protected global::System.Web.UI.WebControls.Label lblName;
         protected global::System.Web.UI.WebControls.Label lblPrice;
+        protected global::System.Web.UI.WebControls.Label lblComparePrice;
         protected global::System.Web.UI.WebControls.Label lblDescription;
+        protected global::System.Web.UI.WebControls.Label lblCooperative;
+        protected global::System.Web.UI.WebControls.Label lblStock;
+        protected global::System.Web.UI.WebControls.Label lblCategory;
         protected global::System.Web.UI.WebControls.Panel pnlVariants;
         protected global::System.Web.UI.WebControls.DropDownList ddlVariants;
         protected global::System.Web.UI.WebControls.TextBox txtQuantity;
         protected global::System.Web.UI.WebControls.Button btnAddToCart;
-        protected global::System.Web.UI.WebControls.Button btnWishlist;
-        protected global::System.Web.UI.WebControls.Label lblMessage;
+        protected global::System.Web.UI.WebControls.LinkButton btnWishlist;
+        protected global::System.Web.UI.WebControls.Panel pnlMessage;
+        protected global::System.Web.UI.WebControls.Literal litMessage;
+        protected global::System.Web.UI.WebControls.Panel pnlProductNotFound;
+        protected global::System.Web.UI.WebControls.Panel pnlProductDetails;
+        protected global::System.Web.UI.WebControls.Panel pnlStockStatus;
+        protected global::System.Web.UI.WebControls.Repeater rptReviews;
+        protected global::System.Web.UI.WebControls.Label lblNoReviews;
+
+        private int productId = 0;
+
+        protected global::System.Web.UI.WebControls.Panel pnlAddReview;
+        protected global::System.Web.UI.WebControls.Panel pnlReviewError;
+        protected global::System.Web.UI.WebControls.Literal litReviewError;
+        protected global::System.Web.UI.WebControls.DropDownList ddlRating;
+        protected global::System.Web.UI.WebControls.TextBox txtReviewComment;
+        protected global::System.Web.UI.WebControls.Button btnSubmitReview;
 
         protected void Page_Load(object sender, EventArgs e)
         {
+            string id = Request.QueryString["id"];
+            if (string.IsNullOrEmpty(id) || !int.TryParse(id, out productId))
+            {
+                pnlProductNotFound.Visible = true;
+                pnlProductDetails.Visible = false;
+                return;
+            }
+
             if (!IsPostBack)
             {
-                string productId = Request.QueryString["id"];
-                if (string.IsNullOrEmpty(productId))
-                {
-                    Response.Redirect("Shop.aspx");
-                    return;
-                }
                 LoadProduct(productId);
+                LoadReviews(productId);
+                CheckCanAddReview(productId);
             }
         }
 
-        private void LoadProduct(string id)
+        private void CheckCanAddReview(int productId)
+        {
+            if (Session["UserId"] == null)
+            {
+                pnlAddReview.Visible = false;
+                return;
+            }
+
+            int userId = Convert.ToInt32(Session["UserId"]);
+            DbContext db = new DbContext();
+            
+            // Check if user already reviewed this product
+            string checkQuery = "SELECT COUNT(*) FROM Reviews WHERE ProductId = @ProductId AND UserId = @UserId";
+            SqlParameter[] checkParams = {
+                new SqlParameter("@ProductId", productId),
+                new SqlParameter("@UserId", userId)
+            };
+            
+            int count = (int)db.ExecuteScalar(checkQuery, checkParams);
+            pnlAddReview.Visible = (count == 0);
+        }
+
+        private void LoadProduct(int id)
         {
             try
             {
                 DbContext db = new DbContext();
-                string query = "SELECT * FROM Products WHERE Id = @Id";
-                SqlParameter[] p = { new SqlParameter("@Id", id) };
+                string query = @"SELECT p.*, c.Name as CooperativeName, cat.Name as CategoryName
+                                 FROM Products p
+                                 LEFT JOIN Cooperatives c ON p.CooperativeId = c.Id
+                                 LEFT JOIN Categories cat ON p.CategoryId = cat.Id
+                                 WHERE p.Id = @Id AND p.IsActive = 1";
+                SqlParameter[] parameters = { new SqlParameter("@Id", id) };
                 
-                DataTable dt = db.ExecuteQuery(query, p);
+                DataTable dt = db.ExecuteQuery(query, parameters);
                 if (dt.Rows.Count > 0)
                 {
                     DataRow row = dt.Rows[0];
-                    lblName.Text = row["Name"].ToString();
-                    lblDescription.Text = row["Description"].ToString();
+                    lblName.Text = Server.HtmlEncode(row["Name"].ToString());
+                    lblDescription.Text = Server.HtmlEncode(row["Description"]?.ToString() ?? "");
                     decimal price = Convert.ToDecimal(row["Price"]);
-                    lblPrice.Text = price.ToString("C");
+                    lblPrice.Text = price.ToString("F2");
                     
-                    // Use ImageUrl directly (supports both local and external URLs)
-                    string imageUrl = row["ImageUrl"].ToString();
-                    imgMain.ImageUrl = imageUrl;
-                    // Fallback handled by onerror in HTML if needed
-
+                    if (row["CompareAtPrice"] != DBNull.Value)
+                    {
+                        decimal comparePrice = Convert.ToDecimal(row["CompareAtPrice"]);
+                        lblComparePrice.Text = comparePrice.ToString("F2") + " MAD";
+                        lblComparePrice.Visible = true;
+                    }
+                    
+                    lblCooperative.Text = row["CooperativeName"]?.ToString() ?? "N/A";
+                    lblStock.Text = row["StockQuantity"]?.ToString() ?? "0";
+                    lblCategory.Text = row["CategoryName"]?.ToString() ?? "N/A";
+                    
+                    int stockQty = Convert.ToInt32(row["StockQuantity"]);
+                    if (stockQty > 0)
+                    {
+                        pnlStockStatus.CssClass = "stock-status stock-in";
+                        pnlStockStatus.Controls.Clear();
+                        pnlStockStatus.Controls.Add(new LiteralControl("<i class='fas fa-check-circle'></i> En stock"));
+                        btnAddToCart.Enabled = true;
+                    }
+                    else
+                    {
+                        pnlStockStatus.CssClass = "stock-status stock-out";
+                        pnlStockStatus.Controls.Clear();
+                        pnlStockStatus.Controls.Add(new LiteralControl("<i class='fas fa-times-circle'></i> Rupture de stock"));
+                        btnAddToCart.Enabled = false;
+                    }
+                    
+                    string imageUrl = row["ImageUrl"]?.ToString() ?? "";
+                    if (!string.IsNullOrEmpty(imageUrl))
+                    {
+                        imgMain.ImageUrl = imageUrl;
+                    }
+                    
+                    // Update view count
+                    db.ExecuteNonQuery("UPDATE Products SET ViewCount = ViewCount + 1 WHERE Id = @Id", parameters);
+                    
                     LoadVariants(id);
                 }
                 else
                 {
-                    Response.Redirect("Shop.aspx");
+                    pnlProductNotFound.Visible = true;
+                    pnlProductDetails.Visible = false;
                 }
             }
             catch (Exception ex)
             {
-                lblMessage.Text = "Erreur: " + ex.Message;
-                lblMessage.Visible = true;
+                litMessage.Text = "Erreur: " + Server.HtmlEncode(ex.Message);
+                pnlMessage.Visible = true;
+                pnlMessage.CssClass = "alert alert-danger";
             }
         }
 
-        private void LoadVariants(string productId)
+        private void LoadVariants(int productId)
         {
-            DbContext db = new DbContext();
-            string query = "SELECT Id, Size, Color, PriceAdjustment FROM ProductVariants WHERE ProductId = @Id";
-            SqlParameter[] p = { new SqlParameter("@Id", productId) };
-            DataTable dt = db.ExecuteQuery(query, p);
-
-            if (dt.Rows.Count > 0)
+            try
             {
-                pnlVariants.Visible = true;
-                ddlVariants.DataSource = dt;
-                ddlVariants.DataTextField = "Size";
-                ddlVariants.DataValueField = "Id";
-                ddlVariants.DataBind();
-                ddlVariants.Items.Insert(0, new ListItem("Choisir une option", ""));
+                DbContext db = new DbContext();
+                string query = @"SELECT Id, VariantType, VariantValue, PriceAdjustment, StockQuantity 
+                                 FROM ProductVariants 
+                                 WHERE ProductId = @Id AND StockQuantity > 0
+                                 ORDER BY VariantType, VariantValue";
+                SqlParameter[] parameters = { new SqlParameter("@Id", productId) };
+                DataTable dt = db.ExecuteQuery(query, parameters);
+
+                if (dt.Rows.Count > 0)
+                {
+                    pnlVariants.Visible = true;
+                    ddlVariants.DataSource = dt;
+                    ddlVariants.DataTextField = "VariantValue";
+                    ddlVariants.DataValueField = "Id";
+                    ddlVariants.DataBind();
+                    ddlVariants.Items.Insert(0, new ListItem("Sélectionner une option", "0"));
+                }
             }
+            catch { }
+        }
+
+        private void LoadReviews(int productId)
+        {
+            try
+            {
+                DbContext db = new DbContext();
+                string query = @"SELECT r.*, u.FullName 
+                                 FROM Reviews r
+                                 INNER JOIN Users u ON r.UserId = u.Id
+                                 WHERE r.ProductId = @ProductId AND r.IsApproved = 1
+                                 ORDER BY r.ReviewDate DESC";
+                SqlParameter[] parameters = { new SqlParameter("@ProductId", productId) };
+                DataTable dt = db.ExecuteQuery(query, parameters);
+
+                if (dt.Rows.Count > 0)
+                {
+                    rptReviews.DataSource = dt;
+                    rptReviews.DataBind();
+                    lblNoReviews.Visible = false;
+                }
+                else
+                {
+                    lblNoReviews.Visible = true;
+                }
+            }
+            catch { }
         }
 
         protected void btnAddToCart_Click(object sender, EventArgs e)
         {
-            string productId = Request.QueryString["id"];
-            int quantity = int.Parse(txtQuantity.Text);
-            string variantId = ddlVariants.SelectedValue;
-
-            if (pnlVariants.Visible && string.IsNullOrEmpty(variantId))
+            if (productId == 0)
             {
-                 lblMessage.Text = "Veuillez choisir une option.";
-                 lblMessage.ForeColor = System.Drawing.Color.Red;
-                 lblMessage.Visible = true;
-                 return;
+                litMessage.Text = "Produit invalide.";
+                pnlMessage.Visible = true;
+                pnlMessage.CssClass = "alert alert-danger";
+                return;
             }
 
-            AddToCart(productId, quantity, variantId);
-
-            lblMessage.Text = "Produit ajouté au panier !";
-            lblMessage.ForeColor = System.Drawing.Color.FromArgb(16, 185, 129);
-            lblMessage.Visible = true;
-        }
-
-        private void AddToCart(string productId, int quantity, string variantId)
-        {
-            List<CartItem> cart = Session["Cart"] as List<CartItem>;
-            if (cart == null)
+            int quantity;
+            if (!int.TryParse(txtQuantity.Text, out quantity) || quantity < 1)
             {
-                cart = new List<CartItem>();
+                litMessage.Text = "Quantité invalide.";
+                pnlMessage.Visible = true;
+                pnlMessage.CssClass = "alert alert-danger";
+                return;
             }
 
-            var existingItem = cart.Find(i => i.ProductId == productId && i.VariantId == variantId);
-            if (existingItem != null)
+            int? variantId = null;
+            if (pnlVariants.Visible && ddlVariants.SelectedValue != "0")
             {
-                existingItem.Quantity += quantity;
+                int temp;
+                if (int.TryParse(ddlVariants.SelectedValue, out temp))
+                    variantId = temp;
             }
-            else
+
+            try
             {
-                DbContext db = new DbContext();
-                string query = "SELECT Name, Price, ImageUrl FROM Products WHERE Id = @Id";
-                DataTable dt = db.ExecuteQuery(query, new SqlParameter[] { new SqlParameter("@Id", productId) });
+                CartHelper.AddToCart(productId, quantity, variantId);
+                litMessage.Text = "<i class='fas fa-check-circle'></i> Produit ajouté au panier avec succès !";
+                pnlMessage.Visible = true;
+                pnlMessage.CssClass = "alert alert-success";
                 
-                if (dt.Rows.Count > 0)
-                {
-                    cart.Add(new CartItem 
-                    {
-                        ProductId = productId,
-                        VariantId = variantId,
-                        Quantity = quantity,
-                        Name = dt.Rows[0]["Name"].ToString(),
-                        Price = Convert.ToDecimal(dt.Rows[0]["Price"]),
-                        ImageUrl = dt.Rows[0]["ImageUrl"].ToString()
-                    });
-                }
+                // Update cart count in session
+                Session["CartCount"] = CartHelper.GetCartItemCount();
+            }
+            catch (Exception ex)
+            {
+                litMessage.Text = "Erreur lors de l'ajout au panier: " + Server.HtmlEncode(ex.Message);
+                pnlMessage.Visible = true;
+                pnlMessage.CssClass = "alert alert-danger";
+            }
+        }
+
+        protected void btnWishlist_Click(object sender, EventArgs e)
+        {
+            if (Session["UserId"] == null)
+            {
+                Response.Redirect("Login.aspx?returnUrl=" + Server.UrlEncode(Request.RawUrl));
+                return;
             }
 
-            Session["Cart"] = cart;
-        }
-    }
+            if (productId == 0) return;
 
-    [Serializable]
-    public class CartItem
-    {
-        public string ProductId { get; set; }
-        public string VariantId { get; set; }
-        public string Name { get; set; }
-        public decimal Price { get; set; }
-        public int Quantity { get; set; }
-        public string ImageUrl { get; set; }
-        public decimal Total => Price * Quantity;
+            try
+            {
+                int userId = Convert.ToInt32(Session["UserId"]);
+                DbContext db = new DbContext();
+                
+                // Check if already in wishlist
+                string checkQuery = "SELECT COUNT(*) FROM Wishlist WHERE UserId = @UserId AND ProductId = @ProductId";
+                SqlParameter[] checkParams = {
+                    new SqlParameter("@UserId", userId),
+                    new SqlParameter("@ProductId", productId)
+                };
+                
+                int count = (int)db.ExecuteScalar(checkQuery, checkParams);
+                
+                if (count > 0)
+                {
+                    // Remove from wishlist
+                    string deleteQuery = "DELETE FROM Wishlist WHERE UserId = @UserId AND ProductId = @ProductId";
+                    db.ExecuteNonQuery(deleteQuery, checkParams);
+                    litMessage.Text = "<i class='fas fa-heart-broken'></i> Retiré de la liste de souhaits";
+                }
+                else
+                {
+                    // Add to wishlist
+                    string insertQuery = "INSERT INTO Wishlist (UserId, ProductId) VALUES (@UserId, @ProductId)";
+                    db.ExecuteNonQuery(insertQuery, checkParams);
+                    litMessage.Text = "<i class='fas fa-heart'></i> Ajouté à la liste de souhaits";
+                }
+                
+                pnlMessage.Visible = true;
+                pnlMessage.CssClass = "alert alert-success";
+            }
+            catch (Exception ex)
+            {
+                litMessage.Text = "Erreur: " + Server.HtmlEncode(ex.Message);
+                pnlMessage.Visible = true;
+                pnlMessage.CssClass = "alert alert-danger";
+            }
+        }
+
+        protected void ddlVariants_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            // Update price if variant selected
+            if (ddlVariants.SelectedValue != "0")
+            {
+                try
+                {
+                    DbContext db = new DbContext();
+                    string query = "SELECT PriceAdjustment FROM ProductVariants WHERE Id = @Id";
+                    SqlParameter[] parameters = { new SqlParameter("@Id", ddlVariants.SelectedValue) };
+                    DataTable dt = db.ExecuteQuery(query, parameters);
+                    
+                    if (dt.Rows.Count > 0)
+                    {
+                        decimal basePrice = Convert.ToDecimal(lblPrice.Text);
+                        decimal adjustment = Convert.ToDecimal(dt.Rows[0]["PriceAdjustment"]);
+                        decimal newPrice = basePrice + adjustment;
+                        lblPrice.Text = newPrice.ToString("F2");
+                    }
+                }
+                catch { }
+            }
+        }
+
+        protected string GetStars(object rating)
+        {
+            int ratingValue = 0;
+            if (rating != null && rating != DBNull.Value)
+            {
+                ratingValue = Convert.ToInt32(rating);
+            }
+            
+            string stars = "";
+            for (int i = 1; i <= 5; i++)
+            {
+                if (i <= ratingValue)
+                    stars += "<i class='fas fa-star'></i>";
+                else
+                    stars += "<i class='far fa-star'></i>";
+            }
+            return stars;
+        }
+
+        protected string GetReviewDate(object reviewDate)
+        {
+            if (reviewDate != null && reviewDate != DBNull.Value)
+            {
+                return Convert.ToDateTime(reviewDate).ToString("dd/MM/yyyy");
+            }
+            return "";
+        }
+
+        protected void btnSubmitReview_Click(object sender, EventArgs e)
+        {
+            pnlReviewError.Visible = false;
+
+            if (Session["UserId"] == null)
+            {
+                Response.Redirect("Login.aspx?returnUrl=" + Server.UrlEncode(Request.RawUrl));
+                return;
+            }
+
+            if (productId == 0)
+            {
+                ShowReviewError("Produit invalide.");
+                return;
+            }
+
+            int rating;
+            if (!int.TryParse(ddlRating.SelectedValue, out rating) || rating < 1 || rating > 5)
+            {
+                ShowReviewError("Veuillez sélectionner une note valide.");
+                return;
+            }
+
+            string comment = txtReviewComment.Text.Trim();
+            if (string.IsNullOrWhiteSpace(comment))
+            {
+                ShowReviewError("Veuillez saisir un commentaire.");
+                return;
+            }
+
+            try
+            {
+                int userId = Convert.ToInt32(Session["UserId"]);
+                DbContext db = new DbContext();
+                string insertQuery = @"INSERT INTO Reviews (ProductId, UserId, Rating, Comment, ReviewDate, IsApproved)
+                                       VALUES (@ProductId, @UserId, @Rating, @Comment, GETDATE(), 1)";
+                SqlParameter[] parameters = {
+                    new SqlParameter("@ProductId", productId),
+                    new SqlParameter("@UserId", userId),
+                    new SqlParameter("@Rating", rating),
+                    new SqlParameter("@Comment", comment)
+                };
+
+                db.ExecuteNonQuery(insertQuery, parameters);
+
+                pnlAddReview.Visible = false;
+                litMessage.Text = "<i class='fas fa-check-circle'></i> Merci pour votre avis !";
+                pnlMessage.Visible = true;
+                pnlMessage.CssClass = "alert alert-success";
+
+                LoadReviews(productId);
+            }
+            catch (Exception ex)
+            {
+                ShowReviewError("Impossible d'enregistrer votre avis : " + Server.HtmlEncode(ex.Message));
+            }
+        }
+
+        private void ShowReviewError(string message)
+        {
+            pnlReviewError.Visible = true;
+            litReviewError.Text = message;
+        }
     }
 }
