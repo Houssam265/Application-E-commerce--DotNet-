@@ -73,33 +73,35 @@
     </div>
 
     <!-- Why Choose Us Section -->
-    <div class="container mb-80" style="background: var(--bg-light); padding: 3rem; border-radius: 10px;">
-        <div class="section-title">
-            <h3>Pourquoi Nous Choisir ?</h3>
-            <p>Des avantages qui font la différence</p>
+    <section class="why-choose-us">
+        <div class="container">
+            <div class="section-title">
+                <h3>Pourquoi Nous Choisir ?</h3>
+                <p>Des avantages qui font la différence</p>
+            </div>
+            <div class="grid grid-3">
+                <div style="text-align: center; padding: 1.5rem;">
+                    <div style="font-size: 3rem; color: var(--primary-color); margin-bottom: 1rem;">
+                        <i class="fas fa-leaf"></i>
+                    </div>
+                    <h4>Produits Bio & Naturels</h4>
+                    <p>Des produits 100% biologiques et naturels directement des coopératives</p>
+                </div>
+                <div style="text-align: center; padding: 1.5rem;">
+                    <div style="font-size: 3rem; color: var(--primary-color); margin-bottom: 1rem;">
+                        <i class="fas fa-truck"></i>
+                    </div>
+                    <h4>Livraison Rapide</h4>
+                    <p>Livraison partout au Maroc et à l'international</p>
+                </div>
+                <div style="text-align: center; padding: 1.5rem;">
+                    <div style="font-size: 3rem; color: var(--primary-color); margin-bottom: 1rem;">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h4>Paiement Sécurisé</h4>
+                    <p>Transactions sécurisées et garanties</p>
+                </div>
+            </div>
         </div>
-        <div class="grid grid-3">
-            <div style="text-align: center; padding: 1.5rem;">
-                <div style="font-size: 3rem; color: var(--primary-color); margin-bottom: 1rem;">
-                    <i class="fas fa-leaf"></i>
-                </div>
-                <h4>Produits Bio & Naturels</h4>
-                <p>Des produits 100% biologiques et naturels directement des coopératives</p>
-            </div>
-            <div style="text-align: center; padding: 1.5rem;">
-                <div style="font-size: 3rem; color: var(--primary-color); margin-bottom: 1rem;">
-                    <i class="fas fa-truck"></i>
-                </div>
-                <h4>Livraison Rapide</h4>
-                <p>Livraison partout au Maroc et à l'international</p>
-            </div>
-            <div style="text-align: center; padding: 1.5rem;">
-                <div style="font-size: 3rem; color: var(--primary-color); margin-bottom: 1rem;">
-                    <i class="fas fa-shield-alt"></i>
-                </div>
-                <h4>Paiement Sécurisé</h4>
-                <p>Transactions sécurisées et garanties</p>
-            </div>
-        </div>
-    </div>
+    </section>
 </asp:Content>

@@ -37,6 +37,8 @@
                     <ul class="nav-links">
                         <li><a href="/" class='<%= Request.Path == "/" || Request.Path == "/Default.aspx" ? "active" : "" %>'>Accueil</a></li>
                         <li><a href="/Pages/Public/Shop.aspx" class='<%= Request.Path.Contains("Shop.aspx") ? "active" : "" %>'>Boutique</a></li>
+                        <li><a href="/Pages/Public/About.aspx" class='<%= Request.Path.Contains("About.aspx") ? "active" : "" %>'>À propos</a></li>
+                        <li><a href="/Pages/Public/Contact.aspx" class='<%= Request.Path.Contains("Contact.aspx") ? "active" : "" %>'>Contact</a></li>
                         <li><a href="/Pages/Public/Cart.aspx" class='<%= Request.Path.Contains("Cart.aspx") ? "active" : "" %>'>
                             <i class="fas fa-shopping-cart"></i> Panier
                             <% if (Session["CartCount"] != null && Convert.ToInt32(Session["CartCount"]) > 0) { %>
@@ -65,20 +67,43 @@
                             <i class="fas fa-user-plus"></i> Inscription
                         </a>
                     <% } else { %>
-                        <div style="display: flex; align-items: center; gap: 1rem;">
-                            <div style="text-align: right;">
-                                <div style="font-weight: 600; color: var(--text-dark);">
-                                    <i class="fas fa-user"></i> <%: Session["FullName"] %>
-                                </div>
-                                <div style="font-size: 0.85rem; color: var(--text-light);"><%: Session["UserEmail"] %></div>
-                            </div>
-                            <a href="/Pages/Public/Profile.aspx" class="btn btn-outline" style="padding: 8px 15px;">
-                                <i class="fas fa-user-circle"></i> Mon Compte
+                        <div class="user-dropdown">
+                            <a href="javascript:void(0);" class="user-dropdown-btn" onclick="toggleUserMenu(event); return false;">
+                                <img src="https://ui-avatars.com/api/?name=<%: Server.UrlEncode(Session["FullName"]?.ToString() ?? "User") %>&background=28a745&color=fff&size=40" 
+                                     alt="Avatar" class="user-avatar" />
+                                <span class="user-name"><%: Session["FullName"] %></span>
+                                <i class="fas fa-chevron-down"></i>
                             </a>
-                            <asp:LinkButton ID="LogoutBtn" runat="server" OnClick="Logout_Click" CssClass="btn" 
-                                style="background: rgba(220,53,69,0.1); color: var(--danger-color); padding: 8px 15px;">
-                                <i class="fas fa-sign-out-alt"></i> Déconnexion
-                            </asp:LinkButton>
+                            <div class="user-dropdown-menu" id="userDropdownMenu">
+                                <a href="/Pages/Public/Profile.aspx" class="dropdown-item">
+                                    <i class="fas fa-user"></i> Mon Profil
+                                </a>
+                                <a href="/Pages/Public/OrderTracking.aspx" class="dropdown-item">
+                                    <i class="fas fa-box"></i> Mes Commandes
+                                </a>
+                                <a href="/Pages/Public/Profile.aspx#wishlist" class="dropdown-item">
+                                    <i class="fas fa-heart"></i> Favoris
+                                </a>
+                                <a href="/Pages/Public/Addresses.aspx" class="dropdown-item">
+                                    <i class="fas fa-map-marker-alt"></i> Mes Adresses
+                                </a>
+                                <% if (Session["Role"] != null && Session["Role"].ToString() == "Admin") { %>
+                                    <div class="dropdown-divider"></div>
+                                    <a href="/Pages/Admin/Dashboard.aspx" class="dropdown-item">
+                                        <i class="fas fa-cog"></i> Administration
+                                    </a>
+                                <% } %>
+                                <% if (Session["Role"] != null && Session["Role"].ToString() == "Cooperative") { %>
+                                    <div class="dropdown-divider"></div>
+                                    <a href="/Pages/Cooperative/Dashboard.aspx" class="dropdown-item">
+                                        <i class="fas fa-store"></i> Ma Coopérative
+                                    </a>
+                                <% } %>
+                                <div class="dropdown-divider"></div>
+                                <asp:LinkButton ID="LogoutBtn" runat="server" OnClick="Logout_Click" CssClass="dropdown-item logout-item">
+                                    <i class="fas fa-sign-out-alt"></i> Déconnexion
+                                </asp:LinkButton>
+                            </div>
                         </div>
                     <% } %>
                 </div>
@@ -142,6 +167,28 @@
         // Show loader on form submit
         document.querySelector('form').addEventListener('submit', function() {
             document.getElementById('pageLoader').classList.add('active');
+        });
+
+        // User dropdown menu toggle
+        function toggleUserMenu(event) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            var menu = document.getElementById('userDropdownMenu');
+            if (menu) {
+                menu.classList.toggle('show');
+            }
+            return false;
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            var dropdown = document.querySelector('.user-dropdown');
+            var menu = document.getElementById('userDropdownMenu');
+            if (dropdown && !dropdown.contains(event.target) && menu) {
+                menu.classList.remove('show');
+            }
         });
     </script>
 </body>

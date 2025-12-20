@@ -130,10 +130,7 @@ namespace Ecommerce.Pages.Public
                     }
                     
                     string imageUrl = row["ImageUrl"]?.ToString() ?? "";
-                    if (!string.IsNullOrEmpty(imageUrl))
-                    {
-                        imgMain.ImageUrl = imageUrl;
-                    }
+                    imgMain.ImageUrl = GetImageUrl(imageUrl);
                     
                     // Update view count
                     db.ExecuteNonQuery("UPDATE Products SET ViewCount = ViewCount + 1 WHERE Id = @Id", parameters);
@@ -415,6 +412,49 @@ namespace Ecommerce.Pages.Public
         {
             pnlReviewError.Visible = true;
             litReviewError.Text = message;
+        }
+
+        protected string GetImageUrl(object imageUrlObj)
+        {
+            if (imageUrlObj == null || imageUrlObj == DBNull.Value)
+            {
+                return ResolveUrl("~/Assets/Images/Products/placeholder.jpg");
+            }
+
+            string imageUrl = imageUrlObj.ToString().Trim();
+            
+            if (string.IsNullOrEmpty(imageUrl))
+            {
+                return ResolveUrl("~/Assets/Images/Products/placeholder.jpg");
+            }
+
+            // Si c'est une URL absolue (http/https), la retourner telle quelle
+            if (imageUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || 
+                imageUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            {
+                return imageUrl;
+            }
+
+            // Si c'est un simple nom de fichier (sans slash), ajouter le chemin de base
+            if (!imageUrl.Contains("/") && !imageUrl.Contains("\\"))
+            {
+                return ResolveUrl("~/Assets/Images/Products/" + imageUrl);
+            }
+
+            // Si c'est un chemin relatif, le résoudre
+            if (imageUrl.StartsWith("~/") || imageUrl.StartsWith("../") || imageUrl.StartsWith("./"))
+            {
+                return ResolveUrl(imageUrl);
+            }
+
+            // Si le chemin commence par Assets/, le résoudre avec ~/
+            if (imageUrl.StartsWith("Assets/", StringComparison.OrdinalIgnoreCase))
+            {
+                return ResolveUrl("~/" + imageUrl);
+            }
+
+            // Sinon, essayer de résoudre tel quel
+            return ResolveUrl("~/Assets/Images/Products/" + imageUrl);
         }
     }
 }

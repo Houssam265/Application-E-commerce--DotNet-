@@ -201,8 +201,8 @@
                     <ItemTemplate>
                         <a href='/Pages/Public/ProductDetails.aspx?id=<%# Eval("Id") %>' class="product-card">
                             <%# GetStockBadge(Eval("StockQuantity")) %>
-                            <img src='<%# Eval("ImageUrl") %>' alt='<%# Eval("Name") %>'
-                                onerror="this.src='https://via.placeholder.com/300x250/f5f5f5/051922?text=Produit'" />
+                            <img src='<%# GetImageUrl(Eval("ImageUrl")) %>' alt='<%# Eval("Name") %>'
+                                onerror="this.src='https://via.placeholder.com/300x250/f5f5f5/051922?text=Produit'" loading="lazy" />
                             <div class="product-info">
                                 <h3><%# Eval("Name") %></h3>
                                 <p><%# Eval("ShortDescription") ?? (Eval("Description") != null ? (Eval("Description").ToString().Length > 100 ? Eval("Description").ToString().Substring(0, 100) + "..." : Eval("Description")) : "") %></p>

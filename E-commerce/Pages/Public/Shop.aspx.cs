@@ -184,5 +184,34 @@ namespace Ecommerce.Pages.Public
             }
             return "";
         }
+
+        protected string GetImageUrl(object imageUrl)
+        {
+            string url = imageUrl?.ToString()?.Trim() ?? "";
+
+            if (string.IsNullOrEmpty(url))
+            {
+                return "https://via.placeholder.com/300x250/f5f5f5/051922?text=Produit";
+            }
+
+            // Absolute URL (https, http)
+            if (Uri.IsWellFormedUriString(url, UriKind.Absolute))
+            {
+                return url;
+            }
+
+            // If only filename stored, prepend product images folder
+            if (!url.Contains("/") && !url.Contains("\\"))
+            {
+                url = "~/Assets/Images/Products/" + url;
+            }
+            else if (!url.StartsWith("~/"))
+            {
+                // Normalize other relative/virtual paths to application root
+                url = "~/" + url.TrimStart('/');
+            }
+
+            return ResolveUrl(url);
+        }
     }
 }
