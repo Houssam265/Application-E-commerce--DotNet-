@@ -57,10 +57,14 @@ namespace Ecommerce.Chatbot
 
         public ChatbotLogic()
         {
-            _provider = ConfigurationManager.AppSettings["OpenAI:Provider"] ?? "OpenAI"; // or AzureOpenAI
-            _apiKey = ConfigurationManager.AppSettings["OpenAI:ApiKey"] ?? string.Empty;
-            _model = ConfigurationManager.AppSettings["OpenAI:Model"] ?? "gpt-3.5-turbo";
-            _endpoint = ConfigurationManager.AppSettings["OpenAI:Endpoint"] ?? string.Empty;
+            _provider = ConfigurationManager.AppSettings["AI:Provider"]
+                ?? ConfigurationManager.AppSettings["OpenAI:Provider"] ?? "OpenAI"; // or AzureOpenAI
+            _apiKey = ConfigurationManager.AppSettings["AI:ApiKey"]
+                ?? ConfigurationManager.AppSettings["OpenAI:ApiKey"] ?? string.Empty;
+            _model = ConfigurationManager.AppSettings["AI:Model"]
+                ?? ConfigurationManager.AppSettings["OpenAI:Model"] ?? "gpt-3.5-turbo";
+            _endpoint = ConfigurationManager.AppSettings["AI:Endpoint"]
+                ?? ConfigurationManager.AppSettings["OpenAI:Endpoint"] ?? string.Empty;
             _deploymentId = ConfigurationManager.AppSettings["OpenAI:DeploymentId"] ?? string.Empty;
             _apiVersion = ConfigurationManager.AppSettings["OpenAI:ApiVersion"] ?? "2023-05-15";
         }
@@ -76,6 +80,16 @@ namespace Ecommerce.Chatbot
 
                 var history = GetHistory(context);
                 history.Add(new ChatMessage { Role = "user", Content = userMessage });
+
+                // Essai d'interprétation locale rapide (avant LLM)
+                var quickIntent = TryResolveIntentFromUserMessage(userMessage);
+                if (!string.IsNullOrEmpty(quickIntent))
+                {
+                    var quickReply = ExecuteIntent(quickIntent);
+                    AppendAssistant(history, quickReply);
+                    SaveHistory(context, history);
+                    return new ChatResponse { Reply = quickReply, Suggestions = DefaultSuggestions() };
+                }
 
                 var systemPrompt = BuildSystemPrompt();
                 var lastTurns = history.Skip(Math.Max(0, history.Count - 10)).ToList();
@@ -150,7 +164,7 @@ namespace Ecommerce.Chatbot
         private string BuildSystemPrompt()
         {
             var sb = new StringBuilder();
-            sb.AppendLine("Tu es un assistant e-commerce pour une boutique en ligne. Réponds toujours en français, de manière polie et concise.");
+            sb.AppendLine("Tu es un assistant e-commerce pour une boutique en ligne spécialisée en produits bio (huiles, produits naturels, etc.). Réponds toujours en français, de manière polie et concise.");
             sb.AppendLine("Quand la question nécessite des données de la base SQL, produis UNIQUEMENT un JSON valide respectant ce schéma, sans texte autour:");
             sb.AppendLine("{\"intent\": \"<l_intention>\", \"parameters\": { ... }}");
             sb.AppendLine("Intentions supportées : \"search_products\"(name, limit), \"get_product_details\"(id|name), \"get_order_status\"(orderNumber), \"get_user_orders\"(email, limit), \"top_products\"(limit).");
@@ -187,7 +201,19 @@ namespace Ecommerce.Chatbot
                 }
                 else
                 {
-                    url = "https://api.openai.com/v1/chat/completions";
+                    // Support Groq and OpenAI (OpenAI-compatible APIs)
+                    if (string.Equals(_provider, "Groq", StringComparison.OrdinalIgnoreCase))
+                    {
+                        url = !string.IsNullOrEmpty(_endpoint) ? _endpoint : "https://api.groq.com/openai/v1/chat/completions";
+                    }
+                    else if (string.Equals(_provider, "OpenAI", StringComparison.OrdinalIgnoreCase))
+                    {
+                        url = !string.IsNullOrEmpty(_endpoint) ? _endpoint : "https://api.openai.com/v1/chat/completions";
+                    }
+                    else
+                    {
+                        url = !string.IsNullOrEmpty(_endpoint) ? _endpoint : "https://api.openai.com/v1/chat/completions";
+                    }
                     request = (HttpWebRequest)WebRequest.Create(url);
                     request.Headers["Authorization"] = "Bearer " + _apiKey;
                 }
@@ -227,15 +253,79 @@ namespace Ecommerce.Chatbot
         private string FallbackAnswer(List<ChatCompletionMessage> messages)
         {
             var lastUser = messages.LastOrDefault(m => m.role == "user")?.content ?? string.Empty;
-            if (lastUser.IndexOf("commande", StringComparison.OrdinalIgnoreCase) >= 0)
+            // Essai d'intentions locales simples pour éviter une réponse vide
+            var quickIntent = TryResolveIntentFromUserMessage(lastUser);
+            if (!string.IsNullOrEmpty(quickIntent))
+            {
+                try { return ExecuteIntent(quickIntent); } catch { }
+            }
+
+            if (lastUser.IndexOf("commande", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                Regex.IsMatch(lastUser, @"\bORD-?\d+\b", RegexOptions.IgnoreCase))
             {
                 return "Pour suivre une commande, indiquez votre numéro de commande (ex: ORD-12345).";
             }
-            if (lastUser.IndexOf("produit", StringComparison.OrdinalIgnoreCase) >= 0)
+            if (lastUser.IndexOf("produit", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                lastUser.IndexOf("huile", StringComparison.OrdinalIgnoreCase) >= 0)
             {
-                return "Je peux rechercher des produits. Donnez-moi un nom ou une catégorie.";
+                return "Je peux rechercher des produits. Donnez-moi un nom (ex: huile d'argan).";
             }
             return "Bonjour, je suis votre assistant. Comment puis-je vous aider ?";
+        }
+
+        private string TryResolveIntentFromUserMessage(string userMessage)
+        {
+            if (string.IsNullOrWhiteSpace(userMessage)) return null;
+            var text = userMessage.Trim();
+
+            // Statut de commande via numéro ORD-xxxxx
+            var mOrder = Regex.Match(text, @"\b(ORD-?\d+)\b", RegexOptions.IgnoreCase);
+            if (mOrder.Success)
+            {
+                var num = mOrder.Groups[1].Value;
+                return _serializer.Serialize(new { intent = "get_order_status", parameters = new { orderNumber = num } });
+            }
+
+            // Détails produit par ID
+            var mId = Regex.Match(text, @"\b(?:id\s*[:#]?|produit\s*#?)\s*(\d{1,9})\b", RegexOptions.IgnoreCase);
+            if (mId.Success)
+            {
+                var id = mId.Groups[1].Value;
+                return _serializer.Serialize(new { intent = "get_product_details", parameters = new { id = id } });
+            }
+
+            // Mes commandes par email
+            var mEmail = Regex.Match(text, @"[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}", RegexOptions.IgnoreCase);
+            if (mEmail.Success && text.IndexOf("commande", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                var email = mEmail.Value;
+                return _serializer.Serialize(new { intent = "get_user_orders", parameters = new { email = email, limit = 5 } });
+            }
+
+            // Recherche produit par mots clés simples (huile, nom, etc.)
+            if (Regex.IsMatch(text, @"\b(huile|produit|chercher|recherche|bio|argan|coco|olive)\b", RegexOptions.IgnoreCase))
+            {
+                var tokens = Regex.Matches(text, @"[\p{L}\p{N}]{3,}", RegexOptions.IgnoreCase)
+                                   .Cast<Match>()
+                                   .Select(x => x.Value)
+                                   .Where(w => w.Length >= 3)
+                                   .Take(3)
+                                   .ToArray();
+                var name = string.Join(" ", tokens);
+                if (!string.IsNullOrWhiteSpace(name))
+                {
+                    return _serializer.Serialize(new { intent = "search_products", parameters = new { name = name, limit = 5 } });
+                }
+            }
+
+            // Top produits
+            if (text.IndexOf("top", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                text.IndexOf("populaire", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return _serializer.Serialize(new { intent = "top_products", parameters = new { limit = 5 } });
+            }
+
+            return null;
         }
 
         private string ExtractIntentJson(string assistant)

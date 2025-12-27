@@ -248,17 +248,15 @@
     </PropertyGroup>
     <Error Condition="!Exists('..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.4.1.0\build\net472\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.4.1.0\build\net472\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.targets'))" />
   </Target>
-
   <ItemGroup>
     <Content Include="ChatbotService.asmx" />
     <Content Include="Assets\Js\chatbot.js" />
   </ItemGroup>
-
   <ItemGroup>
     <Compile Include="App_Code\ChatbotLogic.cs" />
     <Compile Include="ChatbotService.asmx.cs">
       <DependentUpon>ChatbotService.asmx</DependentUpon>
-      <SubType>ASPXCodeBehind</SubType>
+      <SubType>Component</SubType>
     </Compile>
   </ItemGroup>
 </Project>
