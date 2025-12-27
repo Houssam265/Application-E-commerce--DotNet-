@@ -2,6 +2,7 @@ using System;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
+using System.Web.UI.HtmlControls;
 using Ecommerce.Utils;
 
 namespace Ecommerce
@@ -30,6 +31,32 @@ namespace Ecommerce
                 int userId = Convert.ToInt32(Session["UserId"]);
                 CartHelper.MergeCartOnLogin(userId);
                 Session["CartMerged"] = true;
+            }
+
+            if (Page != null && Page.Header != null)
+            {
+                bool hasChatCss = false;
+                foreach (Control c in Page.Header.Controls)
+                {
+                    var link = c as HtmlLink;
+                    if (link != null && !string.IsNullOrEmpty(link.Href) && link.Href.IndexOf("/Assets/Styles/chatbot.css", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        hasChatCss = true;
+                        break;
+                    }
+                }
+                if (!hasChatCss)
+                {
+                    var css = new HtmlLink();
+                    css.Href = ResolveUrl("~/Assets/Styles/chatbot.css");
+                    css.Attributes["rel"] = "stylesheet";
+                    Page.Header.Controls.Add(css);
+                }
+            }
+
+            if (Page != null && !Page.ClientScript.IsClientScriptIncludeRegistered("chatbot-js-include"))
+            {
+                Page.ClientScript.RegisterClientScriptInclude("chatbot-js-include", ResolveUrl("~/Assets/Js/chatbot.js"));
             }
         }
 
