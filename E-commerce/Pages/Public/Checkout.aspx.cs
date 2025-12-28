@@ -82,17 +82,36 @@ namespace Ecommerce.Pages.Public
                     ddlCountry.SelectedValue = addrDt.Rows[0]["Country"].ToString();
                 }
 
+                // Create a new DataTable with TotalPrice column
+                DataTable dtSummary = cartItems.Clone();
+                dtSummary.Columns.Add("TotalPrice", typeof(decimal));
+
                 // Prepare cart items for summary
                 foreach (DataRow row in cartItems.Rows)
                 {
+                    DataRow newRow = dtSummary.NewRow();
+                    newRow["Id"] = row["Id"];
+                    newRow["ProductId"] = row["ProductId"];
+                    newRow["VariantId"] = row["VariantId"];
+                    newRow["Quantity"] = row["Quantity"];
+                    newRow["Name"] = row["Name"];
+                    newRow["Price"] = row["Price"];
+                    newRow["ImageUrl"] = row["ImageUrl"];
+                    newRow["StockQuantity"] = row["StockQuantity"];
+                    newRow["PriceAdjustment"] = row["PriceAdjustment"];
+                    newRow["VariantType"] = row["VariantType"];
+                    newRow["VariantValue"] = row["VariantValue"];
+
                     decimal unitPrice = Convert.ToDecimal(row["Price"]);
                     decimal adjustment = row["PriceAdjustment"] != DBNull.Value ? Convert.ToDecimal(row["PriceAdjustment"]) : 0;
                     unitPrice += adjustment;
                     int quantity = Convert.ToInt32(row["Quantity"]);
-                    row["TotalPrice"] = unitPrice * quantity;
+                    newRow["TotalPrice"] = unitPrice * quantity;
+
+                    dtSummary.Rows.Add(newRow);
                 }
 
-                rptSummary.DataSource = cartItems;
+                rptSummary.DataSource = dtSummary;
                 rptSummary.DataBind();
 
                 // Calculate totals
@@ -146,10 +165,16 @@ namespace Ecommerce.Pages.Public
 
                 DbContext db = new DbContext();
 
+                // Unset other default addresses before creating new one
+                string unsetDefaultQuery = "UPDATE Addresses SET IsDefault = 0 WHERE UserId = @UserId";
+                SqlParameter[] unsetParams = { new SqlParameter("@UserId", userId) };
+                db.ExecuteNonQuery(unsetDefaultQuery, unsetParams);
+
                 // Create address
                 string addrQuery = @"INSERT INTO Addresses (UserId, FullName, Street, City, ZipCode, Country, Phone, IsDefault) 
                                      OUTPUT INSERTED.Id 
                                      VALUES (@UserId, @FullName, @Street, @City, @Zip, @Country, @Phone, 1)";
+                string phoneValue = string.IsNullOrWhiteSpace(txtPhone.Text) ? null : Server.HtmlEncode(txtPhone.Text.Trim());
                 SqlParameter[] addrParams = {
                     new SqlParameter("@UserId", userId),
                     new SqlParameter("@FullName", Server.HtmlEncode(txtFullName.Text.Trim())),
@@ -157,7 +182,7 @@ namespace Ecommerce.Pages.Public
                     new SqlParameter("@City", Server.HtmlEncode(txtCity.Text.Trim())),
                     new SqlParameter("@Zip", Server.HtmlEncode(txtZip.Text.Trim())),
                     new SqlParameter("@Country", ddlCountry.SelectedValue),
-                    new SqlParameter("@Phone", Server.HtmlEncode(txtPhone.Text.Trim()))
+                    new SqlParameter("@Phone", phoneValue ?? (object)DBNull.Value)
                 };
 
                 int addrId = (int)db.ExecuteScalar(addrQuery, addrParams);
