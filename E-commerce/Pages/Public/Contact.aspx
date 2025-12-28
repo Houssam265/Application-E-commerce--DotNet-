@@ -95,10 +95,12 @@
                         <asp:TextBox ID="txtName" runat="server" CssClass="form-control" required></asp:TextBox>
                     </div>
 
-                    <div class="form-group">
-                        <label>Email *</label>
-                        <asp:TextBox ID="txtEmail" runat="server" CssClass="form-control" TextMode="Email" required></asp:TextBox>
-                    </div>
+                    <asp:Panel ID="pnlEmailField" runat="server">
+                        <div class="form-group">
+                            <label>Email *</label>
+                            <asp:TextBox ID="txtEmail" runat="server" CssClass="form-control" TextMode="Email" required></asp:TextBox>
+                        </div>
+                    </asp:Panel>
 
                     <div class="form-group">
                         <label>Sujet *</label>

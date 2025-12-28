@@ -14,6 +14,8 @@ namespace Ecommerce.Pages.Admin
         protected global::System.Web.UI.WebControls.Label lblRevenue;
         protected global::System.Web.UI.WebControls.Label lblTotalProducts;
         protected global::System.Web.UI.WebControls.Label lblTotalUsers;
+        protected global::System.Web.UI.WebControls.Label lblLowStockProducts;
+        protected global::System.Web.UI.WebControls.Label lblPendingComplaints;
 
         protected global::System.Web.UI.WebControls.HiddenField hfSalesData;
         protected global::System.Web.UI.WebControls.HiddenField hfOrdersByStatus;
@@ -41,11 +43,11 @@ namespace Ecommerce.Pages.Admin
             {
                 DbContext db = new DbContext();
                 
-                // Total orders
-                object orderCount = db.ExecuteScalar("SELECT COUNT(*) FROM Orders");
+                // Total orders (only active, non-archived)
+                object orderCount = db.ExecuteScalar("SELECT COUNT(*) FROM Orders WHERE IsArchived = 0");
                 lblTotalOrders.Text = orderCount?.ToString() ?? "0";
                 
-                // Revenue
+                // Revenue (excluding cancelled orders)
                 object rev = db.ExecuteScalar("SELECT SUM(TotalAmount) FROM Orders WHERE Status != 'Cancelled'");
                 decimal revenue = (rev != null && rev != DBNull.Value) ? Convert.ToDecimal(rev) : 0;
                 lblRevenue.Text = revenue.ToString("F2") + " MAD";
@@ -57,6 +59,24 @@ namespace Ecommerce.Pages.Admin
                 // Total users (excluding admins)
                 object userCount = db.ExecuteScalar("SELECT COUNT(*) FROM Users WHERE Role != 'Admin'");
                 lblTotalUsers.Text = userCount?.ToString() ?? "0";
+                
+                // Low stock products (stock < 10)
+                try
+                {
+                    object lowStockCount = db.ExecuteScalar("SELECT COUNT(*) FROM Products WHERE IsActive = 1 AND StockQuantity < 10");
+                    if (lblLowStockProducts != null)
+                        lblLowStockProducts.Text = lowStockCount?.ToString() ?? "0";
+                }
+                catch { }
+                
+                // Pending complaints
+                try
+                {
+                    object complaintCount = db.ExecuteScalar("SELECT COUNT(*) FROM Complaints WHERE Status IN ('Pending', 'InProgress')");
+                    if (lblPendingComplaints != null)
+                        lblPendingComplaints.Text = complaintCount?.ToString() ?? "0";
+                }
+                catch { }
             }
             catch { }
         }

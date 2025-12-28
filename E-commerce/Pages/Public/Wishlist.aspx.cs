@@ -63,7 +63,7 @@ namespace Ecommerce.Pages.Public
                     pnlEmptyWishlist.Visible = true;
                 }
             }
-            catch (Exception ex)
+            catch
             {
                 pnlEmptyWishlist.Visible = true;
             }

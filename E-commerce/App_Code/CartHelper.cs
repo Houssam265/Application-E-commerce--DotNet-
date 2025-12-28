@@ -16,6 +16,13 @@ namespace Ecommerce.Utils
 
             DbContext db = new DbContext();
             
+            // Get available stock (variant takes precedence if provided)
+            int availableStock = GetAvailableStock(db, productId, variantId);
+            if (availableStock <= 0)
+            {
+                throw new Exception("Produit en rupture de stock.");
+            }
+            
             // Check if item already exists in cart
             string checkQuery;
             List<SqlParameter> checkParams = new List<SqlParameter>();
@@ -49,6 +56,11 @@ namespace Ecommerce.Utils
                 int currentQty = Convert.ToInt32(dt.Rows[0]["Quantity"]);
                 int newQty = currentQty + quantity;
 
+                if (newQty > availableStock)
+                {
+                    throw new Exception($"Quantité demandée dépasse le stock disponible ({availableStock}).");
+                }
+
                 string updateQuery = "UPDATE ShoppingCart SET Quantity = @Quantity, UpdatedAt = GETDATE() WHERE Id = @Id";
                 SqlParameter[] updateParams = {
                     new SqlParameter("@Quantity", newQty),
@@ -59,6 +71,10 @@ namespace Ecommerce.Utils
             else
             {
                 // Insert new item
+                if (quantity > availableStock)
+                {
+                    throw new Exception($"Quantité demandée dépasse le stock disponible ({availableStock}).");
+                }
                 string insertQuery = @"INSERT INTO ShoppingCart (UserId, SessionId, ProductId, VariantId, Quantity) 
                                        VALUES (@UserId, @SessionId, @ProductId, @VariantId, @Quantity)";
                 List<SqlParameter> insertParams = new List<SqlParameter>
@@ -103,6 +119,20 @@ namespace Ecommerce.Utils
             }
 
             DbContext db = new DbContext();
+            // Find product and variant for this cart item
+            DataTable cdt = db.ExecuteQuery(
+                @"SELECT ProductId, VariantId FROM ShoppingCart WHERE Id = @Id",
+                new SqlParameter[] { new SqlParameter("@Id", cartItemId) }
+            );
+            if (cdt.Rows.Count == 0) return;
+            int productId = Convert.ToInt32(cdt.Rows[0]["ProductId"]);
+            int? variantId = cdt.Rows[0]["VariantId"] == DBNull.Value ? (int?)null : Convert.ToInt32(cdt.Rows[0]["VariantId"]);
+
+            int availableStock = GetAvailableStock(db, productId, variantId);
+            if (quantity > availableStock)
+            {
+                throw new Exception($"Quantité demandée dépasse le stock disponible ({availableStock}).");
+            }
             string query = "UPDATE ShoppingCart SET Quantity = @Quantity, UpdatedAt = GETDATE() WHERE Id = @Id";
             SqlParameter[] parameters = {
                 new SqlParameter("@Quantity", quantity),
@@ -260,6 +290,20 @@ namespace Ecommerce.Utils
         {
             HttpContext context = HttpContext.Current;
             context.Session["CartCount"] = GetCartItemCount();
+        }
+
+        private static int GetAvailableStock(DbContext db, int productId, int? variantId)
+        {
+            if (variantId.HasValue)
+            {
+                object v = db.ExecuteScalar("SELECT StockQuantity FROM ProductVariants WHERE Id = @Id", new SqlParameter[] { new SqlParameter("@Id", variantId.Value) });
+                if (v != null && v != DBNull.Value)
+                {
+                    return Convert.ToInt32(v);
+                }
+            }
+            object p = db.ExecuteScalar("SELECT StockQuantity FROM Products WHERE Id = @Id", new SqlParameter[] { new SqlParameter("@Id", productId) });
+            return (p != null && p != DBNull.Value) ? Convert.ToInt32(p) : 0;
         }
     }
 }

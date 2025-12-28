@@ -4,6 +4,7 @@ using System.Data.SqlClient;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 using Ecommerce.Data;
+using Ecommerce.Utils;
 
 namespace Ecommerce.Pages.Admin
 {
@@ -34,12 +35,20 @@ namespace Ecommerce.Pages.Admin
                 string userId = e.CommandArgument.ToString();
                 DbContext db = new DbContext();
                 
-                // Get current status
-                string checkQuery = "SELECT IsActive FROM Users WHERE Id = @Id";
+                // Get current status and user info
+                string checkQuery = "SELECT IsActive, Email, FullName FROM Users WHERE Id = @Id";
                 SqlParameter[] checkParams = { new SqlParameter("@Id", userId) };
-                object currentStatus = db.ExecuteScalar(checkQuery, checkParams);
+                DataTable userDt = db.ExecuteQuery(checkQuery, checkParams);
                 
-                bool newStatus = !Convert.ToBoolean(currentStatus);
+                if (userDt.Rows.Count == 0)
+                {
+                    return;
+                }
+                
+                bool currentStatus = Convert.ToBoolean(userDt.Rows[0]["IsActive"]);
+                string userEmail = userDt.Rows[0]["Email"].ToString();
+                string userName = userDt.Rows[0]["FullName"] != DBNull.Value ? userDt.Rows[0]["FullName"].ToString() : userEmail;
+                bool newStatus = !currentStatus;
                 
                 // Update status
                 string updateQuery = "UPDATE Users SET IsActive = @IsActive WHERE Id = @Id";
@@ -48,6 +57,22 @@ namespace Ecommerce.Pages.Admin
                     new SqlParameter("@Id", userId)
                 };
                 db.ExecuteNonQuery(updateQuery, updateParams);
+                
+                // Send email notification
+                try
+                {
+                    string emailSubject = newStatus 
+                        ? "Votre compte a été réactivé - E-commerce Platform"
+                        : "Votre compte a été désactivé - E-commerce Platform";
+                    
+                    string emailBody = EmailTemplates.GetAccountStatusEmailTemplate(userName, newStatus);
+                    
+                    SecurityHelper.SendEmail(userEmail, emailSubject, emailBody);
+                }
+                catch
+                {
+                    // Log error but don't prevent the status update
+                }
                 
                 LoadUsers();
             }

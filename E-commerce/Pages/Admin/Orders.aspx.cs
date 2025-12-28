@@ -45,12 +45,15 @@ namespace Ecommerce.Pages.Admin
                 SELECT O.Id, O.OrderDate, O.TotalAmount, O.Status, U.FullName 
                 FROM Orders O 
                 INNER JOIN Users U ON O.UserId = U.Id 
+                WHERE O.IsArchived = 0 
+                AND O.Status NOT IN ('Delivered', 'Cancelled')
                 ORDER BY O.OrderDate DESC";
             
             DataTable dt = db.ExecuteQuery(query);
             gvOrders.DataSource = dt;
             gvOrders.DataBind();
         }
+
 
         protected void gvOrders_RowCommand(object sender, GridViewCommandEventArgs e)
         {
@@ -94,7 +97,35 @@ namespace Ecommerce.Pages.Admin
                     lblAddress.Text = "Adresse non disponible";
                 }
                 
-                ddlStatus.SelectedValue = row["Status"].ToString();
+                string currentStatus = row["Status"].ToString();
+                ddlStatus.SelectedValue = currentStatus;
+                
+                // CHECK IF ORDER STATUS IS LOCKED (Delivered or Cancelled)
+                bool isStatusLocked = (currentStatus == "Delivered" || currentStatus == "Cancelled");
+                
+                if (isStatusLocked)
+                {
+                    // Disable status modification for locked orders
+                    ddlStatus.Enabled = false;
+                    btnUpdateStatus.Enabled = false;
+                    btnUpdateStatus.CssClass = "btn btn-secondary"; // Gray out button
+                    txtCancelReason.Enabled = false;
+                    
+                    // Show informational message
+                    lblStatusError.Text = "⚠️ Cette commande est verrouillée et ne peut plus être modifiée (statut final : " + GetStatusLabel(currentStatus) + ").";
+                    lblStatusError.CssClass = "alert alert-info";
+                    lblStatusError.Visible = true;
+                }
+                else
+                {
+                    // Enable controls for non-locked orders
+                    ddlStatus.Enabled = true;
+                    btnUpdateStatus.Enabled = true;
+                    btnUpdateStatus.CssClass = "btn btn-primary";
+                    txtCancelReason.Enabled = true;
+                    lblStatusError.Visible = false;
+                }
+                
                 if (row["Status"].ToString() == "Cancelled")
                 {
                     txtCancelReason.Style["display"] = "block";
@@ -123,6 +154,7 @@ namespace Ecommerce.Pages.Admin
             }
         }
 
+
         protected void btnClose_Click(object sender, EventArgs e)
         {
             pnlDetails.Visible = false;
@@ -136,10 +168,29 @@ namespace Ecommerce.Pages.Admin
 
             DbContext db = new DbContext();
             lblStatusError.Visible = false;
+            
+            // CHECK IF ORDER IS ALREADY LOCKED
+            string checkLockQuery = "SELECT Status FROM Orders WHERE Id = @Id";
+            DataTable lockCheck = db.ExecuteQuery(checkLockQuery, new SqlParameter[] { new SqlParameter("@Id", id) });
+            if (lockCheck.Rows.Count > 0)
+            {
+                string currentStatus = lockCheck.Rows[0]["Status"].ToString();
+                if (currentStatus == "Delivered" || currentStatus == "Cancelled")
+                {
+                    lblStatusError.Text = "❌ Impossible de modifier le statut : cette commande est verrouillée (statut final : " + GetStatusLabel(currentStatus) + ").";
+                    lblStatusError.CssClass = "alert alert-danger";
+                    lblStatusError.Visible = true;
+                    pnlDetails.Visible = true;
+                    pnlList.Visible = false;
+                    return;
+                }
+            }
+            
             string cancelReason = txtCancelReason.Text.Trim();
             if (status == "Cancelled" && string.IsNullOrWhiteSpace(cancelReason))
             {
                 lblStatusError.Text = "Veuillez préciser la raison de l'annulation.";
+                lblStatusError.CssClass = "alert alert-warning";
                 lblStatusError.Visible = true;
                 pnlDetails.Visible = true;
                 pnlList.Visible = false;
@@ -154,6 +205,7 @@ namespace Ecommerce.Pages.Admin
             };
             db.ExecuteNonQuery(updateQuery, updateParams);
 
+            // GET ORDER AND USER DETAILS
             DataTable odt = db.ExecuteQuery(@"SELECT O.OrderNumber, O.UserId, U.Email, U.FullName 
                                               FROM Orders O INNER JOIN Users U ON O.UserId = U.Id 
                                               WHERE O.Id = @Id", new SqlParameter[] { new SqlParameter("@Id", id) });
@@ -165,6 +217,7 @@ namespace Ecommerce.Pages.Admin
                 string fullName = orow["FullName"].ToString();
                 string orderNumber = orow["OrderNumber"].ToString();
 
+                // CREATE NOTIFICATION
                 string title = "Mise à jour de votre commande " + orderNumber;
                 string message = "OrderId=" + id + ";Status=" + status + (status == "Cancelled" ? ";Reason=" + cancelReason : "");
                 db.ExecuteNonQuery(@"INSERT INTO Notifications (UserId, Title, Message, Type) 
@@ -175,15 +228,48 @@ namespace Ecommerce.Pages.Admin
                                          new SqlParameter("@Message", message)
                                      });
 
+                // GET ORDER ITEMS FOR EMAIL
+                string itemsQuery = @"SELECT ProductName, Quantity, UnitPrice, TotalPrice 
+                                     FROM OrderItems WHERE OrderId = @OrderId";
+                DataTable dtProducts = db.ExecuteQuery(itemsQuery, new SqlParameter[] { new SqlParameter("@OrderId", id) });
+                
+                // GENERATE BEAUTIFUL HTML EMAIL WITH PRODUCTS
+                string productsHtml = EmailTemplates.GenerateProductTableHtml(dtProducts, false);
                 string subject = "Commande " + orderNumber + " - " + GetStatusLabel(status);
-                string body = BuildStatusEmailBody(fullName, orderNumber, status, cancelReason);
+                string body = EmailTemplates.GetOrderStatusEmailTemplate(fullName, orderNumber, status, productsHtml, cancelReason);
+                
                 SecurityHelper.SendEmail(email, subject, body);
+
+                // ARCHIVE ORDER IF STATUS IS DELIVERED OR CANCELLED
+                if (status == "Delivered" || status == "Cancelled")
+                {
+                    try
+                    {
+                        // Use stored procedure to archive order
+                        db.ExecuteNonQuery("EXEC sp_ArchiveOrder @OrderId", new SqlParameter[] { new SqlParameter("@OrderId", id) });
+                    }
+                    catch
+                    {
+                        // Fallback: manual archiving if stored procedure doesn't exist
+                        string archiveQuery = @"
+                            IF NOT EXISTS (SELECT 1 FROM OrderHistory WHERE OrderId = @OrderId)
+                            BEGIN
+                                INSERT INTO OrderHistory (OrderId, UserId, OrderNumber, TotalAmount, Status, OrderDate, Notes)
+                                SELECT Id, UserId, OrderNumber, TotalAmount, Status, OrderDate, Notes
+                                FROM Orders WHERE Id = @OrderId;
+                                
+                                UPDATE Orders SET IsArchived = 1, ArchivedAt = GETDATE() WHERE Id = @OrderId;
+                            END";
+                        db.ExecuteNonQuery(archiveQuery, new SqlParameter[] { new SqlParameter("@OrderId", id) });
+                    }
+                }
             }
 
             LoadOrders();
             pnlDetails.Visible = false;
             pnlList.Visible = true;
         }
+
 
         private void LoadOrderReview(string orderId)
         {

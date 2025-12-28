@@ -99,6 +99,14 @@ namespace Ecommerce.Auth.Google
                     {
                         userId = Convert.ToInt32(dt.Rows[0]["Id"]);
                         role = Convert.ToString(dt.Rows[0]["Role"]);
+                        
+                        // Check if account is active
+                        bool isActive = dt.Rows[0]["IsActive"] != DBNull.Value && Convert.ToBoolean(dt.Rows[0]["IsActive"]);
+                        if (!isActive)
+                        {
+                            ShowError("Votre compte a été désactivé. Veuillez contacter l'administrateur pour plus d'informations.");
+                            return;
+                        }
 
                         if (dt.Rows[0]["EmailVerified"] == DBNull.Value || Convert.ToInt32(dt.Rows[0]["EmailVerified"]) != 1)
                         {

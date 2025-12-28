@@ -42,6 +42,12 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="BouncyCastle.Cryptography, Version=2.0.0.0, Culture=neutral, PublicKeyToken=072edcf4a5328938, processorArchitecture=MSIL">
+      <HintPath>..\packages\BouncyCastle.Cryptography.2.6.2\lib\net461\BouncyCastle.Cryptography.dll</HintPath>
+    </Reference>
+    <Reference Include="itextsharp, Version=5.5.13.4, Culture=neutral, PublicKeyToken=8354ae6d2174ddca, processorArchitecture=MSIL">
+      <HintPath>..\packages\iTextSharp.5.5.13.4\lib\net461\itextsharp.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.CodeDom.Providers.DotNetCompilerPlatform, Version=4.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.4.1.0\lib\net472\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.dll</HintPath>
     </Reference>
@@ -96,6 +102,11 @@
     <Content Include="Pages\Public\VerifyEmail.aspx" />
     <Content Include="auth\google\login.aspx" />
     <Content Include="auth\google\callback.aspx" />
+    <Content Include="Pages\Admin\ComplaintsManagement.aspx" />
+    <Content Include="Pages\Admin\OrderHistory.aspx" />
+    <Content Include="Pages\Public\UserComplaints.aspx" />
+    <Content Include="Pages\Public\DownloadInvoice.aspx" />
+    <Content Include="Database\Migration_v2.0.sql" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Global.asax.cs">
@@ -105,6 +116,8 @@
     <Compile Include="App_Code\DbContext.cs" />
     <Compile Include="App_Code\SecurityHelper.cs" />
     <Compile Include="App_Code\CartHelper.cs" />
+    <Compile Include="Utils\EmailTemplates.cs" />
+    <Compile Include="Utils\InvoiceHelper.cs" />
     <Compile Include="Site.Master.cs">
       <DependentUpon>Site.Master</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -165,6 +178,14 @@
       <DependentUpon>Categories.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
+    <Compile Include="Pages\Admin\ComplaintsManagement.aspx.cs">
+      <DependentUpon>ComplaintsManagement.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Admin\OrderHistory.aspx.cs">
+      <DependentUpon>OrderHistory.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
     <Compile Include="Pages\Public\Profile.aspx.cs">
       <DependentUpon>Profile.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -199,6 +220,14 @@
     </Compile>
     <Compile Include="Pages\Public\Wishlist.aspx.cs">
       <DependentUpon>Wishlist.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Public\UserComplaints.aspx.cs">
+      <DependentUpon>UserComplaints.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Public\DownloadInvoice.aspx.cs">
+      <DependentUpon>DownloadInvoice.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="Pages\Public\VerifyEmail.aspx.cs">

@@ -68,6 +68,15 @@ namespace Ecommerce.Pages.Public
                 if (dt.Rows.Count > 0)
                 {
                     DataRow row = dt.Rows[0];
+                    
+                    // Check if account is active
+                    bool isActive = row["IsActive"] != DBNull.Value && Convert.ToBoolean(row["IsActive"]);
+                    if (!isActive)
+                    {
+                        ShowError("Votre compte a été désactivé. Veuillez contacter l'administrateur pour plus d'informations.");
+                        return;
+                    }
+                    
                     string storedHash = row["PasswordHash"].ToString();
 
                     if (SecurityHelper.VerifyPassword(password, storedHash))

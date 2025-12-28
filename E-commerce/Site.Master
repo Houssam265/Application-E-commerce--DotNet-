@@ -111,6 +111,9 @@
                                 <a href="/Pages/Public/Profile.aspx?tab=addresses" class="dropdown-item">
                                     <i class="fas fa-map-marker-alt"></i> Mes Adresses
                                 </a>
+                                <a href="/Pages/Public/UserComplaints.aspx" class="dropdown-item">
+                                    <i class="fas fa-exclamation-circle"></i> Mes Réclamations
+                                </a>
                                 <% if (Session["Role"] != null && Session["Role"].ToString() == "Admin") { %>
                                     <div class="dropdown-divider"></div>
                                     <a href="/Pages/Admin/Dashboard.aspx" class="dropdown-item">

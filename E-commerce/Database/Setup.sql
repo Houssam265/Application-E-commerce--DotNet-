@@ -185,6 +185,32 @@ CREATE TABLE ShippingMethods (
     IsActive BIT DEFAULT 1,
     DisplayOrder INT DEFAULT 0
 );
+CREATE TABLE Complaints (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    UserId INT NOT NULL FOREIGN KEY REFERENCES Users(Id),
+    OrderId INT NULL FOREIGN KEY REFERENCES Orders(Id),
+    Subject NVARCHAR(200) NOT NULL,
+    Description NVARCHAR(MAX) NOT NULL,
+    Status NVARCHAR(50) DEFAULT 'Pending',
+    Priority NVARCHAR(20) DEFAULT 'Medium',
+    Category NVARCHAR(100) NULL,
+    AdminResponse NVARCHAR(MAX) NULL,
+    AdminId INT NULL FOREIGN KEY REFERENCES Users(Id),
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    UpdatedAt DATETIME NULL,
+    ResolvedAt DATETIME NULL
+)
+CREATE TABLE OrderHistory (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    OrderId INT NOT NULL FOREIGN KEY REFERENCES Orders(Id),
+    UserId INT NOT NULL,
+    OrderNumber NVARCHAR(50) NOT NULL,
+    TotalAmount DECIMAL(18,2) NOT NULL,
+    Status NVARCHAR(50) NOT NULL,
+    OrderDate DATETIME NOT NULL,
+    CompletedDate DATETIME DEFAULT GETDATE(),
+    Notes NVARCHAR(MAX) NULL
+)
 
 -- Notifications Table
 CREATE TABLE Notifications (

@@ -165,6 +165,23 @@ namespace Ecommerce.Pages.Public
 
                 DbContext db = new DbContext();
 
+                // *** CRITICAL FIX: VALIDATE STOCK BEFORE CREATING ORDER ***
+                // This prevents creating orders with insufficient stock
+                foreach (DataRow row in cartItems.Rows)
+                {
+                    int productId = Convert.ToInt32(row["ProductId"]);
+                    int? variantId = row["VariantId"] != DBNull.Value ? (int?)Convert.ToInt32(row["VariantId"]) : null;
+                    int quantity = Convert.ToInt32(row["Quantity"]);
+                    int available = GetAvailableStock(db, productId, variantId);
+                    
+                    if (quantity > available)
+                    {
+                        litError.Text = $"❌ La quantité demandée pour '{Server.HtmlEncode(row["Name"].ToString())}' ({quantity}) dépasse le stock disponible ({available}). Veuillez ajuster votre panier.";
+                        pnlError.Visible = true;
+                        return;
+                    }
+                }
+
                 // Unset other default addresses before creating new one
                 string unsetDefaultQuery = "UPDATE Addresses SET IsDefault = 0 WHERE UserId = @UserId";
                 SqlParameter[] unsetParams = { new SqlParameter("@UserId", userId) };
@@ -210,7 +227,7 @@ namespace Ecommerce.Pages.Public
 
                 int orderId = (int)db.ExecuteScalar(orderQuery, orderParams);
 
-                // Create order items
+                // Create order items and update stock
                 foreach (DataRow row in cartItems.Rows)
                 {
                     int productId = Convert.ToInt32(row["ProductId"]);
@@ -236,8 +253,17 @@ namespace Ecommerce.Pages.Public
 
                     db.ExecuteNonQuery(itemQuery, itemParams);
 
-                    // Update product stock
-                    string updateStockQuery = "UPDATE Products SET StockQuantity = StockQuantity - @Qty WHERE Id = @ProductId";
+                    // Update stock (variant first if exists)
+                    if (variantId.HasValue)
+                    {
+                        string updateVarStock = "UPDATE ProductVariants SET StockQuantity = CASE WHEN StockQuantity >= @Qty THEN StockQuantity - @Qty ELSE StockQuantity END WHERE Id = @VarId";
+                        db.ExecuteNonQuery(updateVarStock, new SqlParameter[] {
+                            new SqlParameter("@Qty", quantity),
+                            new SqlParameter("@VarId", variantId.Value)
+                        });
+                    }
+
+                    string updateStockQuery = "UPDATE Products SET StockQuantity = CASE WHEN StockQuantity >= @Qty THEN StockQuantity - @Qty ELSE StockQuantity END WHERE Id = @ProductId";
                     SqlParameter[] stockParams = {
                         new SqlParameter("@Qty", quantity),
                         new SqlParameter("@ProductId", productId)
@@ -257,6 +283,19 @@ namespace Ecommerce.Pages.Public
                 litError.Text = "Erreur lors de la commande: " + Server.HtmlEncode(ex.Message);
                 pnlError.Visible = true;
             }
+        }
+
+
+        private int GetAvailableStock(DbContext db, int productId, int? variantId)
+        {
+            if (variantId.HasValue)
+            {
+                object v = db.ExecuteScalar("SELECT StockQuantity FROM ProductVariants WHERE Id = @Id", new SqlParameter[] { new SqlParameter("@Id", variantId.Value) });
+                if (v != null && v != DBNull.Value)
+                    return Convert.ToInt32(v);
+            }
+            object p = db.ExecuteScalar("SELECT StockQuantity FROM Products WHERE Id = @Id", new SqlParameter[] { new SqlParameter("@Id", productId) });
+            return (p != null && p != DBNull.Value) ? Convert.ToInt32(p) : 0;
         }
     }
 }
