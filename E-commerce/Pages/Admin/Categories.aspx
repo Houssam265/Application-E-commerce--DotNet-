@@ -1,5 +1,5 @@
 <%@ Page Title="Gestion Catégories" Language="C#" MasterPageFile="~/Admin.Master" AutoEventWireup="true"
-    CodeBehind="Categories.aspx.cs" Inherits="Ecommerce.Pages.Admin.Categories" %>
+    CodeBehind="Categories.aspx.cs" Inherits="Ecommerce.Pages.Admin.Categories" UnobtrusiveValidationMode="None" %>
 
     <asp:Content ID="Content1" ContentPlaceHolderID="HeadContent" runat="server">
         <style>
