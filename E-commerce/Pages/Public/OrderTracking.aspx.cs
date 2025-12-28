@@ -13,8 +13,18 @@ namespace Ecommerce.Pages.Public
         protected global::System.Web.UI.WebControls.Panel pnlTracking;
         protected global::System.Web.UI.WebControls.Label lblOrderNumber;
         protected global::System.Web.UI.WebControls.Repeater rptTrackingSteps;
+        protected global::System.Web.UI.WebControls.Panel pnlReview;
+        protected global::System.Web.UI.WebControls.Panel pnlReviewDisplay;
+        protected global::System.Web.UI.WebControls.DropDownList ddlRating;
+        protected global::System.Web.UI.WebControls.TextBox txtReview;
+        protected global::System.Web.UI.WebControls.Button btnSubmitReview;
+        protected global::System.Web.UI.WebControls.Label lblReviewError;
+        protected global::System.Web.UI.WebControls.Label lblReviewSuccess;
+        protected global::System.Web.UI.WebControls.Literal litReviewStars;
+        protected global::System.Web.UI.WebControls.Literal litReviewText;
 
         private string currentStatus = "";
+        private string orderId;
 
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -24,7 +34,7 @@ namespace Ecommerce.Pages.Public
                 return;
             }
 
-            string orderId = Request.QueryString["id"];
+            orderId = Request.QueryString["id"];
             if (string.IsNullOrEmpty(orderId))
             {
                 pnlNotFound.Visible = true;
@@ -35,6 +45,7 @@ namespace Ecommerce.Pages.Public
             if (!IsPostBack)
             {
                 LoadTracking(orderId);
+                LoadReview(orderId);
             }
         }
 
@@ -116,6 +127,100 @@ namespace Ecommerce.Pages.Public
             }
         }
 
+        private void LoadReview(string orderId)
+        {
+            try
+            {
+                int userId = Convert.ToInt32(Session["UserId"]);
+                DbContext db = new DbContext();
+                DataTable dt = db.ExecuteQuery(
+                    @"SELECT TOP 1 Rating, Comment 
+                      FROM Reviews 
+                      WHERE OrderId = @OrderId AND UserId = @UserId AND ProductId IS NULL 
+                      ORDER BY ReviewDate DESC",
+                    new SqlParameter[] {
+                        new SqlParameter("@OrderId", orderId),
+                        new SqlParameter("@UserId", userId)
+                    });
+
+                if (currentStatus == "Delivered" && dt.Rows.Count == 0)
+                {
+                    pnlReview.Visible = true;
+                    pnlReviewDisplay.Visible = false;
+                }
+                else if (dt.Rows.Count > 0)
+                {
+                    int rating = Convert.ToInt32(dt.Rows[0]["Rating"]);
+                    string comment = dt.Rows[0]["Comment"] != DBNull.Value ? dt.Rows[0]["Comment"].ToString() : "";
+                    litReviewStars.Text = RenderStars(rating);
+                    litReviewText.Text = Server.HtmlEncode(comment);
+                    pnlReviewDisplay.Visible = true;
+                    pnlReview.Visible = false;
+                }
+            }
+            catch
+            {
+                pnlReview.Visible = false;
+                pnlReviewDisplay.Visible = false;
+            }
+        }
+
+        protected void btnSubmitReview_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                int userId = Convert.ToInt32(Session["UserId"]);
+                int rating = int.TryParse(ddlRating.SelectedValue, out var r) ? r : 0;
+                string comment = txtReview.Text.Trim();
+
+                if (rating < 1 || rating > 5)
+                {
+                    lblReviewError.Text = "Veuillez sélectionner une note valide.";
+                    lblReviewError.Visible = true;
+                    lblReviewSuccess.Visible = false;
+                    return;
+                }
+
+                DbContext db = new DbContext();
+                object exists = db.ExecuteScalar(
+                    @"SELECT COUNT(*) FROM Reviews 
+                      WHERE OrderId = @OrderId AND UserId = @UserId AND ProductId IS NULL",
+                    new SqlParameter[] {
+                        new SqlParameter("@OrderId", orderId),
+                        new SqlParameter("@UserId", userId)
+                    });
+                if (Convert.ToInt32(exists) > 0)
+                {
+                    lblReviewError.Text = "Vous avez déjà donné votre avis pour cette commande.";
+                    lblReviewError.Visible = true;
+                    lblReviewSuccess.Visible = false;
+                    return;
+                }
+
+                db.ExecuteNonQuery(
+                    @"INSERT INTO Reviews (ProductId, UserId, OrderId, Rating, Comment, ReviewDate, IsApproved, IsVerifiedPurchase) 
+                      VALUES (NULL, @UserId, @OrderId, @Rating, @Comment, GETDATE(), 1, 1)",
+                    new SqlParameter[] {
+                        new SqlParameter("@UserId", userId),
+                        new SqlParameter("@OrderId", orderId),
+                        new SqlParameter("@Rating", rating),
+                        new SqlParameter("@Comment", string.IsNullOrWhiteSpace(comment) ? (object)DBNull.Value : comment)
+                    });
+
+                lblReviewSuccess.Text = "Merci pour votre avis !";
+                lblReviewSuccess.Visible = true;
+                lblReviewError.Visible = false;
+                pnlReview.Visible = false;
+                LoadReview(orderId);
+            }
+            catch (Exception ex)
+            {
+                lblReviewError.Text = "Erreur: " + Server.HtmlEncode(ex.Message);
+                lblReviewError.Visible = true;
+                lblReviewSuccess.Visible = false;
+            }
+        }
+
         protected string GetStepClass(object status, int index)
         {
             if (status == null) return "pending";
@@ -184,6 +289,18 @@ namespace Ecommerce.Pages.Public
             public string Description { get; set; }
             public DateTime? Date { get; set; }
             public bool IsCompleted { get; set; }
+        }
+
+        private string RenderStars(int rating)
+        {
+            rating = Math.Max(1, Math.Min(5, rating));
+            string stars = "";
+            for (int i = 0; i < 5; i++)
+            {
+                if (i < rating) stars += "<i class='fas fa-star' style='color:#f59e0b;'></i>";
+                else stars += "<i class='far fa-star' style='color:#f59e0b;'></i>";
+            }
+            return "<div style='font-size:1.2rem;'>" + stars + "</div>";
         }
     }
 }

@@ -107,6 +107,11 @@
                             </a>
                         </asp:Panel>
                     </div>
+                    
+                    <asp:Panel ID="pnlCancel" runat="server" Visible="false" CssClass="info-box">
+                        <h4><i class="fas fa-ban"></i> Raison d'annulation</h4>
+                        <p><asp:Label ID="lblCancelReason" runat="server"></asp:Label></p>
+                    </asp:Panel>
                 </div>
 
                 <div class="card">

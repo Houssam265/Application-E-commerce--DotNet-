@@ -65,6 +65,32 @@
                             <i class="fas fa-user-plus"></i> Inscription
                         </a>
                     <% } else { %>
+                        <div class="notifications" style="position: relative; margin-right: 1rem;">
+                            <a href="javascript:void(0);" class="notif-btn" onclick="toggleNotifMenu(event); return false;" style="position:relative;">
+                                <i class="fas fa-bell"></i>
+                                <span id="notifDot" runat="server" class="notif-dot" style="position:absolute; right:-2px; top:-2px; width:10px; height:10px; background:#ef4444; border-radius:50%; display:none;"></span>
+                                <asp:Literal ID="litNotifCount" runat="server"></asp:Literal>
+                            </a>
+                            <div class="notif-dropdown" id="notifDropdown" style="display:none; position:absolute; right:0; top:120%; background:#fff; border:1px solid #e2e8f0; border-radius:10px; min-width:300px; box-shadow:0 8px 24px rgba(0,0,0,0.12); z-index:1000;">
+                                <div class="notif-header" style="display:flex; justify-content:space-between; align-items:center; padding:0.75rem 1rem; border-bottom:1px solid #e2e8f0;">
+                                    <span>Notifications</span>
+                                    <asp:LinkButton ID="btnMarkAllRead" runat="server" CssClass="notif-action" OnClick="MarkAllRead_Click">Tout marquer comme lu</asp:LinkButton>
+                                </div>
+                                <asp:Repeater ID="rptNotifications" runat="server" OnItemCommand="rptNotifications_ItemCommand">
+                                    <ItemTemplate>
+                                        <div id="notifItem" runat="server" class="notif-item" style="display:flex; justify-content:space-between; gap:0.5rem; padding:0.75rem 1rem; border-bottom:1px solid #f1f5f9;">
+                                            <div class="notif-info" style="flex:1;">
+                                                <div class="notif-title" style="font-weight:600;"><%# Eval("Title") %></div>
+                                                <div class="notif-meta" style="font-size:0.85rem; color:#64748b;"><%# Eval("CreatedAt", "{0:dd/MM/yyyy HH:mm}") %></div>
+                                                <asp:HyperLink ID="lnkNotifAction" runat="server" CssClass="btn btn-outline" />
+                                            </div>
+                                            <asp:LinkButton ID="btnMarkRead" runat="server" CommandName="MarkRead" CommandArgument='<%# Eval("Id") %>' CssClass="notif-mark" style="color:#2563eb;">Lu</asp:LinkButton>
+                                        </div>
+                                    </ItemTemplate>
+                                </asp:Repeater>
+                                <asp:Label ID="lblNoNotifications" runat="server" Text="Aucune notification" Visible="false" CssClass="notif-empty" style="display:block; padding:1rem; color:#64748b;"></asp:Label>
+                            </div>
+                        </div>
                         <div class="user-dropdown">
                             <a href="javascript:void(0);" class="user-dropdown-btn" onclick="toggleUserMenu(event); return false;">
                                 <img src="https://ui-avatars.com/api/?name=<%: Server.UrlEncode(Session["FullName"]?.ToString() ?? "User") %>&background=28a745&color=fff&size=40" 
@@ -192,6 +218,11 @@
             if (dropdown && !dropdown.contains(event.target) && menu) {
                 menu.classList.remove('show');
             }
+            var notif = document.querySelector('.notifications');
+            var notifMenu = document.getElementById('notifDropdown');
+            if (notif && !notif.contains(event.target) && notifMenu) {
+                notifMenu.classList.remove('show');
+            }
         });
 
         // Notification System
@@ -223,6 +254,22 @@
         function closeNotification() {
             var banner = document.getElementById('notificationBanner');
             banner.style.display = 'none';
+        }
+        
+        function toggleNotifMenu(event) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            var menu = document.getElementById('notifDropdown');
+            if (menu) {
+                if (menu.style.display === 'none' || menu.style.display === '') {
+                    menu.style.display = 'block';
+                } else {
+                    menu.style.display = 'none';
+                }
+            }
+            return false;
         }
     </script>
     

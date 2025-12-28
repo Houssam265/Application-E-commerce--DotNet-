@@ -113,6 +113,18 @@ namespace Ecommerce.Pages.Admin
                     
                     object result = db.ExecuteScalar(query, p);
                     productId = result?.ToString() ?? "";
+                    
+                    if (!string.IsNullOrEmpty(productId))
+                    {
+                        db.ExecuteNonQuery(
+                            @"INSERT INTO Notifications (UserId, Title, Message, Type) 
+                              SELECT Id, 'Nouveau produit: ' + @ProdName, 'ProductId=' + CAST(@ProductId AS NVARCHAR(20)), 'Product'
+                              FROM Users WHERE Role = 'Customer' AND IsActive = 1",
+                            new SqlParameter[] {
+                                new SqlParameter("@ProdName", name),
+                                new SqlParameter("@ProductId", productId)
+                            });
+                    }
                 }
                 else
                 {

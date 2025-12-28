@@ -75,7 +75,7 @@ namespace Ecommerce.Pages.Public
             {
                 int userId = Convert.ToInt32(Session["UserId"]);
                 DbContext db = new DbContext();
-                string query = @"SELECT Id, OrderNumber, OrderDate, TotalAmount, Status 
+                string query = @"SELECT Id, OrderNumber, OrderDate, TotalAmount, Status, Notes 
                                  FROM Orders 
                                  WHERE UserId = @UserId 
                                  ORDER BY OrderDate DESC";
@@ -190,6 +190,17 @@ namespace Ecommerce.Pages.Public
             if (statusStr == "Shipped" || statusStr == "Delivered")
             {
                 return $"<a href='OrderTracking.aspx?id={orderId}' class='btn btn-outline' style='padding: 8px 15px;'><i class='fas fa-truck'></i> Suivre</a>";
+            }
+            return "";
+        }
+
+        protected string GetCancelReason(object status, object notes)
+        {
+            string s = status?.ToString() ?? "";
+            if (s == "Cancelled")
+            {
+                string reason = notes == null || notes == DBNull.Value ? "Aucune raison fournie." : Server.HtmlEncode(notes.ToString());
+                return $"<div style='margin-top:0.5rem; color: var(--danger-color);'><i class='fas fa-ban'></i> Raison: {reason}</div>";
             }
             return "";
         }

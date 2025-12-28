@@ -4,6 +4,7 @@ using System.Data.SqlClient;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 using Ecommerce.Data;
+using Ecommerce.Utils;
 
 namespace Ecommerce.Pages.Admin
 {
@@ -21,6 +22,13 @@ namespace Ecommerce.Pages.Admin
         protected global::System.Web.UI.WebControls.GridView gvItems;
         protected global::System.Web.UI.WebControls.DropDownList ddlStatus;
         protected global::System.Web.UI.WebControls.LinkButton btnUpdateStatus;
+        protected global::System.Web.UI.WebControls.TextBox txtCancelReason;
+        protected global::System.Web.UI.WebControls.Label lblStatusError;
+        protected global::System.Web.UI.WebControls.Panel pnlReviewAdmin;
+        protected global::System.Web.UI.WebControls.Literal litAdminReviewStars;
+        protected global::System.Web.UI.WebControls.Literal litAdminReviewText;
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl lblAdminReviewDate;
+        protected global::System.Web.UI.WebControls.Label lblNoReview;
 
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -87,11 +95,21 @@ namespace Ecommerce.Pages.Admin
                 }
                 
                 ddlStatus.SelectedValue = row["Status"].ToString();
+                if (row["Status"].ToString() == "Cancelled")
+                {
+                    txtCancelReason.Style["display"] = "block";
+                    txtCancelReason.Text = row["Notes"] != DBNull.Value ? row["Notes"].ToString() : "";
+                }
+                else
+                {
+                    txtCancelReason.Style["display"] = "none";
+                    txtCancelReason.Text = "";
+                }
 
-                string itemsQuery = @"
-                    SELECT OI.ProductName as Name, OI.Quantity, OI.UnitPrice, OI.TotalPrice
-                    FROM OrderItems OI 
-                    WHERE OI.OrderId = @OrderId";
+            string itemsQuery = @"
+                SELECT OI.ProductName as Name, OI.Quantity, OI.UnitPrice, OI.TotalPrice
+                FROM OrderItems OI 
+                WHERE OI.OrderId = @OrderId";
                 
                 SqlParameter[] itemParams = { new SqlParameter("@OrderId", id) };
                 DataTable dtItems = db.ExecuteQuery(itemsQuery, itemParams);
@@ -100,6 +118,8 @@ namespace Ecommerce.Pages.Admin
 
                 pnlList.Visible = false;
                 pnlDetails.Visible = true;
+
+                LoadOrderReview(id);
             }
         }
 
@@ -115,14 +135,113 @@ namespace Ecommerce.Pages.Admin
             string status = ddlStatus.SelectedValue;
 
             DbContext db = new DbContext();
-            db.ExecuteNonQuery("UPDATE Orders SET Status = @Status WHERE Id = @Id", new SqlParameter[] {
+            lblStatusError.Visible = false;
+            string cancelReason = txtCancelReason.Text.Trim();
+            if (status == "Cancelled" && string.IsNullOrWhiteSpace(cancelReason))
+            {
+                lblStatusError.Text = "Veuillez préciser la raison de l'annulation.";
+                lblStatusError.Visible = true;
+                pnlDetails.Visible = true;
+                pnlList.Visible = false;
+                return;
+            }
+
+            string updateQuery = "UPDATE Orders SET Status = @Status, Notes = @Notes, UpdatedAt = GETDATE() WHERE Id = @Id";
+            SqlParameter[] updateParams = {
                 new SqlParameter("@Status", status),
+                new SqlParameter("@Notes", status == "Cancelled" ? (object)cancelReason : DBNull.Value),
                 new SqlParameter("@Id", id)
-            });
+            };
+            db.ExecuteNonQuery(updateQuery, updateParams);
+
+            DataTable odt = db.ExecuteQuery(@"SELECT O.OrderNumber, O.UserId, U.Email, U.FullName 
+                                              FROM Orders O INNER JOIN Users U ON O.UserId = U.Id 
+                                              WHERE O.Id = @Id", new SqlParameter[] { new SqlParameter("@Id", id) });
+            if (odt.Rows.Count > 0)
+            {
+                var orow = odt.Rows[0];
+                int userId = Convert.ToInt32(orow["UserId"]);
+                string email = orow["Email"].ToString();
+                string fullName = orow["FullName"].ToString();
+                string orderNumber = orow["OrderNumber"].ToString();
+
+                string title = "Mise à jour de votre commande " + orderNumber;
+                string message = "OrderId=" + id + ";Status=" + status + (status == "Cancelled" ? ";Reason=" + cancelReason : "");
+                db.ExecuteNonQuery(@"INSERT INTO Notifications (UserId, Title, Message, Type) 
+                                     VALUES (@UserId, @Title, @Message, 'Order')",
+                                     new SqlParameter[] {
+                                         new SqlParameter("@UserId", userId),
+                                         new SqlParameter("@Title", title),
+                                         new SqlParameter("@Message", message)
+                                     });
+
+                string subject = "Commande " + orderNumber + " - " + GetStatusLabel(status);
+                string body = BuildStatusEmailBody(fullName, orderNumber, status, cancelReason);
+                SecurityHelper.SendEmail(email, subject, body);
+            }
 
             LoadOrders();
             pnlDetails.Visible = false;
             pnlList.Visible = true;
+        }
+
+        private void LoadOrderReview(string orderId)
+        {
+            try
+            {
+                DbContext db = new DbContext();
+                DataTable dt = db.ExecuteQuery(
+                    @"SELECT TOP 1 Rating, Comment, ReviewDate 
+                      FROM Reviews 
+                      WHERE OrderId = @OrderId AND ProductId IS NULL 
+                      ORDER BY ReviewDate DESC",
+                    new SqlParameter[] { new SqlParameter("@OrderId", orderId) });
+                if (dt.Rows.Count > 0)
+                {
+                    int rating = Convert.ToInt32(dt.Rows[0]["Rating"]);
+                    string comment = dt.Rows[0]["Comment"] != DBNull.Value ? dt.Rows[0]["Comment"].ToString() : "";
+                    DateTime date = Convert.ToDateTime(dt.Rows[0]["ReviewDate"]);
+                    litAdminReviewStars.Text = RenderStars(rating);
+                    litAdminReviewText.Text = Server.HtmlEncode(comment);
+                    lblAdminReviewDate.InnerText = date.ToString("dd/MM/yyyy HH:mm");
+                    pnlReviewAdmin.Visible = true;
+                    lblNoReview.Visible = false;
+                }
+                else
+                {
+                    pnlReviewAdmin.Visible = false;
+                    lblNoReview.Visible = true;
+                }
+            }
+            catch
+            {
+                pnlReviewAdmin.Visible = false;
+                lblNoReview.Visible = true;
+            }
+        }
+
+        private string RenderStars(int rating)
+        {
+            rating = Math.Max(1, Math.Min(5, rating));
+            string stars = "";
+            for (int i = 0; i < 5; i++)
+            {
+                if (i < rating) stars += "<i class='fas fa-star' style='color:#f59e0b;'></i>";
+                else stars += "<i class='far fa-star' style='color:#f59e0b;'></i>";
+            }
+            return "<div style='font-size:1.2rem;'>" + stars + "</div>";
+        }
+        protected void ddlStatus_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (ddlStatus.SelectedValue == "Cancelled")
+            {
+                txtCancelReason.Style["display"] = "block";
+            }
+            else
+            {
+                txtCancelReason.Style["display"] = "none";
+                txtCancelReason.Text = "";
+            }
         }
 
         protected string GetItemTotal(object unitPrice, object quantity)
@@ -134,6 +253,37 @@ namespace Ecommerce.Pages.Admin
                 return (price * qty).ToString("C");
             }
             return "0.00 €";
+        }
+
+        private string GetStatusLabel(string status)
+        {
+            switch (status)
+            {
+                case "Pending": return "En attente";
+                case "Processing": return "En préparation";
+                case "Shipped": return "Expédié";
+                case "Delivered": return "Livré";
+                case "Cancelled": return "Annulé";
+                default: return status;
+            }
+        }
+
+        private string BuildStatusEmailBody(string fullName, string orderNumber, string status, string cancelReason)
+        {
+            string statusLabel = GetStatusLabel(status);
+            string reasonSection = status == "Cancelled" && !string.IsNullOrWhiteSpace(cancelReason)
+                ? "<p>Raison de l'annulation: <strong>" + Server.HtmlEncode(cancelReason) + "</strong></p>"
+                : "";
+            string trackingSection = status == "Shipped"
+                ? "<p>Vous pouvez suivre votre commande depuis votre profil.</p>"
+                : "";
+            string body = "<h2>Bonjour " + Server.HtmlEncode(fullName) + ",</h2>"
+                        + "<p>Le statut de votre commande <strong>" + Server.HtmlEncode(orderNumber) + "</strong> a été mis à jour: <strong>" + statusLabel + "</strong>.</p>"
+                        + reasonSection
+                        + trackingSection
+                        + "<p>Accédez à vos commandes: <a href='" + ResolveUrl("~/Pages/Public/Profile.aspx?tab=orders") + "'>Mes commandes</a></p>"
+                        + "<p>Merci de votre confiance.</p>";
+            return body;
         }
     }
 }

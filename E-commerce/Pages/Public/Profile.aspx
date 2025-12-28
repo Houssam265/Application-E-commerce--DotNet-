@@ -187,6 +187,7 @@
                                     </a>
                                     <%# GetTrackingButton(Eval("Status"), Eval("Id")) %>
                                 </div>
+                                <%# GetCancelReason(Eval("Status"), Eval("Notes")) %>
                             </div>
                         </ItemTemplate>
                         <FooterTemplate>

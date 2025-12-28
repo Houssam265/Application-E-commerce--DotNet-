@@ -23,6 +23,8 @@ namespace Ecommerce.Pages.Public
         protected global::System.Web.UI.WebControls.Label lblShippingCost;
         protected global::System.Web.UI.WebControls.Label lblTotal;
         protected global::System.Web.UI.HtmlControls.HtmlGenericControl statusBadge;
+        protected global::System.Web.UI.WebControls.Panel pnlCancel;
+        protected global::System.Web.UI.WebControls.Label lblCancelReason;
 
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -101,6 +103,12 @@ namespace Ecommerce.Pages.Public
                 {
                     lblTrackingNumber.Text = Server.HtmlEncode(row["TrackingNumber"].ToString());
                     pnlTracking.Visible = true;
+                }
+                
+                if (status == "Cancelled")
+                {
+                    pnlCancel.Visible = true;
+                    lblCancelReason.Text = row["Notes"] != DBNull.Value ? Server.HtmlEncode(row["Notes"].ToString()) : "Aucune raison fournie.";
                 }
 
                 // Load order items

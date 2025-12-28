@@ -259,7 +259,7 @@
             <div class="status-update-section">
                 <h3><i class="fas fa-sync-alt"></i> Mise à jour du Statut</h3>
                 <div class="status-controls">
-                    <asp:DropDownList ID="ddlStatus" runat="server" CssClass="form-control" 
+                    <asp:DropDownList ID="ddlStatus" runat="server" CssClass="form-control" AutoPostBack="true" OnSelectedIndexChanged="ddlStatus_SelectedIndexChanged"
                         style="background: #ffffff; color: #1e293b; border: 1px solid #e2e8f0; padding: 0.75rem 1rem; border-radius: 10px; min-width: 200px;">
                         <asp:ListItem Value="Pending">En attente</asp:ListItem>
                         <asp:ListItem Value="Processing">En préparation</asp:ListItem>
@@ -267,12 +267,28 @@
                         <asp:ListItem Value="Delivered">Livré</asp:ListItem>
                         <asp:ListItem Value="Cancelled">Annulé</asp:ListItem>
                     </asp:DropDownList>
+                    <asp:TextBox ID="txtCancelReason" runat="server" CssClass="form-control" placeholder="Raison de l'annulation" 
+                        style="background: #ffffff; color: #1e293b; border: 1px solid #e2e8f0; padding: 0.75rem 1rem; border-radius: 10px; min-width: 300px; display: none;"></asp:TextBox>
                     <asp:LinkButton ID="btnUpdateStatus" runat="server" CssClass="btn btn-primary"
                         OnClick="btnUpdateStatus_Click">
                         <i class="fas fa-check"></i>
                         <span>Mettre à jour</span>
                     </asp:LinkButton>
                 </div>
+                <asp:Label ID="lblStatusError" runat="server" Visible="false" 
+                    style="display:block; margin-top:0.75rem; color:#dc2626;"></asp:Label>
+            </div>
+
+            <div style="margin-top:2rem;">
+                <h3><i class="fas fa-star"></i> Avis sur le service</h3>
+                <asp:Panel ID="pnlReviewAdmin" runat="server" Visible="false" CssClass="orders-table-container">
+                    <div style="display:flex; align-items:center; gap:0.75rem;">
+                        <asp:Literal ID="litAdminReviewStars" runat="server"></asp:Literal>
+                        <span id="lblAdminReviewDate" runat="server"></span>
+                    </div>
+                    <p style="margin-top:0.75rem;"><asp:Literal ID="litAdminReviewText" runat="server"></asp:Literal></p>
+                </asp:Panel>
+                <asp:Label ID="lblNoReview" runat="server" Visible="false" Text="Aucun avis pour cette commande." style="color:#64748b;"></asp:Label>
             </div>
         </asp:Panel>
     </asp:Content>

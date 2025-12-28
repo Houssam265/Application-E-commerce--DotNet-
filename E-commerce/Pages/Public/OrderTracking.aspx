@@ -132,6 +132,37 @@
                     </div>
                 </div>
 
+                <asp:Panel ID="pnlReview" runat="server" Visible="false" style="margin-top:2rem;">
+                    <div class="card">
+                        <h3 style="margin-bottom:1rem;">Donnez votre avis sur notre service</h3>
+                        <div class="form-group" style="margin-bottom:0.75rem;">
+                            <label>Note</label>
+                            <asp:DropDownList ID="ddlRating" runat="server" CssClass="form-control" style="max-width:180px;">
+                                <asp:ListItem Value="5">★★★★★ (Excellent)</asp:ListItem>
+                                <asp:ListItem Value="4">★★★★☆ (Très bien)</asp:ListItem>
+                                <asp:ListItem Value="3">★★★☆☆ (Bien)</asp:ListItem>
+                                <asp:ListItem Value="2">★★☆☆☆ (Moyen)</asp:ListItem>
+                                <asp:ListItem Value="1">★☆☆☆☆ (Faible)</asp:ListItem>
+                            </asp:DropDownList>
+                        </div>
+                        <div class="form-group">
+                            <label>Commentaire</label>
+                            <asp:TextBox ID="txtReview" runat="server" CssClass="form-control" TextMode="MultiLine" Rows="4" placeholder="Comment avez-vous trouvé le service ?"></asp:TextBox>
+                        </div>
+                        <asp:Button ID="btnSubmitReview" runat="server" Text="Envoyer mon avis" CssClass="btn btn-primary" OnClick="btnSubmitReview_Click" />
+                        <asp:Label ID="lblReviewError" runat="server" Visible="false" style="display:block; color:#dc2626; margin-top:0.75rem;"></asp:Label>
+                        <asp:Label ID="lblReviewSuccess" runat="server" Visible="false" style="display:block; color:#16a34a; margin-top:0.75rem;"></asp:Label>
+                    </div>
+                </asp:Panel>
+
+                <asp:Panel ID="pnlReviewDisplay" runat="server" Visible="false" style="margin-top:2rem;">
+                    <div class="card">
+                        <h3 style="margin-bottom:1rem;">Votre avis</h3>
+                        <div><asp:Literal ID="litReviewStars" runat="server"></asp:Literal></div>
+                        <p style="margin-top:0.5rem; color:var(--text-dark);"><asp:Literal ID="litReviewText" runat="server"></asp:Literal></p>
+                    </div>
+                </asp:Panel>
+
                 <div style="margin-top: 2rem; text-align: center;">
                     <a href='OrderDetails.aspx?id=<%= Request.QueryString["id"] %>' class="btn btn-outline">
                         <i class="fas fa-info-circle"></i> Voir les détails de la commande
