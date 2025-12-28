@@ -211,6 +211,68 @@ namespace Ecommerce.Pages.Public
             
             return currentTab == tabName ? "active" : "";
         }
+
+        protected void rptAddresses_ItemCommand(object source, RepeaterCommandEventArgs e)
+        {
+            if (e.CommandName == "Delete")
+            {
+                try
+                {
+                    int addressId = Convert.ToInt32(e.CommandArgument);
+                    int userId = Convert.ToInt32(Session["UserId"]);
+
+                    DbContext db = new DbContext();
+
+                    // Verify that the address belongs to the user before deleting
+                    string verifyQuery = "SELECT Id FROM Addresses WHERE Id = @Id AND UserId = @UserId";
+                    SqlParameter[] verifyParams = {
+                        new SqlParameter("@Id", addressId),
+                        new SqlParameter("@UserId", userId)
+                    };
+                    DataTable verifyDt = db.ExecuteQuery(verifyQuery, verifyParams);
+
+                    if (verifyDt.Rows.Count > 0)
+                    {
+                        // Check if address is used in any orders
+                        string checkOrdersQuery = "SELECT COUNT(*) FROM Orders WHERE ShippingAddressId = @AddressId";
+                        SqlParameter[] checkParams = { new SqlParameter("@AddressId", addressId) };
+                        int orderCount = Convert.ToInt32(db.ExecuteScalar(checkOrdersQuery, checkParams));
+
+                        if (orderCount > 0)
+                        {
+                            // Address is used in orders, don't delete but show error
+                            litError.Text = "Cette adresse ne peut pas être supprimée car elle est associée à une ou plusieurs commandes.";
+                            pnlError.Visible = true;
+                            LoadAddresses(); // Reload to refresh the list
+                            return;
+                        }
+
+                        // Delete the address
+                        string deleteQuery = "DELETE FROM Addresses WHERE Id = @Id AND UserId = @UserId";
+                        SqlParameter[] deleteParams = {
+                            new SqlParameter("@Id", addressId),
+                            new SqlParameter("@UserId", userId)
+                        };
+                        db.ExecuteNonQuery(deleteQuery, deleteParams);
+
+                        // Reload addresses
+                        LoadAddresses();
+                        litSuccess.Text = "Adresse supprimée avec succès !";
+                        pnlSuccess.Visible = true;
+                    }
+                    else
+                    {
+                        litError.Text = "Adresse introuvable ou vous n'avez pas l'autorisation de la supprimer.";
+                        pnlError.Visible = true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    litError.Text = "Erreur lors de la suppression: " + Server.HtmlEncode(ex.Message);
+                    pnlError.Visible = true;
+                }
+            }
+        }
     }
 }
 
