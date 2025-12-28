@@ -3,6 +3,9 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Web;
+using System.Configuration;
+using System.Net;
+using System.Net.Mail;
 
 namespace Ecommerce.Utils
 {
@@ -93,6 +96,60 @@ namespace Ecommerce.Utils
             
             // Check Moroccan format: 06XXXXXXXX or +2126XXXXXXXX
             return Regex.IsMatch(phone, @"^(0|(\+212))[67]\d{8}$");
+        }
+
+        // Generate numeric verification code (e.g., 6 digits)
+        public static string GenerateNumericCode(int digits = 6)
+        {
+            if (digits <= 0 || digits > 12) digits = 6;
+            using (var rng = new RNGCryptoServiceProvider())
+            {
+                byte[] data = new byte[8];
+                rng.GetBytes(data);
+                ulong value = BitConverter.ToUInt64(data, 0);
+                var code = (value % (ulong)Math.Pow(10, digits)).ToString().PadLeft(digits, '0');
+                return code;
+            }
+        }
+
+        // Send email via SMTP using appSettings
+        public static bool SendEmail(string to, string subject, string htmlBody)
+        {
+            try
+            {
+                string fromAddress = ConfigurationManager.AppSettings["MAIL_FROM_ADDRESS"];
+                string fromName = ConfigurationManager.AppSettings["MAIL_FROM_NAME"] ?? "Service";
+                string host = ConfigurationManager.AppSettings["MAIL_HOST"];
+                int port = int.TryParse(ConfigurationManager.AppSettings["MAIL_PORT"], out var p) ? p : 587;
+                string username = ConfigurationManager.AppSettings["MAIL_USERNAME"];
+                string password = ConfigurationManager.AppSettings["MAIL_PASSWORD"];
+                string encryption = ConfigurationManager.AppSettings["MAIL_ENCRYPTION"];
+
+                var mail = new MailMessage();
+                mail.From = new MailAddress(fromAddress, fromName, Encoding.UTF8);
+                mail.To.Add(new MailAddress(to));
+                mail.Subject = subject;
+                mail.Body = htmlBody;
+                mail.IsBodyHtml = true;
+                mail.BodyEncoding = Encoding.UTF8;
+                mail.SubjectEncoding = Encoding.UTF8;
+
+                using (var client = new SmtpClient(host, port))
+                {
+                    client.DeliveryMethod = SmtpDeliveryMethod.Network;
+                    client.UseDefaultCredentials = false;
+                    client.Credentials = new NetworkCredential(username, password);
+                    client.EnableSsl = string.Equals(encryption, "tls", StringComparison.OrdinalIgnoreCase) ||
+                                       string.Equals(encryption, "ssl", StringComparison.OrdinalIgnoreCase);
+
+                    client.Send(mail);
+                }
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }

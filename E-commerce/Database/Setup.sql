@@ -13,6 +13,8 @@ CREATE TABLE Users (
     CreatedAt DATETIME DEFAULT GETDATE(),
     IsActive BIT DEFAULT 1,
     EmailVerified BIT DEFAULT 0,
+    EmailVerificationCode NVARCHAR(10) NULL,
+    EmailVerificationExpiry DATETIME NULL,
     ResetPasswordToken NVARCHAR(255) NULL,
     ResetPasswordExpiry DATETIME NULL
 );

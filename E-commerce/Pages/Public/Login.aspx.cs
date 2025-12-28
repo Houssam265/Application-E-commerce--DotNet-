@@ -14,6 +14,8 @@ namespace Ecommerce.Pages.Public
         // Controls
         protected global::System.Web.UI.WebControls.Panel pnlError;
         protected global::System.Web.UI.WebControls.Literal litError;
+        protected global::System.Web.UI.WebControls.Panel pnlSuccess;
+        protected global::System.Web.UI.WebControls.Literal litSuccess;
         protected global::System.Web.UI.WebControls.TextBox txtEmail;
         protected global::System.Web.UI.WebControls.TextBox txtPassword;
         protected global::System.Web.UI.WebControls.Button btnLogin;
@@ -23,6 +25,22 @@ namespace Ecommerce.Pages.Public
             if (Session["UserEmail"] != null)
             {
                 Response.Redirect("~/Default.aspx");
+                return;
+            }
+
+            if (!IsPostBack)
+            {
+                var verified = Request.QueryString["verified"];
+                var emailParam = Request.QueryString["email"];
+                if (string.Equals(verified, "1", StringComparison.Ordinal))
+                {
+                    pnlSuccess.Visible = true;
+                    litSuccess.Text = "Votre email a été vérifié. Vous pouvez maintenant vous connecter.";
+                    if (!string.IsNullOrWhiteSpace(emailParam))
+                    {
+                        txtEmail.Text = emailParam;
+                    }
+                }
             }
         }
 
@@ -54,6 +72,14 @@ namespace Ecommerce.Pages.Public
 
                     if (SecurityHelper.VerifyPassword(password, storedHash))
                     {
+                        // Enforcer la vérification d'email avant la connexion
+                        if (row["EmailVerified"] == DBNull.Value || Convert.ToInt32(row["EmailVerified"]) != 1)
+                        {
+                            // Rediriger vers la page de vérification avec l'email
+                            Response.Redirect("~/Pages/Public/VerifyEmail.aspx?email=" + Server.UrlEncode(email));
+                            return;
+                        }
+
                         Session["UserId"] = row["Id"];
                         Session["UserEmail"] = row["Email"];
                         Session["FullName"] = row["FullName"];
@@ -75,6 +101,15 @@ namespace Ecommerce.Pages.Public
                 }
                 else
                 {
+                    // Aucun compte en base : vérifier s'il y a une inscription en attente pour cet email
+                    var pending = Session["PendingReg:" + email] as System.Collections.Generic.Dictionary<string, string>;
+                    if (pending != null)
+                    {
+                        // Inviter l'utilisateur à vérifier son email
+                        Response.Redirect("~/Pages/Public/VerifyEmail.aspx?email=" + Server.UrlEncode(email));
+                        return;
+                    }
+                    
                     ShowError("Aucun compte trouvé avec cet email.");
                 }
             }

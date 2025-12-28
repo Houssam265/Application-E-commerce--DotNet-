@@ -13,7 +13,7 @@ namespace Ecommerce.Services
     {
         [WebMethod(EnableSession = true)]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
-        public ChatResponse SendMessage(string message)
+        public ChatbotResponse SendMessage(string message)
         {
             var logic = new ChatbotLogic();
             return logic.ProcessMessage(message, HttpContext.Current);

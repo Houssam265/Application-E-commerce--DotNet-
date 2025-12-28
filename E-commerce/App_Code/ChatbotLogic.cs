@@ -20,7 +20,8 @@ namespace Ecommerce.Chatbot
         public string Content { get; set; }
     }
 
-    public class ChatResponse
+    [Serializable]
+    public class ChatbotResponse
     {
         public string Reply { get; set; }
         public string[] Suggestions { get; set; }
@@ -69,13 +70,13 @@ namespace Ecommerce.Chatbot
             _apiVersion = ConfigurationManager.AppSettings["OpenAI:ApiVersion"] ?? "2023-05-15";
         }
 
-        public ChatResponse ProcessMessage(string userMessage, HttpContext context)
+        public ChatbotResponse ProcessMessage(string userMessage, HttpContext context)
         {
             try
             {
                 if (string.IsNullOrWhiteSpace(userMessage))
                 {
-                    return new ChatResponse { Reply = "Veuillez saisir un message.", Suggestions = new[] { "Lister les produits", "Suivre une commande", "Aide" } };
+                    return new ChatbotResponse { Reply = "Veuillez saisir un message.", Suggestions = new[] { "Lister les produits", "Suivre une commande", "Aide" } };
                 }
 
                 var history = GetHistory(context);
@@ -88,7 +89,7 @@ namespace Ecommerce.Chatbot
                     var quickReply = ExecuteIntent(quickIntent);
                     AppendAssistant(history, quickReply);
                     SaveHistory(context, history);
-                    return new ChatResponse { Reply = quickReply, Suggestions = DefaultSuggestions() };
+                    return new ChatbotResponse { Reply = quickReply, Suggestions = DefaultSuggestions() };
                 }
 
                 var systemPrompt = BuildSystemPrompt();
@@ -111,22 +112,22 @@ namespace Ecommerce.Chatbot
                         var reply = ExecuteIntent(intentJson);
                         AppendAssistant(history, reply);
                         SaveHistory(context, history);
-                        return new ChatResponse { Reply = reply, Suggestions = DefaultSuggestions() };
+                        return new ChatbotResponse { Reply = reply, Suggestions = DefaultSuggestions() };
                     }
 
                     // Fallback: echo assistant text
                     AppendAssistant(history, assistant);
                     SaveHistory(context, history);
-                    return new ChatResponse { Reply = assistant, Suggestions = DefaultSuggestions() };
+                    return new ChatbotResponse { Reply = assistant, Suggestions = DefaultSuggestions() };
                 }
 
                 AppendAssistant(history, "Je n'ai pas pu générer de réponse.");
                 SaveHistory(context, history);
-                return new ChatResponse { Reply = "Je n'ai pas pu générer de réponse.", Suggestions = DefaultSuggestions() };
+                return new ChatbotResponse { Reply = "Je n'ai pas pu générer de réponse.", Suggestions = DefaultSuggestions() };
             }
             catch (Exception ex)
             {
-                return new ChatResponse { Reply = "Désolé, une erreur s'est produite.", Error = ex.Message, Suggestions = DefaultSuggestions() };
+                return new ChatbotResponse { Reply = "Désolé, une erreur s'est produite.", Error = ex.Message, Suggestions = DefaultSuggestions() };
             }
         }
 

@@ -149,6 +149,12 @@
                 </div>
 
                 <div style="text-align: center;">
+                    <a href="/auth/google/login.aspx" class="btn btn-danger" style="width: 100%; padding: 12px; font-size: 16px; background-color: #DB4437; border-color: #DB4437; margin-bottom: 1rem; display: inline-block;">
+                        <i class="fab fa-google"></i> Se connecter avec Google
+                    </a>
+                </div>
+
+                <div style="text-align: center;">
                     <p style="margin-bottom: 1rem;">Pas encore de compte ?</p>
                     <a href="Register.aspx" class="btn btn-secondary" style="width: 100%;">
                         <i class="fas fa-user-plus"></i> Créer un compte
