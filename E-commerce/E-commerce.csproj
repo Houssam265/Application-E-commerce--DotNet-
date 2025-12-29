@@ -104,6 +104,7 @@
     <Content Include="auth\google\callback.aspx" />
     <Content Include="Pages\Admin\ComplaintsManagement.aspx" />
     <Content Include="Pages\Admin\OrderHistory.aspx" />
+    <Content Include="Pages\Admin\PromoCodes.aspx" />
     <Content Include="Pages\Public\UserComplaints.aspx" />
     <Content Include="Pages\Public\DownloadInvoice.aspx" />
     <Content Include="Database\Migration_v2.0.sql" />
@@ -116,6 +117,7 @@
     <Compile Include="App_Code\DbContext.cs" />
     <Compile Include="App_Code\SecurityHelper.cs" />
     <Compile Include="App_Code\CartHelper.cs" />
+    <Compile Include="App_Code\CouponHelper.cs" />
     <Compile Include="Utils\EmailTemplates.cs" />
     <Compile Include="Utils\InvoiceHelper.cs" />
     <Compile Include="Site.Master.cs">
@@ -184,6 +186,10 @@
     </Compile>
     <Compile Include="Pages\Admin\OrderHistory.aspx.cs">
       <DependentUpon>OrderHistory.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Admin\PromoCodes.aspx.cs">
+      <DependentUpon>PromoCodes.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="Pages\Public\Profile.aspx.cs">

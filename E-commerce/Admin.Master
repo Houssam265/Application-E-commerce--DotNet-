@@ -388,6 +388,10 @@
                         <i class="fas fa-archive"></i>
                         <span>Historique</span>
                     </a>
+                    <a href="/Pages/Admin/PromoCodes.aspx" class="nav-item">
+                        <i class="fas fa-ticket-alt"></i>
+                        <span>Codes Promo</span>
+                    </a>
                     
                     <div style="margin-top: auto; border-top: 1px dashed #cbd5e1; padding-top: 1rem;">
                         <a href="/" class="nav-item">
