@@ -28,6 +28,9 @@ namespace Ecommerce.Pages.Admin
         protected global::System.Web.UI.WebControls.Label lblError;
         protected global::System.Web.UI.WebControls.Label lblSuccess;
         protected global::System.Web.UI.WebControls.RequiredFieldValidator rfvName;
+        protected global::System.Web.UI.WebControls.TextBox txtSearch;
+        protected global::System.Web.UI.WebControls.LinkButton btnSearch;
+        protected global::System.Web.UI.WebControls.LinkButton btnClear;
 
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -37,12 +40,32 @@ namespace Ecommerce.Pages.Admin
             }
         }
 
-        private void LoadCategories()
+        private void LoadCategories(string searchTerm = "")
         {
             try
             {
                 DbContext db = new DbContext();
-                DataTable dt = db.ExecuteQuery("SELECT * FROM Categories ORDER BY DisplayOrder ASC, Name ASC");
+                string query = "SELECT * FROM Categories";
+                
+                if (!string.IsNullOrEmpty(searchTerm))
+                {
+                    query += " WHERE Name LIKE @Search OR Description LIKE @Search";
+                }
+                
+                query += " ORDER BY DisplayOrder ASC, Name ASC";
+                
+                DataTable dt;
+                if (!string.IsNullOrEmpty(searchTerm))
+                {
+                    dt = db.ExecuteQuery(query, new SqlParameter[] { 
+                        new SqlParameter("@Search", "%" + searchTerm + "%") 
+                    });
+                }
+                else
+                {
+                    dt = db.ExecuteQuery(query);
+                }
+                
                 gvCategories.DataSource = dt;
                 gvCategories.DataBind();
             }
@@ -51,6 +74,27 @@ namespace Ecommerce.Pages.Admin
                 lblError.Text = "Erreur lors du chargement: " + ex.Message;
                 lblError.Visible = true;
             }
+        }
+
+        protected void btnSearch_Click(object sender, EventArgs e)
+        {
+            string searchTerm = txtSearch.Text.Trim();
+            LoadCategories(searchTerm);
+            btnClear.Visible = !string.IsNullOrEmpty(searchTerm);
+        }
+
+        protected void btnClear_Click(object sender, EventArgs e)
+        {
+            txtSearch.Text = "";
+            LoadCategories();
+            btnClear.Visible = false;
+        }
+
+        protected void gvCategories_PageIndexChanging(object sender, GridViewPageEventArgs e)
+        {
+            gvCategories.PageIndex = e.NewPageIndex;
+            string searchTerm = txtSearch.Text.Trim();
+            LoadCategories(searchTerm);
         }
 
         protected void btnAddNew_Click(object sender, EventArgs e)
@@ -160,7 +204,8 @@ namespace Ecommerce.Pages.Admin
 
                 // Recharger la liste après un court délai
                 System.Threading.Thread.Sleep(500);
-                LoadCategories();
+                string searchTerm = txtSearch != null ? txtSearch.Text.Trim() : "";
+                LoadCategories(searchTerm);
                 
                 pnlEdit.Visible = false;
                 pnlList.Visible = true;
@@ -180,35 +225,38 @@ namespace Ecommerce.Pages.Admin
                 string id = e.CommandArgument.ToString();
                 LoadCategoryForEdit(id);
             }
-            else if (e.CommandName == "DeleteCat")
+            else if (e.CommandName == "ToggleActive")
             {
                 string id = e.CommandArgument.ToString();
                 try
                 {
                     DbContext db = new DbContext();
-                    
-                    // Vérifier si la catégorie est utilisée par des produits
-                    object productCount = db.ExecuteScalar("SELECT COUNT(*) FROM Products WHERE CategoryId = @CatId", 
-                        new SqlParameter[] { new SqlParameter("@CatId", id) });
-                    
-                    if (Convert.ToInt32(productCount) > 0)
-                    {
-                        lblError.Text = "Impossible de supprimer cette catégorie car elle est utilisée par " + productCount + " produit(s).";
-                        lblError.Visible = true;
-                        return;
-                    }
-
-                    // Supprimer la catégorie
-                    db.ExecuteNonQuery("DELETE FROM Categories WHERE Id = @Id", 
+                    // Récupérer le statut actuel
+                    DataTable dt = db.ExecuteQuery("SELECT IsActive FROM Categories WHERE Id = @Id", 
                         new SqlParameter[] { new SqlParameter("@Id", id) });
                     
-                    lblSuccess.Text = "Catégorie supprimée avec succès!";
-                    lblSuccess.Visible = true;
-                    LoadCategories();
+                    if (dt.Rows.Count > 0)
+                    {
+                        bool currentStatus = Convert.ToBoolean(dt.Rows[0]["IsActive"]);
+                        bool newStatus = !currentStatus;
+                        
+                        // Mettre à jour le statut
+                        db.ExecuteNonQuery("UPDATE Categories SET IsActive = @IsActive WHERE Id = @Id", 
+                            new SqlParameter[] { 
+                                new SqlParameter("@IsActive", newStatus),
+                                new SqlParameter("@Id", id)
+                            });
+                        
+                        string statusText = newStatus ? "activée" : "désactivée";
+                        lblSuccess.Text = "Catégorie " + statusText + " avec succès!";
+                        lblSuccess.Visible = true;
+                        string searchTerm = txtSearch != null ? txtSearch.Text.Trim() : "";
+                        LoadCategories(searchTerm);
+                    }
                 }
                 catch (Exception ex)
                 {
-                    lblError.Text = "Erreur lors de la suppression: " + ex.Message;
+                    lblError.Text = "Erreur lors de la modification: " + ex.Message;
                     lblError.Visible = true;
                 }
             }
@@ -297,6 +345,50 @@ namespace Ecommerce.Pages.Admin
                 bool.TryParse(isActive.ToString(), out active);
             }
             return active ? "Actif" : "Inactif";
+        }
+
+        // Méthode helper pour obtenir la classe CSS du bouton toggle
+        protected string GetToggleButtonClass(object isActive)
+        {
+            bool active = false;
+            if (isActive != null && isActive != DBNull.Value)
+            {
+                bool.TryParse(isActive.ToString(), out active);
+            }
+            return active ? "action-btn toggle" : "action-btn activate";
+        }
+
+        // Méthode helper pour obtenir le message de confirmation
+        protected string GetToggleConfirmMessage(object isActive)
+        {
+            bool active = false;
+            if (isActive != null && isActive != DBNull.Value)
+            {
+                bool.TryParse(isActive.ToString(), out active);
+            }
+            return active ? "return confirm(\"Êtes-vous sûr de vouloir désactiver cette catégorie ?\");" : "return confirm(\"Êtes-vous sûr de vouloir activer cette catégorie ?\");";
+        }
+
+        // Méthode helper pour obtenir l'icône du bouton toggle
+        protected string GetToggleIcon(object isActive)
+        {
+            bool active = false;
+            if (isActive != null && isActive != DBNull.Value)
+            {
+                bool.TryParse(isActive.ToString(), out active);
+            }
+            return active ? "fas fa-ban" : "fas fa-check";
+        }
+
+        // Méthode helper pour obtenir le texte du bouton toggle
+        protected string GetToggleButtonText(object isActive)
+        {
+            bool active = false;
+            if (isActive != null && isActive != DBNull.Value)
+            {
+                bool.TryParse(isActive.ToString(), out active);
+            }
+            return active ? "Désactiver" : "Activer";
         }
     }
 }

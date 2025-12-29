@@ -29,6 +29,9 @@ namespace Ecommerce.Pages.Admin
         protected global::System.Web.UI.WebControls.Literal litAdminReviewText;
         protected global::System.Web.UI.HtmlControls.HtmlGenericControl lblAdminReviewDate;
         protected global::System.Web.UI.WebControls.Label lblNoReview;
+        protected global::System.Web.UI.WebControls.TextBox txtSearch;
+        protected global::System.Web.UI.WebControls.LinkButton btnSearch;
+        protected global::System.Web.UI.WebControls.LinkButton btnClear;
 
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -38,21 +41,59 @@ namespace Ecommerce.Pages.Admin
             }
         }
 
-        private void LoadOrders()
+        private void LoadOrders(string searchTerm = "")
         {
             DbContext db = new DbContext();
             // Handle case where IsArchived column might not exist yet
             string query = @"
-                SELECT O.Id, O.OrderDate, O.TotalAmount, O.Status, U.FullName 
+                SELECT O.Id, O.OrderNumber, O.OrderDate, O.TotalAmount, O.Status, U.FullName 
                 FROM Orders O 
                 INNER JOIN Users U ON O.UserId = U.Id 
                 WHERE (O.IsArchived IS NULL OR O.IsArchived = 0)
-                AND O.Status NOT IN ('Delivered', 'Cancelled')
-                ORDER BY O.OrderDate DESC";
+                AND O.Status NOT IN ('Delivered', 'Cancelled')";
             
-            DataTable dt = db.ExecuteQuery(query);
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                query += " AND (U.FullName LIKE @Search OR O.OrderNumber LIKE @Search)";
+            }
+            
+            query += " ORDER BY O.OrderDate DESC";
+            
+            DataTable dt;
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                dt = db.ExecuteQuery(query, new SqlParameter[] { 
+                    new SqlParameter("@Search", "%" + searchTerm + "%") 
+                });
+            }
+            else
+            {
+                dt = db.ExecuteQuery(query);
+            }
+            
             gvOrders.DataSource = dt;
             gvOrders.DataBind();
+        }
+
+        protected void btnSearch_Click(object sender, EventArgs e)
+        {
+            string searchTerm = txtSearch.Text.Trim();
+            LoadOrders(searchTerm);
+            btnClear.Visible = !string.IsNullOrEmpty(searchTerm);
+        }
+
+        protected void btnClear_Click(object sender, EventArgs e)
+        {
+            txtSearch.Text = "";
+            LoadOrders();
+            btnClear.Visible = false;
+        }
+
+        protected void gvOrders_PageIndexChanging(object sender, GridViewPageEventArgs e)
+        {
+            gvOrders.PageIndex = e.NewPageIndex;
+            string searchTerm = txtSearch.Text.Trim();
+            LoadOrders(searchTerm);
         }
 
 
@@ -271,7 +312,8 @@ namespace Ecommerce.Pages.Admin
                 }
             }
 
-            LoadOrders();
+            string searchTerm = txtSearch != null ? txtSearch.Text.Trim() : "";
+            LoadOrders(searchTerm);
             pnlDetails.Visible = false;
             pnlList.Visible = true;
         }

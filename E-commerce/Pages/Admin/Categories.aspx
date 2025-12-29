@@ -123,6 +123,30 @@
                 box-shadow: 0 4px 8px rgba(239, 68, 68, 0.2);
             }
 
+            .action-btn.toggle {
+                background: rgba(245, 158, 11, 0.15);
+                color: #d97706;
+                border: 1px solid rgba(245, 158, 11, 0.25);
+            }
+
+            .action-btn.toggle:hover {
+                background: rgba(245, 158, 11, 0.25);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(245, 158, 11, 0.2);
+            }
+
+            .action-btn.activate {
+                background: rgba(16, 185, 129, 0.15);
+                color: #059669;
+                border: 1px solid rgba(16, 185, 129, 0.25);
+            }
+
+            .action-btn.activate:hover {
+                background: rgba(16, 185, 129, 0.25);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(16, 185, 129, 0.2);
+            }
+
             .form-container {
                 background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
                 border: 1px solid #e2e8f0;
@@ -222,6 +246,83 @@
                 background: rgba(148, 163, 184, 0.15);
                 color: #64748b;
             }
+
+            .search-filter-container {
+                background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+                border: 1px solid #e2e8f0;
+                border-radius: 12px;
+                padding: 1.5rem;
+                margin-bottom: 1.5rem;
+                display: flex;
+                gap: 1rem;
+                align-items: center;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            }
+
+            .search-filter-container .search-input {
+                flex: 1;
+                padding: 0.75rem 1rem;
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+                font-size: 0.95rem;
+                transition: all 0.3s ease;
+            }
+
+            .search-filter-container .search-input:focus {
+                outline: none;
+                border-color: #3b82f6;
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            }
+
+            .search-filter-container .search-btn {
+                padding: 0.75rem 1.5rem;
+                background: #3b82f6;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                font-weight: 600;
+                transition: all 0.3s ease;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+            .search-filter-container .search-btn:hover {
+                background: #2563eb;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+            }
+
+            .pager {
+                margin-top: 1rem;
+                padding: 1rem;
+                background: #f8fafc;
+                border-radius: 8px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+            .pager a, .pager span {
+                padding: 0.5rem 1rem;
+                border-radius: 6px;
+                text-decoration: none;
+                color: #475569;
+                font-weight: 500;
+                transition: all 0.2s ease;
+            }
+
+            .pager a:hover {
+                background: #e2e8f0;
+                color: #1e293b;
+            }
+
+            .pager .pager-current {
+                background: #3b82f6;
+                color: white;
+            }
         </style>
     </asp:Content>
     <asp:Content ID="Content2" ContentPlaceHolderID="MainContent" runat="server">
@@ -237,9 +338,22 @@
         </div>
 
         <asp:Panel ID="pnlList" runat="server">
+            <div class="search-filter-container">
+                <asp:TextBox ID="txtSearch" runat="server" CssClass="search-input" placeholder="Rechercher par nom, description..." />
+                <asp:LinkButton ID="btnSearch" runat="server" CssClass="search-btn" OnClick="btnSearch_Click">
+                    <i class="fas fa-search"></i>
+                    <span>Rechercher</span>
+                </asp:LinkButton>
+                <asp:LinkButton ID="btnClear" runat="server" CssClass="search-btn" OnClick="btnClear_Click" 
+                    style="background: #64748b;" Visible="false">
+                    <i class="fas fa-times"></i>
+                    <span>Effacer</span>
+                </asp:LinkButton>
+            </div>
             <div class="categories-table-container">
                 <asp:GridView ID="gvCategories" runat="server" CssClass="grid-view" AutoGenerateColumns="False"
-                    OnRowCommand="gvCategories_RowCommand" GridLines="None" DataKeyNames="Id">
+                    OnRowCommand="gvCategories_RowCommand" OnPageIndexChanging="gvCategories_PageIndexChanging"
+                    GridLines="None" DataKeyNames="Id" AllowPaging="true" PageSize="10" PagerStyle-CssClass="pager">
                     <Columns>
                         <asp:TemplateField HeaderText="Image">
                             <ItemTemplate>
@@ -257,7 +371,7 @@
                         </asp:TemplateField>
                         <asp:TemplateField HeaderText="Statut">
                             <ItemTemplate>
-                                <span class="status-badge <%# GetStatusClass(Eval(" IsActive")) %>">
+                                <span class="status-badge <%# GetStatusClass(Eval("IsActive")) %>">
                                     <%# GetStatusText(Eval("IsActive")) %>
                                 </span>
                             </ItemTemplate>
@@ -271,11 +385,12 @@
                                         <i class="fas fa-edit"></i>
                                         <span>Modifier</span>
                                     </asp:LinkButton>
-                                    <asp:LinkButton ID="btnDelete" runat="server" CommandName="DeleteCat"
-                                        CommandArgument='<%# Eval("Id") %>' CssClass="action-btn delete"
-                                        OnClientClick="return confirm('Êtes-vous sûr de vouloir supprimer cette catégorie ?');">
-                                        <i class="fas fa-trash"></i>
-                                        <span>Supprimer</span>
+                                    <asp:LinkButton ID="btnToggle" runat="server" CommandName="ToggleActive"
+                                        CommandArgument='<%# Eval("Id") %>' 
+                                        CssClass='<%# GetToggleButtonClass(Eval("IsActive")) %>'
+                                        OnClientClick='<%# GetToggleConfirmMessage(Eval("IsActive")) %>'>
+                                        <i class='<%# GetToggleIcon(Eval("IsActive")) %>'></i>
+                                        <span><%# GetToggleButtonText(Eval("IsActive")) %></span>
                                     </asp:LinkButton>
                                 </div>
                             </ItemTemplate>

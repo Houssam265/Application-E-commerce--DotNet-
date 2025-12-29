@@ -34,6 +34,9 @@ namespace Ecommerce.Pages.Admin
         protected global::System.Web.UI.WebControls.RequiredFieldValidator rfvEndDate;
         protected global::System.Web.UI.WebControls.Label lblDiscountHint;
         protected global::System.Web.UI.HtmlControls.HtmlGenericControl maxDiscountLabel;
+        protected global::System.Web.UI.WebControls.TextBox txtSearch;
+        protected global::System.Web.UI.WebControls.LinkButton btnSearch;
+        protected global::System.Web.UI.WebControls.LinkButton btnClear;
 
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -52,14 +55,32 @@ namespace Ecommerce.Pages.Admin
             txtEndDate.Text = DateTime.Now.AddDays(30).ToString("yyyy-MM-ddTHH:mm");
         }
 
-        private void LoadPromoCodes()
+        private void LoadPromoCodes(string searchTerm = "")
         {
             try
             {
                 DbContext db = new DbContext();
-                // Load active coupons first, then inactive ones (sorted by IsActive DESC, then by CreatedAt DESC)
-                DataTable dt = db.ExecuteQuery(@"SELECT * FROM Coupons 
-                                                ORDER BY IsActive DESC, CreatedAt DESC");
+                string query = "SELECT * FROM Coupons";
+                
+                if (!string.IsNullOrEmpty(searchTerm))
+                {
+                    query += " WHERE Code LIKE @Search";
+                }
+                
+                query += " ORDER BY IsActive DESC, CreatedAt DESC";
+                
+                DataTable dt;
+                if (!string.IsNullOrEmpty(searchTerm))
+                {
+                    dt = db.ExecuteQuery(query, new SqlParameter[] { 
+                        new SqlParameter("@Search", "%" + searchTerm + "%") 
+                    });
+                }
+                else
+                {
+                    dt = db.ExecuteQuery(query);
+                }
+                
                 gvPromoCodes.DataSource = dt;
                 gvPromoCodes.DataBind();
             }
@@ -68,6 +89,27 @@ namespace Ecommerce.Pages.Admin
                 lblError.Text = "Erreur lors du chargement: " + ex.Message;
                 lblError.Visible = true;
             }
+        }
+
+        protected void btnSearch_Click(object sender, EventArgs e)
+        {
+            string searchTerm = txtSearch.Text.Trim();
+            LoadPromoCodes(searchTerm);
+            btnClear.Visible = !string.IsNullOrEmpty(searchTerm);
+        }
+
+        protected void btnClear_Click(object sender, EventArgs e)
+        {
+            txtSearch.Text = "";
+            LoadPromoCodes();
+            btnClear.Visible = false;
+        }
+
+        protected void gvPromoCodes_PageIndexChanging(object sender, GridViewPageEventArgs e)
+        {
+            gvPromoCodes.PageIndex = e.NewPageIndex;
+            string searchTerm = txtSearch.Text.Trim();
+            LoadPromoCodes(searchTerm);
         }
 
         protected void btnAddNew_Click(object sender, EventArgs e)
@@ -245,7 +287,8 @@ namespace Ecommerce.Pages.Admin
 
                 // Recharger la liste après un court délai
                 System.Threading.Thread.Sleep(500);
-                LoadPromoCodes();
+                string searchTerm = txtSearch != null ? txtSearch.Text.Trim() : "";
+                LoadPromoCodes(searchTerm);
 
                 pnlEdit.Visible = false;
                 pnlList.Visible = true;
@@ -356,7 +399,8 @@ namespace Ecommerce.Pages.Admin
 
                     lblSuccess.Text = $"Code promo {(newStatus ? "activé" : "désactivé")} avec succès!";
                     lblSuccess.Visible = true;
-                    LoadPromoCodes();
+                    string searchTerm = txtSearch != null ? txtSearch.Text.Trim() : "";
+                    LoadPromoCodes(searchTerm);
                 }
             }
             catch (Exception ex)
@@ -389,7 +433,8 @@ namespace Ecommerce.Pages.Admin
 
                 lblSuccess.Text = "Code promo supprimé avec succès!";
                 lblSuccess.Visible = true;
-                LoadPromoCodes();
+                string searchTerm = txtSearch != null ? txtSearch.Text.Trim() : "";
+                LoadPromoCodes(searchTerm);
             }
             catch (Exception ex)
             {

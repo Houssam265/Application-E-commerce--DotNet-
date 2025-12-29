@@ -11,6 +11,9 @@ namespace Ecommerce.Pages.Admin
     public partial class Users : Page
     {
         protected global::System.Web.UI.WebControls.GridView gvUsers;
+        protected global::System.Web.UI.WebControls.TextBox txtSearch;
+        protected global::System.Web.UI.WebControls.LinkButton btnSearch;
+        protected global::System.Web.UI.WebControls.LinkButton btnClear;
 
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -20,12 +23,53 @@ namespace Ecommerce.Pages.Admin
             }
         }
 
-        private void LoadUsers()
+        private void LoadUsers(string searchTerm = "")
         {
             DbContext db = new DbContext();
-            DataTable dt = db.ExecuteQuery("SELECT Id, FullName, Email, Role, CreatedAt, IsActive FROM Users ORDER BY CreatedAt DESC");
+            string query = "SELECT Id, FullName, Email, Role, CreatedAt, IsActive FROM Users";
+            
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                query += " WHERE FullName LIKE @Search OR Email LIKE @Search";
+            }
+            
+            query += " ORDER BY CreatedAt DESC";
+            
+            DataTable dt;
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                dt = db.ExecuteQuery(query, new SqlParameter[] { 
+                    new SqlParameter("@Search", "%" + searchTerm + "%") 
+                });
+            }
+            else
+            {
+                dt = db.ExecuteQuery(query);
+            }
+            
             gvUsers.DataSource = dt;
             gvUsers.DataBind();
+        }
+
+        protected void btnSearch_Click(object sender, EventArgs e)
+        {
+            string searchTerm = txtSearch.Text.Trim();
+            LoadUsers(searchTerm);
+            btnClear.Visible = !string.IsNullOrEmpty(searchTerm);
+        }
+
+        protected void btnClear_Click(object sender, EventArgs e)
+        {
+            txtSearch.Text = "";
+            LoadUsers();
+            btnClear.Visible = false;
+        }
+
+        protected void gvUsers_PageIndexChanging(object sender, GridViewPageEventArgs e)
+        {
+            gvUsers.PageIndex = e.NewPageIndex;
+            string searchTerm = txtSearch.Text.Trim();
+            LoadUsers(searchTerm);
         }
 
         protected void gvUsers_RowCommand(object sender, GridViewCommandEventArgs e)
@@ -74,7 +118,8 @@ namespace Ecommerce.Pages.Admin
                     // Log error but don't prevent the status update
                 }
                 
-                LoadUsers();
+                string searchTerm = txtSearch != null ? txtSearch.Text.Trim() : "";
+                LoadUsers(searchTerm);
             }
         }
 

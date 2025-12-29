@@ -124,6 +124,83 @@
                 text-align: center;
                 color: #64748b;
             }
+
+            .search-filter-container {
+                background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+                border: 1px solid #e2e8f0;
+                border-radius: 12px;
+                padding: 1.5rem;
+                margin-bottom: 1.5rem;
+                display: flex;
+                gap: 1rem;
+                align-items: center;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            }
+
+            .search-filter-container .search-input {
+                flex: 1;
+                padding: 0.75rem 1rem;
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+                font-size: 0.95rem;
+                transition: all 0.3s ease;
+            }
+
+            .search-filter-container .search-input:focus {
+                outline: none;
+                border-color: #3b82f6;
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            }
+
+            .search-filter-container .search-btn {
+                padding: 0.75rem 1.5rem;
+                background: #3b82f6;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                font-weight: 600;
+                transition: all 0.3s ease;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+            .search-filter-container .search-btn:hover {
+                background: #2563eb;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+            }
+
+            .pager {
+                margin-top: 1rem;
+                padding: 1rem;
+                background: #f8fafc;
+                border-radius: 8px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+            .pager a, .pager span {
+                padding: 0.5rem 1rem;
+                border-radius: 6px;
+                text-decoration: none;
+                color: #475569;
+                font-weight: 500;
+                transition: all 0.2s ease;
+            }
+
+            .pager a:hover {
+                background: #e2e8f0;
+                color: #1e293b;
+            }
+
+            .pager .pager-current {
+                background: #3b82f6;
+                color: white;
+            }
         </style>
     </asp:Content>
     <asp:Content ID="Content2" ContentPlaceHolderID="MainContent" runat="server">
@@ -134,9 +211,22 @@
             </div>
         </div>
 
+        <div class="search-filter-container">
+            <asp:TextBox ID="txtSearch" runat="server" CssClass="search-input" placeholder="Rechercher par nom, email..." />
+            <asp:LinkButton ID="btnSearch" runat="server" CssClass="search-btn" OnClick="btnSearch_Click">
+                <i class="fas fa-search"></i>
+                <span>Rechercher</span>
+            </asp:LinkButton>
+            <asp:LinkButton ID="btnClear" runat="server" CssClass="search-btn" OnClick="btnClear_Click" 
+                style="background: #64748b;" Visible="false">
+                <i class="fas fa-times"></i>
+                <span>Effacer</span>
+            </asp:LinkButton>
+        </div>
         <div class="users-table-container">
             <asp:GridView ID="gvUsers" runat="server" CssClass="grid-view" AutoGenerateColumns="False" 
-                GridLines="None" OnRowCommand="gvUsers_RowCommand" DataKeyNames="Id">
+                GridLines="None" OnRowCommand="gvUsers_RowCommand" OnPageIndexChanging="gvUsers_PageIndexChanging"
+                DataKeyNames="Id" AllowPaging="true" PageSize="10" PagerStyle-CssClass="pager">
                 <Columns>
                     <asp:BoundField DataField="Id" HeaderText="#" />
                     <asp:BoundField DataField="FullName" HeaderText="Nom" />

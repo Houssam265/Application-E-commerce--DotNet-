@@ -31,6 +31,10 @@ namespace Ecommerce.Pages.Admin
         protected global::System.Web.UI.HtmlControls.HtmlGenericControl imagesGrid;
         protected global::System.Web.UI.WebControls.Label lblNoImages;
 
+        protected global::System.Web.UI.WebControls.TextBox txtSearch;
+        protected global::System.Web.UI.WebControls.LinkButton btnSearch;
+        protected global::System.Web.UI.WebControls.LinkButton btnClear;
+
         protected void Page_Load(object sender, EventArgs e)
         {
             if (!IsPostBack)
@@ -40,12 +44,53 @@ namespace Ecommerce.Pages.Admin
             }
         }
 
-        private void LoadProducts()
+        private void LoadProducts(string searchTerm = "")
         {
             DbContext db = new DbContext();
-            DataTable dt = db.ExecuteQuery("SELECT * FROM Products WHERE IsActive = 1 ORDER BY CreatedAt DESC");
+            string query = "SELECT * FROM Products";
+            
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                query += " WHERE Name LIKE @Search OR Description LIKE @Search";
+            }
+            
+            query += " ORDER BY CreatedAt DESC";
+            
+            DataTable dt;
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                dt = db.ExecuteQuery(query, new SqlParameter[] { 
+                    new SqlParameter("@Search", "%" + searchTerm + "%") 
+                });
+            }
+            else
+            {
+                dt = db.ExecuteQuery(query);
+            }
+            
             gvProducts.DataSource = dt;
             gvProducts.DataBind();
+        }
+
+        protected void btnSearch_Click(object sender, EventArgs e)
+        {
+            string searchTerm = txtSearch.Text.Trim();
+            LoadProducts(searchTerm);
+            btnClear.Visible = !string.IsNullOrEmpty(searchTerm);
+        }
+
+        protected void btnClear_Click(object sender, EventArgs e)
+        {
+            txtSearch.Text = "";
+            LoadProducts();
+            btnClear.Visible = false;
+        }
+
+        protected void gvProducts_PageIndexChanging(object sender, GridViewPageEventArgs e)
+        {
+            gvProducts.PageIndex = e.NewPageIndex;
+            string searchTerm = txtSearch.Text.Trim();
+            LoadProducts(searchTerm);
         }
 
         private void LoadCategories()
@@ -221,7 +266,8 @@ namespace Ecommerce.Pages.Admin
                 pnlEdit.Visible = false;
                 pnlList.Visible = true;
                 btnAddNew.Visible = true;
-                LoadProducts(); 
+                string searchTerm = txtSearch != null ? txtSearch.Text.Trim() : "";
+                LoadProducts(searchTerm); 
             }
             catch (Exception ex)
             {
@@ -237,12 +283,36 @@ namespace Ecommerce.Pages.Admin
                 string id = e.CommandArgument.ToString();
                 LoadProductForEdit(id);
             }
-            else if (e.CommandName == "DeleteProd")
+            else if (e.CommandName == "ToggleActive")
             {
                 string id = e.CommandArgument.ToString();
-                DbContext db = new DbContext();
-                db.ExecuteNonQuery("UPDATE Products SET IsActive = 0 WHERE Id = " + id);
-                LoadProducts();
+                try
+                {
+                    DbContext db = new DbContext();
+                    // Récupérer le statut actuel
+                    DataTable dt = db.ExecuteQuery("SELECT IsActive FROM Products WHERE Id = @Id", 
+                        new SqlParameter[] { new SqlParameter("@Id", id) });
+                    
+                    if (dt.Rows.Count > 0)
+                    {
+                        bool currentStatus = Convert.ToBoolean(dt.Rows[0]["IsActive"]);
+                        bool newStatus = !currentStatus;
+                        
+                        // Mettre à jour le statut
+                        db.ExecuteNonQuery("UPDATE Products SET IsActive = @IsActive WHERE Id = @Id", 
+                            new SqlParameter[] { 
+                                new SqlParameter("@IsActive", newStatus),
+                                new SqlParameter("@Id", id)
+                            });
+                        
+                        string searchTerm = txtSearch != null ? txtSearch.Text.Trim() : "";
+                        LoadProducts(searchTerm);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Gérer l'erreur si nécessaire
+                }
             }
         }
 
@@ -430,6 +500,72 @@ namespace Ecommerce.Pages.Admin
             {
                 return ResolveUrl("~/Assets/Images/placeholder.svg");
             }
+        }
+
+        // Méthode helper pour obtenir la classe CSS du statut
+        protected string GetStatusClass(object isActive)
+        {
+            bool active = false;
+            if (isActive != null && isActive != DBNull.Value)
+            {
+                bool.TryParse(isActive.ToString(), out active);
+            }
+            return active ? "active" : "inactive";
+        }
+
+        // Méthode helper pour obtenir le texte du statut
+        protected string GetStatusText(object isActive)
+        {
+            bool active = false;
+            if (isActive != null && isActive != DBNull.Value)
+            {
+                bool.TryParse(isActive.ToString(), out active);
+            }
+            return active ? "Actif" : "Inactif";
+        }
+
+        // Méthode helper pour obtenir la classe CSS du bouton toggle
+        protected string GetToggleButtonClass(object isActive)
+        {
+            bool active = false;
+            if (isActive != null && isActive != DBNull.Value)
+            {
+                bool.TryParse(isActive.ToString(), out active);
+            }
+            return active ? "action-btn toggle" : "action-btn activate";
+        }
+
+        // Méthode helper pour obtenir le message de confirmation
+        protected string GetToggleConfirmMessage(object isActive)
+        {
+            bool active = false;
+            if (isActive != null && isActive != DBNull.Value)
+            {
+                bool.TryParse(isActive.ToString(), out active);
+            }
+            return active ? "return confirm(\"Êtes-vous sûr de vouloir désactiver ce produit ?\");" : "return confirm(\"Êtes-vous sûr de vouloir activer ce produit ?\");";
+        }
+
+        // Méthode helper pour obtenir l'icône du bouton toggle
+        protected string GetToggleIcon(object isActive)
+        {
+            bool active = false;
+            if (isActive != null && isActive != DBNull.Value)
+            {
+                bool.TryParse(isActive.ToString(), out active);
+            }
+            return active ? "fas fa-ban" : "fas fa-check";
+        }
+
+        // Méthode helper pour obtenir le texte du bouton toggle
+        protected string GetToggleButtonText(object isActive)
+        {
+            bool active = false;
+            if (isActive != null && isActive != DBNull.Value)
+            {
+                bool.TryParse(isActive.ToString(), out active);
+            }
+            return active ? "Désactiver" : "Activer";
         }
     }
 }
