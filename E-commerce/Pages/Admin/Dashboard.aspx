@@ -364,6 +364,11 @@
         <asp:HiddenField ID="hfTopProducts" runat="server" />
 
         <script>
+            // Wait for Chart.js to be loaded
+            if (typeof Chart === 'undefined') {
+                console.error('Chart.js is not loaded');
+            }
+
             // Chart configuration
             const chartColors = {
                 primary: '#6366f1',
@@ -397,104 +402,202 @@
                 }
             };
 
-            // Sales Line Chart - Données réelles
-            const salesData = JSON.parse(document.getElementById('<%= hfSalesData.ClientID %>').value || '[0,0,0,0,0,0,0]');
-            const dayLabels = [];
-            const today = new Date();
-            for (let i = 6; i >= 0; i--) {
-                const date = new Date(today);
-                date.setDate(date.getDate() - i);
-                const dayNames = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
-                dayLabels.push(dayNames[date.getDay()]);
+            // Initialize charts when page is loaded
+            document.addEventListener('DOMContentLoaded', function() {
+                initializeCharts();
+            });
+
+            // Also try to initialize if DOMContentLoaded already fired
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initializeCharts);
+            } else {
+                initializeCharts();
             }
-            
-            new Chart(document.getElementById('salesChart'), {
-                type: 'line',
-                data: {
-                    labels: dayLabels,
-                    datasets: [{
-                        label: 'Ventes (MAD)',
-                        data: salesData,
-                        borderColor: chartColors.primary,
-                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                        tension: 0.4,
-                        fill: true,
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    ...chartDefaults,
-                    plugins: {
-                        ...chartDefaults.plugins,
-                        tooltip: {
-                            callbacks: {
-                                label: (context) => context.parsed.y + ' MAD'
+
+            function initializeCharts() {
+                // Sales Line Chart - Données réelles
+                try {
+                    const salesDataElement = document.getElementById('<%= hfSalesData.ClientID %>');
+                    let salesData = [0,0,0,0,0,0,0];
+                    
+                    if (salesDataElement && salesDataElement.value) {
+                        try {
+                            salesData = JSON.parse(salesDataElement.value);
+                            console.log('Sales Data loaded:', salesData);
+                        } catch (parseError) {
+                            console.error('Error parsing sales data:', parseError);
+                            console.log('Raw sales value:', salesDataElement.value);
+                        }
+                    } else {
+                        console.warn('Sales data element not found or empty');
+                    }
+                    
+                    const dayLabels = [];
+                    const today = new Date();
+                    for (let i = 6; i >= 0; i--) {
+                        const date = new Date(today);
+                        date.setDate(date.getDate() - i);
+                        const dayNames = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+                        dayLabels.push(dayNames[date.getDay()] + ' ' + date.getDate());
+                    }
+                    
+                    const salesCtx = document.getElementById('salesChart');
+                    if (salesCtx && typeof Chart !== 'undefined') {
+                        new Chart(salesCtx, {
+                            type: 'line',
+                            data: {
+                                labels: dayLabels,
+                                datasets: [{
+                                    label: 'Ventes (MAD)',
+                                    data: salesData,
+                                    borderColor: chartColors.primary,
+                                    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                                    tension: 0.4,
+                                    fill: true,
+                                    borderWidth: 3,
+                                    pointRadius: 5,
+                                    pointHoverRadius: 7,
+                                    pointBackgroundColor: chartColors.primary,
+                                    pointBorderColor: '#ffffff',
+                                    pointBorderWidth: 2
+                                }]
+                            },
+                            options: {
+                                ...chartDefaults,
+                                plugins: {
+                                    ...chartDefaults.plugins,
+                                    tooltip: {
+                                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                        padding: 12,
+                                        titleFont: { size: 14, weight: 'bold' },
+                                        bodyFont: { size: 13 },
+                                        callbacks: {
+                                            label: (context) => context.parsed.y.toFixed(2) + ' MAD'
+                                        }
+                                    }
+                                }
                             }
+                        });
+                        console.log('Sales chart initialized successfully');
+                    } else {
+                        console.error('Sales chart canvas not found or Chart.js not loaded');
+                    }
+                } catch (e) {
+                    console.error('Error initializing sales chart:', e);
+                }
+
+                // Orders Doughnut Chart - Données réelles
+                try {
+                    const ordersElement = document.getElementById('<%= hfOrdersByStatus.ClientID %>');
+                    const ordersByStatus = ordersElement ? JSON.parse(ordersElement.value || '[0,0,0,0]') : [0,0,0,0];
+                    const ordersCtx = document.getElementById('ordersChart');
+                    if (ordersCtx && typeof Chart !== 'undefined') {
+                        new Chart(ordersCtx, {
+                            type: 'doughnut',
+                            data: {
+                                labels: ['En attente', 'Expédié', 'Livré', 'Annulé'],
+                                datasets: [{
+                                    data: ordersByStatus,
+                                    backgroundColor: [
+                                        chartColors.warning,
+                                        chartColors.info,
+                                        chartColors.success,
+                                        chartColors.danger
+                                    ],
+                                    borderWidth: 3,
+                                    borderColor: '#ffffff'
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: {
+                                        position: 'bottom',
+                                        labels: {
+                                            color: '#94a3b8',
+                                            font: { family: 'Inter', size: 12, weight: '500' },
+                                            padding: 15,
+                                            usePointStyle: true
+                                        }
+                                    },
+                                    tooltip: {
+                                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                        padding: 12,
+                                        callbacks: {
+                                            label: function(context) {
+                                                const label = context.label || '';
+                                                const value = context.parsed || 0;
+                                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                                const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                                return label + ': ' + value + ' (' + percentage + '%)';
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    }
+                } catch (e) {
+                    console.error('Error initializing orders chart:', e);
+                }
+
+                // Top Products Bar Chart - Données réelles
+                try {
+                    const productsElement = document.getElementById('<%= hfTopProducts.ClientID %>');
+                    let topProductsData = {"labels":["-","-","-","-","-"],"data":[0,0,0,0,0]};
+                    
+                    if (productsElement && productsElement.value) {
+                        try {
+                            topProductsData = JSON.parse(productsElement.value);
+                        } catch (parseError) {
+                            console.error('Error parsing top products data:', parseError);
+                            console.log('Raw value:', productsElement.value);
                         }
                     }
-                }
-            });
-
-            // Orders Doughnut Chart - Données réelles
-            const ordersByStatus = JSON.parse(document.getElementById('<%= hfOrdersByStatus.ClientID %>').value || '[0,0,0,0]');
-            new Chart(document.getElementById('ordersChart'), {
-                type: 'doughnut',
-                data: {
-                    labels: ['En attente', 'Expédié', 'Livré', 'Annulé'],
-                    datasets: [{
-                        data: ordersByStatus,
-                        backgroundColor: [
-                            chartColors.warning,
-                            chartColors.info,
-                            chartColors.success,
-                            chartColors.danger
-                        ],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                color: '#94a3b8',
-                                font: { family: 'Inter', size: 11 },
-                                padding: 15
+                    
+                    const productsCtx = document.getElementById('productsChart');
+                    if (productsCtx && typeof Chart !== 'undefined') {
+                        new Chart(productsCtx, {
+                            type: 'bar',
+                            data: {
+                                labels: topProductsData.labels || ["-","-","-","-","-"],
+                                datasets: [{
+                                    label: 'Quantité vendue',
+                                    data: topProductsData.data || [0,0,0,0,0],
+                                    backgroundColor: [
+                                        chartColors.primary,
+                                        chartColors.purple,
+                                        chartColors.info,
+                                        chartColors.warning,
+                                        chartColors.success
+                                    ],
+                                    borderRadius: 8,
+                                    borderWidth: 0
+                                }]
+                            },
+                            options: {
+                                ...chartDefaults,
+                                indexAxis: 'y',
+                                plugins: {
+                                    ...chartDefaults.plugins,
+                                    legend: { display: false },
+                                    tooltip: {
+                                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                        padding: 12,
+                                        callbacks: {
+                                            label: (context) => context.parsed.x + ' unité(s) vendue(s)'
+                                        }
+                                    }
+                                }
                             }
-                        }
+                        });
+                    } else {
+                        console.error('productsCtx not found or Chart.js not loaded');
                     }
+                } catch (e) {
+                    console.error('Error initializing products chart:', e);
                 }
-            });
-
-            // Top Products Bar Chart - Données réelles
-            const topProductsData = JSON.parse(document.getElementById('<%= hfTopProducts.ClientID %>').value || '{"labels":["-","-","-","-","-"],"data":[0,0,0,0,0]}');
-            new Chart(document.getElementById('productsChart'), {
-                type: 'bar',
-                data: {
-                    labels: topProductsData.labels,
-                    datasets: [{
-                        label: 'Ventes',
-                        data: topProductsData.data,
-                        backgroundColor: [
-                            chartColors.primary,
-                            chartColors.purple,
-                            chartColors.info,
-                            chartColors.warning,
-                            chartColors.success
-                        ],
-                        borderRadius: 8,
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    ...chartDefaults,
-                    indexAxis: 'y',
-                    plugins: {
-                        legend: { display: false }
-                    }
-                }
-            });
+            }
         </script>
     </asp:Content>

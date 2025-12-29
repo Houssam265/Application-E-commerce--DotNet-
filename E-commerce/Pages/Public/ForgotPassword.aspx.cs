@@ -12,19 +12,21 @@ namespace Ecommerce.Pages.Public
         protected global::System.Web.UI.WebControls.Panel pnlForm;
         protected global::System.Web.UI.WebControls.Panel pnlError;
         protected global::System.Web.UI.WebControls.Panel pnlSuccess;
+        protected global::System.Web.UI.WebControls.Panel pnlVerifyCode;
         protected global::System.Web.UI.WebControls.Literal litError;
         protected global::System.Web.UI.WebControls.Literal litSuccess;
         protected global::System.Web.UI.WebControls.TextBox txtEmail;
+        protected global::System.Web.UI.WebControls.TextBox txtVerificationCode;
         protected global::System.Web.UI.WebControls.Button btnSend;
+        protected global::System.Web.UI.WebControls.Button btnVerifyCode;
+        protected global::System.Web.UI.WebControls.LinkButton btnResendCode;
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            // Check if reset token is provided
-            string token = Request.QueryString["token"];
-            if (!string.IsNullOrEmpty(token))
+            if (!IsPostBack)
             {
-                pnlForm.Visible = false;
-                ShowResetForm(token);
+                pnlForm.Visible = true;
+                pnlVerifyCode.Visible = false;
             }
         }
 
@@ -41,43 +43,48 @@ namespace Ecommerce.Pages.Public
                 }
 
                 DbContext db = new DbContext();
-                string query = "SELECT Id FROM Users WHERE Email = @Email";
+                string query = "SELECT Id, FullName FROM Users WHERE Email = @Email";
                 SqlParameter[] parameters = { new SqlParameter("@Email", email) };
                 DataTable dt = db.ExecuteQuery(query, parameters);
 
                 if (dt.Rows.Count > 0)
                 {
-                    // Generate reset token
-                    string token = SecurityHelper.GenerateSecureToken();
-                    DateTime expiry = DateTime.Now.AddHours(24);
+                    // Generate 6-digit verification code
+                    string verificationCode = SecurityHelper.GenerateNumericCode(6);
+                    DateTime expiry = DateTime.Now.AddMinutes(15); // Code valid for 15 minutes
 
-                    // Save token to database
+                    // Save code to database (using ResetPasswordToken field to store the code)
                     int userId = Convert.ToInt32(dt.Rows[0]["Id"]);
-                    string updateQuery = @"UPDATE Users SET ResetPasswordToken = @Token, ResetPasswordExpiry = @Expiry 
+                    string userName = dt.Rows[0]["FullName"] != DBNull.Value ? dt.Rows[0]["FullName"].ToString() : email;
+                    
+                    string updateQuery = @"UPDATE Users SET ResetPasswordToken = @Code, ResetPasswordExpiry = @Expiry 
                                            WHERE Id = @UserId";
                     SqlParameter[] updateParams = {
-                        new SqlParameter("@Token", token),
+                        new SqlParameter("@Code", verificationCode),
                         new SqlParameter("@Expiry", expiry),
                         new SqlParameter("@UserId", userId)
                     };
                     db.ExecuteNonQuery(updateQuery, updateParams);
 
-                    // In a real application, send email here
-                    // For demo, show the link
-                    string resetUrl = Request.Url.GetLeftPart(UriPartial.Authority) + 
-                                     "/Pages/Public/ForgotPassword.aspx?token=" + token;
+                    // Send email with verification code
+                    string emailSubject = "Code de vérification - Réinitialisation de mot de passe";
+                    string emailBody = EmailTemplates.GetPasswordResetCodeEmailTemplate(userName, verificationCode);
                     
-                    litSuccess.Text = $"Un lien de réinitialisation a été généré. " +
-                                     $"<br/><br/>Pour la démo, utilisez ce lien : " +
-                                     $"<a href='{resetUrl}' style='color: var(--primary-color);'>{resetUrl}</a>" +
-                                     $"<br/><br/><strong>Note:</strong> En production, ce lien serait envoyé par email.";
-                    pnlSuccess.Visible = true;
+                    SecurityHelper.SendEmail(email, emailSubject, emailBody);
+
+                    // Store email in session for verification step
+                    Session["ResetPasswordEmail"] = email;
+                    
+                    // Show verification code form
                     pnlForm.Visible = false;
+                    pnlVerifyCode.Visible = true;
+                    pnlError.Visible = false;
+                    pnlSuccess.Visible = false;
                 }
                 else
                 {
                     // Don't reveal if email exists for security
-                    litSuccess.Text = "Si cet email existe dans notre système, vous recevrez un lien de réinitialisation.";
+                    litSuccess.Text = "Si cet email existe dans notre système, vous recevrez un code de vérification par email.";
                     pnlSuccess.Visible = true;
                     pnlForm.Visible = false;
                 }
@@ -89,11 +96,73 @@ namespace Ecommerce.Pages.Public
             }
         }
 
-        private void ShowResetForm(string token)
+        protected void btnVerifyCode_Click(object sender, EventArgs e)
         {
-            // This would show a form to enter new password
-            // For now, redirect to a reset page
-            Response.Redirect("ResetPassword.aspx?token=" + token);
+            try
+            {
+                string code = txtVerificationCode.Text.Trim();
+                string email = Session["ResetPasswordEmail"]?.ToString();
+
+                if (string.IsNullOrEmpty(code) || code.Length != 6)
+                {
+                    litError.Text = "Veuillez entrer un code de vérification valide (6 chiffres).";
+                    pnlError.Visible = true;
+                    return;
+                }
+
+                if (string.IsNullOrEmpty(email))
+                {
+                    litError.Text = "Session expirée. Veuillez recommencer.";
+                    pnlError.Visible = true;
+                    pnlVerifyCode.Visible = false;
+                    pnlForm.Visible = true;
+                    return;
+                }
+
+                DbContext db = new DbContext();
+                string query = @"SELECT Id FROM Users 
+                                WHERE Email = @Email 
+                                AND ResetPasswordToken = @Code 
+                                AND ResetPasswordExpiry > GETDATE()";
+                SqlParameter[] parameters = {
+                    new SqlParameter("@Email", email),
+                    new SqlParameter("@Code", code)
+                };
+                DataTable dt = db.ExecuteQuery(query, parameters);
+
+                if (dt.Rows.Count > 0)
+                {
+                    // Code is valid, redirect to reset password page
+                    int userId = Convert.ToInt32(dt.Rows[0]["Id"]);
+                    string token = SecurityHelper.GenerateSecureToken();
+                    
+                    // Generate a secure token for password reset
+                    string updateTokenQuery = @"UPDATE Users SET ResetPasswordToken = @Token, ResetPasswordExpiry = DATEADD(HOUR, 1, GETDATE())
+                                               WHERE Id = @UserId";
+                    db.ExecuteNonQuery(updateTokenQuery, new SqlParameter[] {
+                        new SqlParameter("@Token", token),
+                        new SqlParameter("@UserId", userId)
+                    });
+                    
+                    Response.Redirect("ResetPassword.aspx?token=" + Server.UrlEncode(token));
+                }
+                else
+                {
+                    litError.Text = "Code de vérification invalide ou expiré. Veuillez réessayer.";
+                    pnlError.Visible = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                litError.Text = "Erreur: " + Server.HtmlEncode(ex.Message);
+                pnlError.Visible = true;
+            }
+        }
+
+        protected void btnResendCode_Click(object sender, EventArgs e)
+        {
+            // Resend code by calling btnSend_Click logic
+            btnSend_Click(sender, e);
         }
     }
 }

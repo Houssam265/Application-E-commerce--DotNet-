@@ -83,9 +83,8 @@ namespace Ecommerce.Pages.Public
                 };
                 db.ExecuteNonQuery(updateQuery, updateParams);
 
-                pnlForm.Visible = false;
-                litSuccess.Text = "Votre mot de passe a été réinitialisé avec succès ! Vous pouvez maintenant vous connecter.";
-                pnlSuccess.Visible = true;
+                // Redirect to login page after successful password reset
+                Response.Redirect("Login.aspx?reset=success", false);
             }
             catch (Exception ex)
             {

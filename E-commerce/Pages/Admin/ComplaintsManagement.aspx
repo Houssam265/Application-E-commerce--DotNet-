@@ -117,7 +117,7 @@
                     <div class="col-md-3">
                         <label>Priorité</label>
                         <asp:DropDownList ID="ddlPriorityFilter" runat="server" CssClass="form-control"
-                            AutoPostBack="true" OnSelectedIndexChanged="ddlStatusFilter_SelectedIndexChanged">
+                            AutoPostBack="true" OnSelectedIndexChanged="ddlPriorityFilter_SelectedIndexChanged">
                             <asp:ListItem Value="" Text="Toutes les priorités" />
                             <asp:ListItem Value="High" Text="Haute" />
                             <asp:ListItem Value="Medium" Text="Moyenne" />
@@ -127,7 +127,7 @@
                     <div class="col-md-4">
                         <label>Recherche</label>
                         <asp:TextBox ID="txtSearch" runat="server" CssClass="form-control"
-                            Placeholder="Rechercher par sujet ou utilisateur..." />
+                            Placeholder="Rechercher par sujet, nom client, email ou numéro de commande..." />
                     </div>
                     <div class="col-md-2">
                         <asp:Button ID="btnSearch" runat="server" Text="Rechercher" CssClass="btn btn-primary w-100"
@@ -172,11 +172,11 @@
                         </div>
                     </ItemTemplate>
                 </asp:Repeater>
+            </asp:Panel>
 
-                <asp:Panel ID="pnlNoComplaints" runat="server" Visible="false" CssClass="text-center py-5">
-                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                    <p class="text-muted">Aucune réclamation trouvée.</p>
-                </asp:Panel>
+            <asp:Panel ID="pnlNoComplaints" runat="server" Visible="false" CssClass="text-center py-5">
+                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                <p class="text-muted">Aucune réclamation trouvée.</p>
             </asp:Panel>
 
             <asp:Panel ID="pnlDetails" runat="server" Visible="false">

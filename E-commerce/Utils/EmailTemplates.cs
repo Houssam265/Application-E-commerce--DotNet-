@@ -296,6 +296,39 @@ namespace Ecommerce.Utils
         }
 
         /// <summary>
+        /// Generate password reset code email
+        /// </summary>
+        public static string GetPasswordResetCodeEmailTemplate(
+            string userName,
+            string verificationCode)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.Append(GetEmailHeader());
+
+            sb.Append($"<h2>Bonjour {System.Web.HttpUtility.HtmlEncode(userName)},</h2>");
+            sb.Append("<p>Vous avez demandé la réinitialisation de votre mot de passe.</p>");
+
+            sb.Append("<div class='order-box' style='background-color: #f0f9ff; border-color: #93c5fd;'>");
+            sb.Append("<h3 style='color: #1e40af;'>🔐 Code de vérification</h3>");
+            sb.Append($"<p style='font-size: 24px; font-weight: bold; text-align: center; color: #1e40af; letter-spacing: 5px; margin: 20px 0;'>");
+            sb.Append(verificationCode);
+            sb.Append("</p>");
+            sb.Append("</div>");
+
+            sb.Append("<p><strong>Instructions :</strong></p>");
+            sb.Append("<ul style='margin: 15px 0; padding-left: 20px;'>");
+            sb.Append("<li>Ce code est valide pendant <strong>15 minutes</strong></li>");
+            sb.Append("<li>Entrez ce code dans le formulaire de vérification</li>");
+            sb.Append("<li>Vous pourrez ensuite définir un nouveau mot de passe</li>");
+            sb.Append("</ul>");
+
+            sb.Append("<p style='color: #991b1b;'><strong>⚠️ Sécurité :</strong> Ne partagez jamais ce code avec personne. Notre équipe ne vous demandera jamais votre code de vérification.</p>");
+
+            sb.Append(GetEmailFooter());
+            return sb.ToString();
+        }
+
+        /// <summary>
         /// Generate order confirmation email
         /// </summary>
         public static string GetOrderConfirmationEmailTemplate(

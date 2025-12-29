@@ -77,7 +77,7 @@ if (!string.IsNullOrEmpty(ddlPriorityFilter.SelectedValue))
             
             if (!string.IsNullOrEmpty(txtSearch.Text.Trim()))
             {
-                query += " AND (C.Subject LIKE @Search OR C.Description LIKE @Search OR U.FullName LIKE @Search)";
+                query += " AND (C.Subject LIKE @Search OR C.Description LIKE @Search OR U.FullName LIKE @Search OR U.Email LIKE @Search OR O.OrderNumber LIKE @Search)";
                 parameters.Add(new SqlParameter("@Search", "%" + txtSearch.Text.Trim() + "%"));
             }
             
@@ -89,15 +89,24 @@ if (!string.IsNullOrEmpty(ddlPriorityFilter.SelectedValue))
             {
                 rptComplaints.DataSource = dt;
                 rptComplaints.DataBind();
+                pnlList.Visible = true;
                 pnlNoComplaints.Visible = false;
             }
             else
             {
+                rptComplaints.DataSource = null;
+                rptComplaints.DataBind();
+                pnlList.Visible = false;
                 pnlNoComplaints.Visible = true;
             }
         }
 
         protected void ddlStatusFilter_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            LoadComplaints();
+        }
+
+        protected void ddlPriorityFilter_SelectedIndexChanged(object sender, EventArgs e)
         {
             LoadComplaints();
         }

@@ -32,6 +32,8 @@ namespace Ecommerce.Pages.Public
             {
                 var verified = Request.QueryString["verified"];
                 var emailParam = Request.QueryString["email"];
+                var reset = Request.QueryString["reset"];
+                
                 if (string.Equals(verified, "1", StringComparison.Ordinal))
                 {
                     pnlSuccess.Visible = true;
@@ -40,6 +42,11 @@ namespace Ecommerce.Pages.Public
                     {
                         txtEmail.Text = emailParam;
                     }
+                }
+                else if (string.Equals(reset, "success", StringComparison.OrdinalIgnoreCase))
+                {
+                    pnlSuccess.Visible = true;
+                    litSuccess.Text = "Votre mot de passe a été réinitialisé avec succès ! Vous pouvez maintenant vous connecter avec votre nouveau mot de passe.";
                 }
             }
         }

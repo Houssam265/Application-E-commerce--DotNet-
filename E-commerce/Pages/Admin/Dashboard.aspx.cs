@@ -94,6 +94,7 @@ namespace Ecommerce.Pages.Admin
                     FROM Orders 
                     WHERE OrderDate >= DATEADD(day, -7, GETDATE()) 
                         AND Status != 'Cancelled'
+                        AND (IsArchived IS NULL OR IsArchived = 0)
                     GROUP BY CAST(OrderDate AS DATE)
                     ORDER BY SaleDate ASC";
                 
@@ -109,26 +110,31 @@ namespace Ecommerce.Pages.Admin
                 }
                 
                 // Remplir avec les données réelles ou 0
+                bool isFirst = true;
                 foreach (DateTime day in last7Days)
                 {
                     decimal amount = 0;
                     foreach (DataRow row in dt.Rows)
                     {
-                        if (Convert.ToDateTime(row["SaleDate"]).Date == day)
+                        DateTime saleDate = Convert.ToDateTime(row["SaleDate"]).Date;
+                        if (saleDate == day)
                         {
                             amount = Convert.ToDecimal(row["DailyRevenue"]);
                             break;
                         }
                     }
-                    if (sb.Length > 1) sb.Append(",");
+                    if (!isFirst) sb.Append(",");
                     sb.Append(amount.ToString("F2"));
+                    isFirst = false;
                 }
                 
                 sb.Append("]");
                 return sb.ToString();
             }
-            catch
+            catch (Exception ex)
             {
+                // Log l'erreur pour debug
+                System.Diagnostics.Debug.WriteLine("GetSalesData Error: " + ex.Message);
                 return "[0,0,0,0,0,0,0]";
             }
         }
@@ -184,9 +190,11 @@ namespace Ecommerce.Pages.Admin
                         p.Name,
                         ISNULL(SUM(oi.Quantity), 0) as TotalSold
                     FROM Products p
-                    LEFT JOIN OrderItems oi ON p.Id = oi.ProductId
-                    LEFT JOIN Orders o ON oi.OrderId = o.Id AND o.Status != 'Cancelled'
+                    INNER JOIN OrderItems oi ON p.Id = oi.ProductId
+                    INNER JOIN Orders o ON oi.OrderId = o.Id 
                     WHERE p.IsActive = 1
+                        AND o.Status != 'Cancelled'
+                        AND (o.IsArchived IS NULL OR o.IsArchived = 0)
                     GROUP BY p.Id, p.Name
                     ORDER BY TotalSold DESC, p.Name ASC";
                 
@@ -199,7 +207,8 @@ namespace Ecommerce.Pages.Admin
                     string name = row["Name"].ToString();
                     if (name.Length > 25) name = name.Substring(0, 25) + "...";
                     labels.Add(name.Replace("\"", "\\\"").Replace("'", "\\'"));
-                    data.Add(Convert.ToInt32(row["TotalSold"]));
+                    int totalSold = Convert.ToInt32(row["TotalSold"]);
+                    data.Add(totalSold);
                 }
                 
                 // Remplir jusqu'à 5 produits si nécessaire
@@ -227,8 +236,10 @@ namespace Ecommerce.Pages.Admin
                 
                 return json.ToString();
             }
-            catch
+            catch (Exception ex)
             {
+                // Log l'erreur pour debug
+                System.Diagnostics.Debug.WriteLine("GetTopProducts Error: " + ex.Message);
                 return "{\"labels\":[\"-\",\"-\",\"-\",\"-\",\"-\"],\"data\":[0,0,0,0,0]}";
             }
         }

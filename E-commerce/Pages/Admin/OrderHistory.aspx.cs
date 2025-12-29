@@ -34,7 +34,7 @@ namespace Ecommerce.Pages.Admin
         {
             DbContext db = new DbContext();
 
-            // Get orders from OrderHistory (archived orders)
+            // Get orders from OrderHistory (archived orders) and also from Orders table that are Delivered/Cancelled but not yet archived
             string query = @"
                 SELECT 
                     OH.Id, OH.OrderId, OH.OrderNumber, OH.UserId, OH.OrderDate, 
@@ -46,23 +46,27 @@ namespace Ecommerce.Pages.Admin
 
             System.Collections.Generic.List<SqlParameter> parameters = new System.Collections.Generic.List<SqlParameter>();
 
-            // Apply filters
-            if (!string.IsNullOrEmpty(ddlStatusFilter.SelectedValue))
+            // Apply status filter
+            string statusFilter = ddlStatusFilter.SelectedValue;
+            if (!string.IsNullOrEmpty(statusFilter))
             {
                 query += " AND OH.Status = @Status";
-                parameters.Add(new SqlParameter("@Status", ddlStatusFilter.SelectedValue));
+                parameters.Add(new SqlParameter("@Status", statusFilter));
             }
 
-            if (!string.IsNullOrEmpty(txtSearch.Text.Trim()))
+            // Apply search filter - improved to search by order number, client name, or email
+            string searchText = txtSearch.Text.Trim();
+            if (!string.IsNullOrEmpty(searchText))
             {
                 query += " AND (OH.OrderNumber LIKE @Search OR U.FullName LIKE @Search OR U.Email LIKE @Search)";
-                parameters.Add(new SqlParameter("@Search", "%" + txtSearch.Text.Trim() + "%"));
+                parameters.Add(new SqlParameter("@Search", "%" + searchText + "%"));
             }
 
             query += " ORDER BY OH.CompletedDate DESC";
 
             DataTable dt = db.ExecuteQuery(query, parameters.ToArray());
 
+            // Update UI based on results
             if (dt.Rows.Count > 0)
             {
                 rptOrders.DataSource = dt;
@@ -72,6 +76,8 @@ namespace Ecommerce.Pages.Admin
             }
             else
             {
+                rptOrders.DataSource = null;
+                rptOrders.DataBind();
                 pnlNoOrders.Visible = true;
                 lblTotalArchived.Text = "0 commande archivée";
             }

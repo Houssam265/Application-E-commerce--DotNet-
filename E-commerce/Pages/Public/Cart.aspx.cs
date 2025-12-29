@@ -11,6 +11,8 @@ namespace Ecommerce.Pages.Public
     {
         protected global::System.Web.UI.WebControls.Panel pnlEmptyCart;
         protected global::System.Web.UI.WebControls.Panel pnlCartItems;
+        protected global::System.Web.UI.WebControls.Panel pnlStockError;
+        protected global::System.Web.UI.WebControls.Literal litStockError;
         protected global::System.Web.UI.WebControls.Repeater rptCartItems;
         protected global::System.Web.UI.WebControls.Label lblSubTotal;
         protected global::System.Web.UI.WebControls.Label lblShipping;
@@ -120,6 +122,9 @@ namespace Ecommerce.Pages.Public
         protected void rptCartItems_ItemCommand(object source, RepeaterCommandEventArgs e)
         {
             int cartId = Convert.ToInt32(e.CommandArgument);
+            
+            // Hide error panel initially
+            pnlStockError.Visible = false;
 
             switch (e.CommandName)
             {
@@ -129,36 +134,91 @@ namespace Ecommerce.Pages.Public
                     break;
 
                 case "Increase":
-                    DataTable cartItems = CartHelper.GetCartItems();
-                    foreach (DataRow row in cartItems.Rows)
+                    try
                     {
-                        if (Convert.ToInt32(row["Id"]) == cartId)
+                        DataTable cartItems = CartHelper.GetCartItems();
+                        foreach (DataRow row in cartItems.Rows)
                         {
-                            int currentQty = Convert.ToInt32(row["Quantity"]);
-                            CartHelper.UpdateCartQuantity(cartId, currentQty + 1);
-                            break;
+                            if (Convert.ToInt32(row["Id"]) == cartId)
+                            {
+                                int currentQty = Convert.ToInt32(row["Quantity"]);
+                                int stockQuantity = Convert.ToInt32(row["StockQuantity"]);
+                                
+                                if (currentQty + 1 > stockQuantity)
+                                {
+                                    // Show professional error message in page
+                                    ShowStockError(stockQuantity, currentQty);
+                                    return;
+                                }
+                                
+                                CartHelper.UpdateCartQuantity(cartId, currentQty + 1);
+                                break;
+                            }
                         }
+                        LoadCart();
                     }
-                    LoadCart();
+                    catch (Exception ex)
+                    {
+                        // Show professional error message in page
+                        ShowStockError(-1, -1, ex.Message);
+                    }
                     break;
 
                 case "Decrease":
-                    cartItems = CartHelper.GetCartItems();
-                    foreach (DataRow row in cartItems.Rows)
+                    try
                     {
-                        if (Convert.ToInt32(row["Id"]) == cartId)
+                        DataTable cartItems = CartHelper.GetCartItems();
+                        foreach (DataRow row in cartItems.Rows)
                         {
-                            int currentQty = Convert.ToInt32(row["Quantity"]);
-                            if (currentQty > 1)
+                            if (Convert.ToInt32(row["Id"]) == cartId)
                             {
-                                CartHelper.UpdateCartQuantity(cartId, currentQty - 1);
+                                int currentQty = Convert.ToInt32(row["Quantity"]);
+                                if (currentQty > 1)
+                                {
+                                    CartHelper.UpdateCartQuantity(cartId, currentQty - 1);
+                                }
+                                break;
                             }
-                            break;
                         }
+                        LoadCart();
                     }
-                    LoadCart();
+                    catch (Exception ex)
+                    {
+                        ShowStockError(-1, -1, ex.Message);
+                    }
                     break;
             }
+        }
+
+        private void ShowStockError(int availableStock, int currentQty, string customMessage = null)
+        {
+            pnlStockError.Visible = true;
+            
+            if (!string.IsNullOrEmpty(customMessage))
+            {
+                litStockError.Text = Server.HtmlEncode(customMessage);
+            }
+            else if (availableStock > 0 && currentQty > 0)
+            {
+                litStockError.Text = $"Quantité disponible : <strong>{availableStock}</strong> unité(s). " +
+                                   $"Quantité actuelle dans votre panier : <strong>{currentQty}</strong> unité(s). " +
+                                   $"Vous ne pouvez pas ajouter plus d'articles que le stock disponible.";
+            }
+            else
+            {
+                litStockError.Text = "Impossible de modifier la quantité. Veuillez réessayer.";
+            }
+            
+            // Scroll to error message
+            string script = @"<script>
+                setTimeout(function() {
+                    var errorPanel = document.getElementById('" + pnlStockError.ClientID + @"');
+                    if (errorPanel) {
+                        errorPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }, 100);
+            </script>";
+            ClientScript.RegisterStartupScript(this.GetType(), "ScrollToError", script);
         }
 
         protected void btnCheckout_Click(object sender, EventArgs e)

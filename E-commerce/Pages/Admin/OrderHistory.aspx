@@ -64,9 +64,9 @@
                         </asp:DropDownList>
                     </div>
                     <div class="col-md-4">
-                        <label>Recherche (N° commande, client)</label>
+                        <label>Recherche (N° commande, nom client, email)</label>
                         <asp:TextBox ID="txtSearch" runat="server" CssClass="form-control"
-                            Placeholder="Rechercher..." />
+                            Placeholder="Rechercher par numéro, nom ou email..." />
                     </div>
                     <div class="col-md-2">
                         <asp:Button ID="btnSearch" runat="server" Text="Rechercher" CssClass="btn btn-primary w-100"

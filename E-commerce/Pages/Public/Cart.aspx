@@ -191,6 +191,47 @@
             color: var(--text-light);
             margin-bottom: 1rem;
         }
+
+        .stock-error-alert {
+            background-color: #fee2e2;
+            border: 2px solid #dc2626;
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            color: #991b1b;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 4px 6px rgba(220, 38, 38, 0.1);
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stock-error-alert i {
+            font-size: 24px;
+            color: #dc2626;
+        }
+
+        .stock-error-alert strong {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+
+        .stock-error-alert .error-details {
+            font-size: 14px;
+            line-height: 1.6;
+        }
     </style>
 </asp:Content>
 
@@ -215,6 +256,15 @@
             </asp:Panel>
 
             <asp:Panel ID="pnlCartItems" runat="server" Visible="false">
+                <asp:Panel ID="pnlStockError" runat="server" Visible="false" CssClass="stock-error-alert">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <div>
+                        <strong>Stock insuffisant</strong>
+                        <div class="error-details">
+                            <asp:Literal ID="litStockError" runat="server"></asp:Literal>
+                        </div>
+                    </div>
+                </asp:Panel>
                 <table class="cart-table">
                     <thead>
                         <tr>

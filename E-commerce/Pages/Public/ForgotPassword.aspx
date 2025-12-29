@@ -48,7 +48,7 @@
                             placeholder="votre@email.com" required></asp:TextBox>
                     </div>
 
-                    <asp:Button ID="btnSend" runat="server" Text="Envoyer le lien de réinitialisation" 
+                    <asp:Button ID="btnSend" runat="server" Text="Envoyer le code de vérification" 
                         CssClass="btn btn-primary" Style="width: 100%; padding: 12px; font-size: 16px; margin-bottom: 1rem;" 
                         OnClick="btnSend_Click" />
 
@@ -56,6 +56,26 @@
                         <a href="Login.aspx" style="color: var(--primary-color);">
                             <i class="fas fa-arrow-left"></i> Retour à la connexion
                         </a>
+                    </div>
+                </asp:Panel>
+
+                <asp:Panel ID="pnlVerifyCode" runat="server" Visible="false">
+                    <div class="form-group">
+                        <label><i class="fas fa-key"></i> Code de vérification</label>
+                        <asp:TextBox ID="txtVerificationCode" runat="server" CssClass="form-control" 
+                            placeholder="Entrez le code à 6 chiffres" MaxLength="6" required></asp:TextBox>
+                        <small class="text-muted">Un code de vérification a été envoyé à votre email</small>
+                    </div>
+
+                    <asp:Button ID="btnVerifyCode" runat="server" Text="Vérifier le code" 
+                        CssClass="btn btn-primary" Style="width: 100%; padding: 12px; font-size: 16px; margin-bottom: 1rem;" 
+                        OnClick="btnVerifyCode_Click" />
+
+                    <div style="text-align: center; margin-top: 1rem;">
+                        <asp:LinkButton ID="btnResendCode" runat="server" OnClick="btnResendCode_Click" 
+                            CssClass="btn btn-link" Style="color: var(--primary-color);">
+                            <i class="fas fa-redo"></i> Renvoyer le code
+                        </asp:LinkButton>
                     </div>
                 </asp:Panel>
             </div>
