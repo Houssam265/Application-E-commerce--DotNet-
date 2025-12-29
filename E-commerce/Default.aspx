@@ -48,7 +48,7 @@
                         <a href='/Pages/Public/ProductDetails.aspx?id=<%# Eval("Id") %>' class="product-card">
                             <%# GetFeaturedBadge(Eval("IsFeatured")) %>
                             <img src='<%# Eval("ImageUrl") %>' alt='<%# Eval("Name") %>'
-                                onerror="this.src='https://via.placeholder.com/300x250/f5f5f5/051922?text=Produit'" />
+                                onerror="this.src='<%# ResolveUrl("~/Assets/Images/placeholder.svg") %>'" />
                     <div class="product-info">
                         <h3><%# Eval("Name") %></h3>
                         <p><%# Eval("ShortDescription") ?? Eval("Description") %></p>

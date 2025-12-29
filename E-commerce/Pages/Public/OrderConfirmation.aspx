@@ -90,7 +90,7 @@
                 <a href="Shop.aspx" class="btn btn-primary" style="margin-right: 1rem;">
                     <i class="fas fa-store"></i> Continuer vos achats
                 </a>
-                <a href="Profile.aspx" class="btn btn-outline">
+                <a href="Profile.aspx?tab=orders" class="btn btn-outline">
                     <i class="fas fa-user"></i> Voir mes commandes
                 </a>
             </div>

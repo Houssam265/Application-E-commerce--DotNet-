@@ -256,7 +256,7 @@ namespace Ecommerce.Pages.Admin
         {
             if (imageUrl == null || imageUrl == DBNull.Value || string.IsNullOrEmpty(imageUrl.ToString()))
             {
-                return "https://via.placeholder.com/60x60/e2e8f0/94a3b8?text=No+Image";
+                return ResolveUrl("~/Assets/Images/placeholder.svg");
             }
             return imageUrl.ToString();
         }

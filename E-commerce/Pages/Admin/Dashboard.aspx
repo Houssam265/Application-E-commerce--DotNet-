@@ -24,16 +24,28 @@
                 animation-fill-mode: both;
             }
 
-            .stat-card:nth-child(1) { animation-delay: 0.1s; }
-            .stat-card:nth-child(2) { animation-delay: 0.2s; }
-            .stat-card:nth-child(3) { animation-delay: 0.3s; }
-            .stat-card:nth-child(4) { animation-delay: 0.4s; }
+            .stat-card:nth-child(1) {
+                animation-delay: 0.1s;
+            }
+
+            .stat-card:nth-child(2) {
+                animation-delay: 0.2s;
+            }
+
+            .stat-card:nth-child(3) {
+                animation-delay: 0.3s;
+            }
+
+            .stat-card:nth-child(4) {
+                animation-delay: 0.4s;
+            }
 
             @keyframes fadeInUp {
                 from {
                     opacity: 0;
                     transform: translateY(30px);
                 }
+
                 to {
                     opacity: 1;
                     transform: translateY(0);
@@ -43,7 +55,8 @@
             .stat-card:hover {
                 transform: translateY(-4px);
                 box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
-                border-color: #cbd5e1;
+                border-color: #a7f3d0;
+                /* Soft green border */
             }
 
             .stat-card::before {
@@ -53,7 +66,8 @@
                 right: -50%;
                 width: 200px;
                 height: 200px;
-                background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
+                background: radial-gradient(circle, rgba(40, 167, 69, 0.15) 0%, transparent 70%);
+                /* Green tint */
                 transition: all 0.5s ease;
             }
 
@@ -77,18 +91,40 @@
                 align-items: center;
                 justify-content: center;
                 border-radius: 12px;
-                background: rgba(59, 130, 246, 0.1);
+                background: rgba(40, 167, 69, 0.1);
+                /* Primary green tint */
                 transition: all 0.3s ease;
+                color: #28a745;
+                /* Primary green */
             }
 
             .stat-card:hover .stat-icon {
                 transform: scale(1.1) rotate(5deg);
             }
 
-            .stat-card.orders .stat-icon { background: rgba(59, 130, 246, 0.15); }
-            .stat-card.revenue .stat-icon { background: rgba(16, 185, 129, 0.15); }
-            .stat-card.products .stat-icon { background: rgba(139, 92, 246, 0.15); }
-            .stat-card.users .stat-icon { background: rgba(245, 158, 11, 0.15); }
+            .stat-card.orders .stat-icon {
+                background: rgba(40, 167, 69, 0.15);
+                color: #28a745;
+            }
+
+            .stat-card.revenue .stat-icon {
+                background: rgba(21, 128, 61, 0.15);
+                color: #15803d;
+            }
+
+            /* Darker green */
+            .stat-card.products .stat-icon {
+                background: rgba(132, 204, 22, 0.15);
+                color: #65a30d;
+            }
+
+            /* Lime green */
+            .stat-card.users .stat-icon {
+                background: rgba(234, 179, 8, 0.15);
+                color: #ca8a04;
+            }
+
+            /* Gold/Yellow kept as accent */
 
             .stat-label {
                 color: #64748b;
@@ -116,15 +152,18 @@
             }
 
             .stat-change.positive {
-                color: #10b981;
+                color: #16a34a;
+                /* Green 600 */
             }
 
             .stat-change.negative {
-                color: #ef4444;
+                color: #dc2626;
+                /* Red 600 */
             }
 
             .stat-change.neutral {
-                color: #6366f1;
+                color: #475569;
+                /* Slate 600 */
             }
 
             .chart-container {
@@ -142,13 +181,14 @@
                 from {
                     opacity: 0;
                 }
+
                 to {
                     opacity: 1;
                 }
             }
 
             .chart-container:hover {
-                border-color: #cbd5e1;
+                border-color: #a7f3d0;
                 box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
             }
 
@@ -212,7 +252,8 @@
             }
 
             .action-btn.primary {
-                background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+                background: linear-gradient(135deg, #28a745, #34ce57);
+                /* Green gradient */
                 color: white;
             }
 
@@ -230,7 +271,7 @@
 
             .action-btn:hover {
                 transform: translateY(-3px);
-                box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+                box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
             }
 
             .action-btn:active {
@@ -238,7 +279,7 @@
             }
 
             .action-btn.primary:hover {
-                box-shadow: 0 8px 16px rgba(59, 130, 246, 0.4);
+                box-shadow: 0 8px 16px rgba(40, 167, 69, 0.4);
             }
         </style>
     </asp:Content>
@@ -246,7 +287,8 @@
     <asp:Content ID="Content2" ContentPlaceHolderID="MainContent" runat="server">
         <div style="margin-bottom: 2rem;">
             <h1><i class="fas fa-chart-bar"></i> Tableau de bord</h1>
-            <p style="color: #64748b; margin-top: 0.5rem;">Vue d'ensemble de la boutique et statistiques en temps réel</p>
+            <p style="color: #64748b; margin-top: 0.5rem;">Vue d'ensemble de la boutique et statistiques en temps réel
+            </p>
         </div>
 
         <!-- Stats Cards -->
@@ -371,12 +413,12 @@
 
             // Chart configuration
             const chartColors = {
-                primary: '#6366f1',
-                success: '#10b981',
-                warning: '#f59e0b',
-                danger: '#ef4444',
-                info: '#3b82f6',
-                purple: '#8b5cf6'
+                primary: '#28a745',   // Green
+                success: '#15803d',   // Dark Green
+                warning: '#f59e0b',   // Amber (Keep for warnings)
+                danger: '#dc2626',    // Red (Keep for errors)
+                info: '#0d9488',      // Teal
+                purple: '#65a30d'     // Lime Green
             };
 
             const chartDefaults = {
@@ -403,7 +445,7 @@
             };
 
             // Initialize charts when page is loaded
-            document.addEventListener('DOMContentLoaded', function() {
+            document.addEventListener('DOMContentLoaded', function () {
                 initializeCharts();
             });
 
@@ -418,8 +460,8 @@
                 // Sales Line Chart - Données réelles
                 try {
                     const salesDataElement = document.getElementById('<%= hfSalesData.ClientID %>');
-                    let salesData = [0,0,0,0,0,0,0];
-                    
+                    let salesData = [0, 0, 0, 0, 0, 0, 0];
+
                     if (salesDataElement && salesDataElement.value) {
                         try {
                             salesData = JSON.parse(salesDataElement.value);
@@ -431,7 +473,7 @@
                     } else {
                         console.warn('Sales data element not found or empty');
                     }
-                    
+
                     const dayLabels = [];
                     const today = new Date();
                     for (let i = 6; i >= 0; i--) {
@@ -440,10 +482,13 @@
                         const dayNames = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
                         dayLabels.push(dayNames[date.getDay()] + ' ' + date.getDate());
                     }
-                    
+
                     const salesCtx = document.getElementById('salesChart');
                     if (salesCtx && typeof Chart !== 'undefined') {
-                        new Chart(salesCtx, {
+                        if (window.mySalesChart) {
+                            window.mySalesChart.destroy();
+                        }
+                        window.mySalesChart = new Chart(salesCtx, {
                             type: 'line',
                             data: {
                                 labels: dayLabels,
@@ -489,10 +534,13 @@
                 // Orders Doughnut Chart - Données réelles
                 try {
                     const ordersElement = document.getElementById('<%= hfOrdersByStatus.ClientID %>');
-                    const ordersByStatus = ordersElement ? JSON.parse(ordersElement.value || '[0,0,0,0]') : [0,0,0,0];
+                    const ordersByStatus = ordersElement ? JSON.parse(ordersElement.value || '[0,0,0,0]') : [0, 0, 0, 0];
                     const ordersCtx = document.getElementById('ordersChart');
                     if (ordersCtx && typeof Chart !== 'undefined') {
-                        new Chart(ordersCtx, {
+                        if (window.myOrdersChart) {
+                            window.myOrdersChart.destroy();
+                        }
+                        window.myOrdersChart = new Chart(ordersCtx, {
                             type: 'doughnut',
                             data: {
                                 labels: ['En attente', 'Expédié', 'Livré', 'Annulé'],
@@ -525,7 +573,7 @@
                                         backgroundColor: 'rgba(0, 0, 0, 0.8)',
                                         padding: 12,
                                         callbacks: {
-                                            label: function(context) {
+                                            label: function (context) {
                                                 const label = context.label || '';
                                                 const value = context.parsed || 0;
                                                 const total = context.dataset.data.reduce((a, b) => a + b, 0);
@@ -545,8 +593,8 @@
                 // Top Products Bar Chart - Données réelles
                 try {
                     const productsElement = document.getElementById('<%= hfTopProducts.ClientID %>');
-                    let topProductsData = {"labels":["-","-","-","-","-"],"data":[0,0,0,0,0]};
-                    
+                    let topProductsData = { "labels": ["-", "-", "-", "-", "-"], "data": [0, 0, 0, 0, 0] };
+
                     if (productsElement && productsElement.value) {
                         try {
                             topProductsData = JSON.parse(productsElement.value);
@@ -555,16 +603,19 @@
                             console.log('Raw value:', productsElement.value);
                         }
                     }
-                    
+
                     const productsCtx = document.getElementById('productsChart');
                     if (productsCtx && typeof Chart !== 'undefined') {
-                        new Chart(productsCtx, {
+                        if (window.myProductsChart) {
+                            window.myProductsChart.destroy();
+                        }
+                        window.myProductsChart = new Chart(productsCtx, {
                             type: 'bar',
                             data: {
-                                labels: topProductsData.labels || ["-","-","-","-","-"],
+                                labels: topProductsData.labels || ["-", "-", "-", "-", "-"],
                                 datasets: [{
                                     label: 'Quantité vendue',
-                                    data: topProductsData.data || [0,0,0,0,0],
+                                    data: topProductsData.data || [0, 0, 0, 0, 0],
                                     backgroundColor: [
                                         chartColors.primary,
                                         chartColors.purple,

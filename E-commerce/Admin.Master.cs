@@ -40,5 +40,11 @@ namespace Ecommerce
                 Page.ClientScript.RegisterClientScriptInclude("chatbot-js-include", ResolveUrl("~/Assets/Js/chatbot.js"));
             }
         }
+        protected void Logout_Click(object sender, EventArgs e)
+        {
+            Session.Clear();
+            Session.Abandon();
+            Response.Redirect("~/Pages/Public/Login.aspx");
+        }
     }
 }

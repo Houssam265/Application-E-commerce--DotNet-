@@ -182,17 +182,17 @@ namespace Ecommerce.Pages.Public
                     }
                 }
 
-                // Unset other default addresses before creating new one
-                string unsetDefaultQuery = "UPDATE Addresses SET IsDefault = 0 WHERE UserId = @UserId";
-                SqlParameter[] unsetParams = { new SqlParameter("@UserId", userId) };
-                db.ExecuteNonQuery(unsetDefaultQuery, unsetParams);
-
-                // Create address
-                string addrQuery = @"INSERT INTO Addresses (UserId, FullName, Street, City, ZipCode, Country, Phone, IsDefault) 
-                                     OUTPUT INSERTED.Id 
-                                     VALUES (@UserId, @FullName, @Street, @City, @Zip, @Country, @Phone, 1)";
+                // Check if address already exists (to avoid duplicates)
                 string phoneValue = string.IsNullOrWhiteSpace(txtPhone.Text) ? null : Server.HtmlEncode(txtPhone.Text.Trim());
-                SqlParameter[] addrParams = {
+                string checkAddrQuery = @"SELECT Id FROM Addresses 
+                                         WHERE UserId = @UserId 
+                                         AND FullName = @FullName 
+                                         AND Street = @Street 
+                                         AND City = @City 
+                                         AND ZipCode = @Zip 
+                                         AND Country = @Country
+                                         AND (Phone = @Phone OR (Phone IS NULL AND @Phone IS NULL))";
+                SqlParameter[] checkAddrParams = {
                     new SqlParameter("@UserId", userId),
                     new SqlParameter("@FullName", Server.HtmlEncode(txtFullName.Text.Trim())),
                     new SqlParameter("@Street", Server.HtmlEncode(txtStreet.Text.Trim())),
@@ -202,7 +202,54 @@ namespace Ecommerce.Pages.Public
                     new SqlParameter("@Phone", phoneValue ?? (object)DBNull.Value)
                 };
 
-                int addrId = (int)db.ExecuteScalar(addrQuery, addrParams);
+                object existingAddrId = db.ExecuteScalar(checkAddrQuery, checkAddrParams);
+                int addrId;
+
+                if (existingAddrId != null && existingAddrId != DBNull.Value)
+                {
+                    // Address already exists, use it
+                    addrId = Convert.ToInt32(existingAddrId);
+                    
+                    // Set it as default if it's not already
+                    string updateDefaultQuery = "UPDATE Addresses SET IsDefault = 1 WHERE Id = @Id AND UserId = @UserId";
+                    SqlParameter[] updateDefaultParams = {
+                        new SqlParameter("@Id", addrId),
+                        new SqlParameter("@UserId", userId)
+                    };
+                    db.ExecuteNonQuery(updateDefaultQuery, updateDefaultParams);
+                    
+                    // Unset other default addresses
+                    string unsetDefaultQuery = "UPDATE Addresses SET IsDefault = 0 WHERE UserId = @UserId AND Id != @Id";
+                    SqlParameter[] unsetParams = { 
+                        new SqlParameter("@UserId", userId),
+                        new SqlParameter("@Id", addrId)
+                    };
+                    db.ExecuteNonQuery(unsetDefaultQuery, unsetParams);
+                }
+                else
+                {
+                    // Address doesn't exist, create new one
+                    // Unset other default addresses before creating new one
+                    string unsetDefaultQuery = "UPDATE Addresses SET IsDefault = 0 WHERE UserId = @UserId";
+                    SqlParameter[] unsetParams = { new SqlParameter("@UserId", userId) };
+                    db.ExecuteNonQuery(unsetDefaultQuery, unsetParams);
+
+                    // Create address
+                    string addrQuery = @"INSERT INTO Addresses (UserId, FullName, Street, City, ZipCode, Country, Phone, IsDefault) 
+                                         OUTPUT INSERTED.Id 
+                                         VALUES (@UserId, @FullName, @Street, @City, @Zip, @Country, @Phone, 1)";
+                    SqlParameter[] addrParams = {
+                        new SqlParameter("@UserId", userId),
+                        new SqlParameter("@FullName", Server.HtmlEncode(txtFullName.Text.Trim())),
+                        new SqlParameter("@Street", Server.HtmlEncode(txtStreet.Text.Trim())),
+                        new SqlParameter("@City", Server.HtmlEncode(txtCity.Text.Trim())),
+                        new SqlParameter("@Zip", Server.HtmlEncode(txtZip.Text.Trim())),
+                        new SqlParameter("@Country", ddlCountry.SelectedValue),
+                        new SqlParameter("@Phone", phoneValue ?? (object)DBNull.Value)
+                    };
+
+                    addrId = (int)db.ExecuteScalar(addrQuery, addrParams);
+                }
 
                 // Calculate totals
                 decimal subTotal = CartHelper.GetCartTotal();

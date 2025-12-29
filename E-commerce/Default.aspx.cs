@@ -85,7 +85,27 @@ namespace Ecommerce
                 }
                 
                 // Si c'est un simple nom de fichier ou chemin relatif
-                string resolvedUrl = ResolveUrl("~/Assets/Images/Categories/" + imageUrlStr);
+                string url = imageUrlStr;
+                if (!url.StartsWith("~/") && !url.StartsWith("/"))
+                {
+                     // Supposer que c'est juste le nom du fichier si pas de slash
+                    if (!url.Contains("/") && !url.Contains("\\"))
+                    {
+                        url = "~/Assets/Images/Categories/" + url;
+                    } 
+                    else 
+                    {
+                        // Si contient slash mais pas de tilde/slash début, ajouter ~/
+                         url = "~/" + url;
+                    }
+                }
+                else if (url.StartsWith("/"))
+                {
+                     // Convertir /Assets... en ~/Assets... pour ResolveUrl
+                     url = "~" + url;
+                }
+
+                string resolvedUrl = ResolveUrl(url);
                 return $"<img src='{resolvedUrl}' alt='{categoryNameStr}' onerror=\"this.style.display='none'; this.nextElementSibling.style.display='block';\">" +
                        "<i class='fas fa-seedling category-icon' style='color: var(--primary-color); display: none;'></i>";
             }

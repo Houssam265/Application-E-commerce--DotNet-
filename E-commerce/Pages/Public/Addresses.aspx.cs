@@ -100,6 +100,31 @@ namespace Ecommerce.Pages.Public
                 if (string.IsNullOrEmpty(hfAddressId.Value))
                 {
                     // Insert new address
+                    // Check for duplicates (exact match including phone)
+                    string phoneValue = string.IsNullOrEmpty(txtPhone.Text) ? null : Server.HtmlEncode(txtPhone.Text.Trim());
+                    string checkDupQuery = @"SELECT COUNT(*) FROM Addresses 
+                        WHERE UserId = @UserId AND FullName = @FullName AND Street = @Street 
+                        AND City = @City AND ZipCode = @ZipCode AND Country = @Country
+                        AND (Phone = @Phone OR (Phone IS NULL AND @Phone IS NULL))";
+                    
+                    SqlParameter[] dupParams = {
+                        new SqlParameter("@UserId", userId),
+                        new SqlParameter("@FullName", Server.HtmlEncode(txtFullName.Text.Trim())),
+                        new SqlParameter("@Street", Server.HtmlEncode(txtStreet.Text.Trim())),
+                        new SqlParameter("@City", Server.HtmlEncode(txtCity.Text.Trim())),
+                        new SqlParameter("@ZipCode", Server.HtmlEncode(txtZipCode.Text.Trim())),
+                        new SqlParameter("@Country", ddlCountry.SelectedValue),
+                        new SqlParameter("@Phone", phoneValue ?? (object)DBNull.Value)
+                    };
+                    
+                    int dupCount = Convert.ToInt32(db.ExecuteScalar(checkDupQuery, dupParams));
+                    if (dupCount > 0)
+                    {
+                        litError.Text = "Cette adresse existe déjà dans votre liste.";
+                        pnlError.Visible = true;
+                        return;
+                    }
+
                     string insertQuery = @"INSERT INTO Addresses (UserId, FullName, Street, City, ZipCode, Country, Phone, IsDefault) 
                                            VALUES (@UserId, @FullName, @Street, @City, @ZipCode, @Country, @Phone, @IsDefault)";
                     SqlParameter[] insertParams = {
@@ -137,7 +162,7 @@ namespace Ecommerce.Pages.Public
                 }
 
                 pnlSuccess.Visible = true;
-                Response.AddHeader("REFRESH", "2;URL=Profile.aspx");
+                Response.AddHeader("REFRESH", "2;URL=Profile.aspx?tab=addresses");
             }
             catch (Exception ex)
             {

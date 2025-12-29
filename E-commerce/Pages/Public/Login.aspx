@@ -143,6 +143,31 @@
                 <asp:Button ID="btnLogin" runat="server" Text="Se Connecter" CssClass="btn btn-primary"
                     Style="width: 100%; padding: 12px; font-size: 16px; margin-bottom: 1rem;" 
                     OnClick="btnLogin_Click" />
+                
+                <script type="text/javascript">
+                    // Handle Enter key press to submit login form
+                    document.addEventListener('DOMContentLoaded', function() {
+                        var emailField = document.getElementById('<%= txtEmail.ClientID %>');
+                        var passwordField = document.getElementById('<%= txtPassword.ClientID %>');
+                        var loginButton = document.getElementById('<%= btnLogin.ClientID %>');
+                        
+                        if (emailField && passwordField && loginButton) {
+                            emailField.addEventListener('keypress', function(e) {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    passwordField.focus();
+                                }
+                            });
+                            
+                            passwordField.addEventListener('keypress', function(e) {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    loginButton.click();
+                                }
+                            });
+                        }
+                    });
+                </script>
 
                 <div class="divider">
                     <span>ou</span>

@@ -62,44 +62,61 @@ a:hover {
     transform: translateY(-1px);
 }
 
-h1, .h1, h2, .h2, h3, .h3, h4, .h4, h5, .h5, h6, .h6 {
+h1,
+.h1,
+h2,
+.h2,
+h3,
+.h3,
+h4,
+.h4,
+h5,
+.h5,
+h6,
+.h6 {
     font-family: "Poppins", sans-serif;
     font-weight: 700;
     margin: 0 0 1.25rem 0;
     color: var(--text-dark);
 }
 
-h1, .h1 {
+h1,
+.h1 {
     font-size: 4rem;
     font-weight: 700;
     line-height: 4rem;
 }
 
-h2, .h2 {
+h2,
+.h2 {
     font-size: 3rem;
     font-weight: 700;
     line-height: 3.25rem;
 }
 
-h3, .h3 {
+h3,
+.h3 {
     font-size: 2rem;
     font-weight: 700;
     line-height: 2.25rem;
 }
 
-h4, .h4 {
+h4,
+.h4 {
     font-size: 1.5rem;
     font-weight: 700;
     line-height: 1.75rem;
 }
 
-h5, .h5 {
+h5,
+.h5 {
     font-size: 1.25rem;
     font-weight: 700;
     line-height: 1.5rem;
 }
 
-h6, .h6 {
+h6,
+.h6 {
     font-size: 1rem;
     font-weight: 700;
     line-height: 1.5rem;
@@ -171,8 +188,15 @@ header.scrolled {
 }
 
 @keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.1); }
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
 }
 
 .logo span {
@@ -366,7 +390,7 @@ header.scrolled {
     .user-name {
         display: none;
     }
-    
+
     .user-dropdown-menu {
         right: -10px;
     }
@@ -527,6 +551,7 @@ header.scrolled {
         opacity: 0;
         transform: translateY(30px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -614,8 +639,13 @@ header.scrolled {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 .hero::before {
@@ -631,8 +661,13 @@ header.scrolled {
 }
 
 @keyframes backgroundMove {
-    0% { transform: translate(0, 0); }
-    100% { transform: translate(100px, 100px); }
+    0% {
+        transform: translate(0, 0);
+    }
+
+    100% {
+        transform: translate(100px, 100px);
+    }
 }
 
 .hero::after {
@@ -648,8 +683,15 @@ header.scrolled {
 }
 
 @keyframes float {
-    0%, 100% { transform: translateY(0) rotate(0deg); }
-    50% { transform: translateY(-20px) rotate(180deg); }
+
+    0%,
+    100% {
+        transform: translateY(0) rotate(0deg);
+    }
+
+    50% {
+        transform: translateY(-20px) rotate(180deg);
+    }
 }
 
 .hero h1 {
@@ -667,6 +709,7 @@ header.scrolled {
         opacity: 0;
         transform: translateY(-50px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -796,6 +839,7 @@ header.scrolled {
         transform: translateY(-100%);
         opacity: 0;
     }
+
     to {
         transform: translateY(0);
         opacity: 1;
@@ -1013,7 +1057,7 @@ select.form-control {
     border-radius: 50%;
 }
 
-.why-choose-us .grid > div {
+.why-choose-us .grid>div {
     background: var(--bg-white);
     padding: 2.5rem 2rem;
     border-radius: 12px;
@@ -1024,27 +1068,30 @@ select.form-control {
     z-index: 1;
 }
 
-.why-choose-us .grid > div:hover {
+.why-choose-us .grid>div:hover {
     transform: translateY(-10px);
     box-shadow: var(--shadow-lg);
     border-color: var(--primary-color);
 }
 
-.why-choose-us .grid > div i {
+.why-choose-us .grid>div i {
     transition: var(--transition);
     animation: float-icon 3s ease-in-out infinite;
 }
 
 @keyframes float-icon {
-    0%, 100% {
+
+    0%,
+    100% {
         transform: translateY(0);
     }
+
     50% {
         transform: translateY(-10px);
     }
 }
 
-.why-choose-us .grid > div:hover i {
+.why-choose-us .grid>div:hover i {
     transform: scale(1.2);
     animation: none;
 }
@@ -1076,17 +1123,45 @@ select.form-control {
     color: var(--text-light) !important;
 }
 
-.mt-1 { margin-top: 0.5rem; }
-.mt-2 { margin-top: 1rem; }
-.mt-3 { margin-top: 1.5rem; }
-.mt-4 { margin-top: 2rem; }
-.mt-5 { margin-top: 3rem; }
+.mt-1 {
+    margin-top: 0.5rem;
+}
 
-.mb-1 { margin-bottom: 0.5rem; }
-.mb-2 { margin-bottom: 1rem; }
-.mb-3 { margin-bottom: 1.5rem; }
-.mb-4 { margin-bottom: 2rem; }
-.mb-5 { margin-bottom: 3rem; }
+.mt-2 {
+    margin-top: 1rem;
+}
+
+.mt-3 {
+    margin-top: 1.5rem;
+}
+
+.mt-4 {
+    margin-top: 2rem;
+}
+
+.mt-5 {
+    margin-top: 3rem;
+}
+
+.mb-1 {
+    margin-bottom: 0.5rem;
+}
+
+.mb-2 {
+    margin-bottom: 1rem;
+}
+
+.mb-3 {
+    margin-bottom: 1.5rem;
+}
+
+.mb-4 {
+    margin-bottom: 2rem;
+}
+
+.mb-5 {
+    margin-bottom: 3rem;
+}
 
 .pt-80 {
     padding-top: 80px;
@@ -1300,9 +1375,11 @@ footer .footer-copyright {
     0% {
         transform: scale(0);
     }
+
     50% {
         transform: scale(1.2);
     }
+
     100% {
         transform: scale(1);
     }
@@ -1315,17 +1392,21 @@ footer .footer-copyright {
 
 /* Responsive */
 @media (max-width: 768px) {
-    h1, .h1 {
+
+    h1,
+    .h1 {
         font-size: 2.5rem;
         line-height: 2.75rem;
     }
 
-    h2, .h2 {
+    h2,
+    .h2 {
         font-size: 2rem;
         line-height: 2.25rem;
     }
 
-    h3, .h3 {
+    h3,
+    .h3 {
         font-size: 1.75rem;
         line-height: 2rem;
     }
@@ -1368,6 +1449,7 @@ footer .footer-copyright {
             opacity: 0;
             transform: translateY(-20px);
         }
+
         to {
             opacity: 1;
             transform: translateY(0);
@@ -1454,8 +1536,13 @@ footer .footer-copyright {
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 /* Cart Badge */
@@ -1482,9 +1569,12 @@ footer .footer-copyright {
 }
 
 @keyframes pulse-badge {
-    0%, 100% {
+
+    0%,
+    100% {
         transform: scale(1);
     }
+
     50% {
         transform: scale(1.1);
     }
@@ -1525,6 +1615,7 @@ footer .footer-copyright {
     0% {
         background-position: 200% 0;
     }
+
     100% {
         background-position: -200% 0;
     }
@@ -1582,7 +1673,7 @@ footer .footer-copyright {
 }
 
 /* Stagger Animation for Grid Items */
-.product-grid > * {
+.product-grid>* {
     animation-delay: calc(var(--index, 0) * 0.1s);
 }
 
@@ -1612,13 +1703,11 @@ footer .footer-copyright {
 
 /* Shimmer Effect for Loading */
 .shimmer {
-    background: linear-gradient(
-        90deg,
-        #f0f0f0 0%,
-        #e0e0e0 20%,
-        #f0f0f0 40%,
-        #f0f0f0 100%
-    );
+    background: linear-gradient(90deg,
+            #f0f0f0 0%,
+            #e0e0e0 20%,
+            #f0f0f0 40%,
+            #f0f0f0 100%);
     background-size: 200% 100%;
     animation: shimmer 2s infinite;
 }
@@ -1627,7 +1716,218 @@ footer .footer-copyright {
     0% {
         background-position: -200% 0;
     }
+
     100% {
         background-position: 200% 0;
     }
+}
+
+/* Notification Button Styles */
+.notifications {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.notif-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    color: var(--text-dark);
+    transition: var(--transition);
+    position: relative;
+    text-decoration: none;
+    font-size: 1.1rem;
+    padding: 0;
+    margin: 0;
+    /* Ensure no padding affects centering */
+}
+
+/* Fix icon centering */
+.notif-btn i {
+    line-height: 1;
+    margin: 0;
+    display: block;
+}
+
+.notif-btn:hover,
+.notif-btn.active {
+    background: rgba(40, 167, 69, 0.05);
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+
+.notif-dot {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 8px;
+    height: 8px;
+    background-color: var(--danger-color);
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 1px #fff;
+}
+
+.notif-dropdown {
+    top: calc(100% + 15px) !important;
+    border-radius: 12px !important;
+    overflow: hidden;
+    animation: slideDown 0.3s ease-out;
+    border: 1px solid var(--border-color) !important;
+}
+
+.notif-header {
+    background: var(--bg-white);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.notif-header span {
+    font-weight: 700;
+    color: var(--text-dark);
+    font-family: 'Poppins', sans-serif;
+}
+
+.notif-action {
+    font-size: 0.85rem;
+    color: var(--primary-color) !important;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.notif-action:hover {
+    text-decoration: underline;
+}
+
+.notif-item {
+    transition: background-color 0.2s;
+    cursor: pointer;
+    align-items: flex-start !important;
+    /* Align to top to accommodate icon */
+    padding: 1.25rem 1rem !important;
+    /* Increase vertical padding */
+    gap: 1rem !important;
+    /* Increase gap between icon and text */
+}
+
+.notif-item:hover {
+    background-color: var(--bg-light) !important;
+}
+
+.notif-item:not(:last-child) {
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.notif-item .notif-title {
+    color: var(--text-dark);
+    font-size: 0.95rem;
+    margin-bottom: 0.25rem;
+}
+
+.notif-item .notif-mark {
+    font-size: 0.8rem;
+    color: var(--primary-color) !important;
+    opacity: 0;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+}
+
+/* Header fixes */
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: nowrap;
+    /* Prevent wrapping */
+}
+
+.nav-wrapper {
+    flex-wrap: nowrap;
+    /* Keep logo, nav, and actions in one line */
+}
+
+header .container {
+    padding-left: 15px;
+    padding-right: 15px;
+    max-width: 100%;
+    /* allows header to take full width on large screens to fit Admin menu */
+}
+
+/* Notification content improvements */
+.notif-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.notif-title {
+    font-size: 0.9rem !important;
+    line-height: 1.4;
+    margin-bottom: 2px !important;
+}
+
+.notif-meta {
+    font-size: 0.75rem !important;
+    color: #94a3b8;
+}
+
+/* Fix generic button proportions */
+.btn {
+    padding: 10px 24px;
+    font-size: 0.95rem;
+}
+
+.btn-lg {
+    padding: 12px 30px;
+    font-size: 1.1rem;
+}
+
+.btn-sm {
+    padding: 6px 16px;
+    font-size: 0.85rem;
+}
+
+/* Notification Improvements */
+.notif-dropdown {
+    width: 380px !important;
+    /* Wider dropdown */
+}
+
+/* New Outline Primary Button */
+.btn-outline-primary {
+    background-color: transparent;
+    color: var(--primary-color);
+    border: 1px solid var(--primary-color);
+    transition: all 0.2s;
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--primary-color);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);
+    transform: translateY(-1px);
+}
+
+.notif-item {
+    align-items: flex-start !important;
+    /* Align to top to accommodate icon */
+}
+
+.notif-item:hover {
+    background-color: #f8fafc !important;
+}
+
+.notif-read-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    display: inline-block;
 }

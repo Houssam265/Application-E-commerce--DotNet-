@@ -41,11 +41,12 @@ namespace Ecommerce.Pages.Admin
         private void LoadOrders()
         {
             DbContext db = new DbContext();
+            // Handle case where IsArchived column might not exist yet
             string query = @"
                 SELECT O.Id, O.OrderDate, O.TotalAmount, O.Status, U.FullName 
                 FROM Orders O 
                 INNER JOIN Users U ON O.UserId = U.Id 
-                WHERE O.IsArchived = 0 
+                WHERE (O.IsArchived IS NULL OR O.IsArchived = 0)
                 AND O.Status NOT IN ('Delivered', 'Cancelled')
                 ORDER BY O.OrderDate DESC";
             
@@ -251,6 +252,7 @@ namespace Ecommerce.Pages.Admin
                     catch
                     {
                         // Fallback: manual archiving if stored procedure doesn't exist
+                        // Check if IsArchived column exists before trying to update it
                         string archiveQuery = @"
                             IF NOT EXISTS (SELECT 1 FROM OrderHistory WHERE OrderId = @OrderId)
                             BEGIN
@@ -258,7 +260,11 @@ namespace Ecommerce.Pages.Admin
                                 SELECT Id, UserId, OrderNumber, TotalAmount, Status, OrderDate, Notes
                                 FROM Orders WHERE Id = @OrderId;
                                 
-                                UPDATE Orders SET IsArchived = 1, ArchivedAt = GETDATE() WHERE Id = @OrderId;
+                                -- Only update IsArchived if column exists
+                                IF EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Orders]') AND name = 'IsArchived')
+                                BEGIN
+                                    UPDATE Orders SET IsArchived = 1, ArchivedAt = GETDATE() WHERE Id = @OrderId;
+                                END
                             END";
                         db.ExecuteNonQuery(archiveQuery, new SqlParameter[] { new SqlParameter("@OrderId", id) });
                     }

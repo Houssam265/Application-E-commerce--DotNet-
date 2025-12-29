@@ -55,6 +55,9 @@ namespace Ecommerce.Pages.Public
                 LoadReviews(productId);
                 CheckCanAddReview(productId);
                 CheckWishlistStatus(productId);
+                
+                // Set fallback image script
+                imgMain.Attributes["onerror"] = $"this.src='{ResolveUrl("~/Assets/Images/placeholder.svg")}'";
             }
             else
             {
@@ -135,6 +138,18 @@ namespace Ecommerce.Pages.Public
                     }
                     
                     int stockQty = Convert.ToInt32(row["StockQuantity"]);
+                    if (Session["UserId"] == null)
+                    {
+                         // Optional: Change button text or behavior if not logged in
+                         // For now, let's keep it enabled but handle click to redirect
+                         btnAddToCart.Attributes.Add("onclick", "window.location.href='/Pages/Public/Login.aspx?returnUrl=" + Server.UrlEncode(Request.RawUrl) + "'; return false;");
+                    }
+                    else 
+                    {
+                        // Remove the redirect attribute if logged in, so it posts back normally
+                        btnAddToCart.Attributes.Remove("onclick");
+                    }
+
                     if (stockQty > 0)
                     {
                         litStockStatus.Text = "<span class=\"stock-status stock-in\"><i class=\"fas fa-check-circle\"></i> En stock</span>";
@@ -493,14 +508,14 @@ namespace Ecommerce.Pages.Public
         {
             if (imageUrlObj == null || imageUrlObj == DBNull.Value)
             {
-                return ResolveUrl("~/Assets/Images/Products/placeholder.jpg");
+                return ResolveUrl("~/Assets/Images/placeholder.svg");
             }
 
             string imageUrl = imageUrlObj.ToString().Trim();
             
             if (string.IsNullOrEmpty(imageUrl))
             {
-                return ResolveUrl("~/Assets/Images/Products/placeholder.jpg");
+                return ResolveUrl("~/Assets/Images/placeholder.svg");
             }
 
             // Si c'est une URL absolue (http/https), la retourner telle quelle

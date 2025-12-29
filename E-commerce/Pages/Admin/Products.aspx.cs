@@ -403,7 +403,7 @@ namespace Ecommerce.Pages.Admin
             {
                 if (imageUrl == null || imageUrl == DBNull.Value || string.IsNullOrEmpty(imageUrl.ToString()))
                 {
-                    return "https://via.placeholder.com/150/e2e8f0/94a3b8?text=No+Image";
+                    return ResolveUrl("~/Assets/Images/placeholder.svg");
                 }
                 
                 string url = imageUrl.ToString().Trim();
@@ -416,14 +416,19 @@ namespace Ecommerce.Pages.Admin
                 // Construire l'URL relative
                 if (!url.StartsWith("/"))
                 {
-                    url = "/Assets/Images/Products/" + url;
+                    if (string.IsNullOrWhiteSpace(url)) 
+                    {
+                         return ResolveUrl("~/Assets/Images/placeholder.svg");
+                    }
+                    url = "~/Assets/Images/Products/" + url;
+                    return ResolveUrl(url);
                 }
                 
                 return url;
             }
             catch
             {
-                return "https://via.placeholder.com/150/e2e8f0/94a3b8?text=No+Image";
+                return ResolveUrl("~/Assets/Images/placeholder.svg");
             }
         }
     }

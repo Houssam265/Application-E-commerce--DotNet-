@@ -115,14 +115,14 @@ namespace Ecommerce.Pages.Public
         {
             if (imageUrl == null || imageUrl == DBNull.Value)
             {
-                return ResolveUrl("~/Assets/Images/Products/placeholder.jpg");
+                return ResolveUrl("~/Assets/Images/placeholder.svg");
             }
 
             string imageUrlStr = imageUrl.ToString().Trim();
             
             if (string.IsNullOrEmpty(imageUrlStr))
             {
-                return ResolveUrl("~/Assets/Images/Products/placeholder.jpg");
+                return ResolveUrl("~/Assets/Images/placeholder.svg");
             }
 
             // Si c'est une URL absolue (http/https), la retourner telle quelle

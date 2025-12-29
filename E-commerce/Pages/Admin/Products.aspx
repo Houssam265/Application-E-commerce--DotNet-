@@ -300,8 +300,7 @@
                 <h1><i class="fas fa-box"></i> Produits</h1>
                 <p style="color: #64748b; margin-top: 0.5rem; margin-bottom: 0;">Gérez votre catalogue de produits</p>
             </div>
-            <asp:LinkButton ID="btnAddNew" runat="server" CssClass="btn btn-primary"
-                OnClick="btnAddNew_Click">
+            <asp:LinkButton ID="btnAddNew" runat="server" CssClass="btn btn-primary" OnClick="btnAddNew_Click">
                 <i class="fas fa-plus-circle"></i>
                 <span>Nouveau Produit</span>
             </asp:LinkButton>
@@ -314,8 +313,8 @@
                     <Columns>
                         <asp:TemplateField HeaderText="Image">
                             <ItemTemplate>
-                                <img src='/Assets/Images/Products/<%# Eval("ImageUrl") %>' class="product-thumb" 
-                                    onerror="this.src='https://via.placeholder.com/60x60/334155/94a3b8?text=No+Image'" />
+                                <img src='/Assets/Images/Products/<%# Eval("ImageUrl") %>' class="product-thumb"
+                                    onerror="this.src='<%# ResolveUrl("~/Assets/Images/placeholder.svg") %>'" />
                             </ItemTemplate>
                         </asp:TemplateField>
                         <asp:BoundField DataField="Name" HeaderText="Nom" />
@@ -353,7 +352,8 @@
         <asp:Panel ID="pnlEdit" runat="server" Visible="false">
             <div class="form-container">
                 <h2>
-                    <asp:Label ID="lblTitle" runat="server" Text="<i class=&quot;fas fa-plus&quot;></i> Ajouter un Produit"></asp:Label>
+                    <asp:Label ID="lblTitle" runat="server"
+                        Text="<i class=&quot;fas fa-plus&quot;></i> Ajouter un Produit"></asp:Label>
                 </h2>
 
                 <asp:HiddenField ID="hfProductId" runat="server" />
@@ -366,7 +366,8 @@
 
                 <div class="form-group">
                     <label>Nom du produit</label>
-                    <asp:TextBox ID="txtName" runat="server" CssClass="form-control" placeholder="Ex: Tomates Bio"></asp:TextBox>
+                    <asp:TextBox ID="txtName" runat="server" CssClass="form-control" placeholder="Ex: Tomates Bio">
+                    </asp:TextBox>
                 </div>
 
                 <div class="form-group">
@@ -378,23 +379,27 @@
                 <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                     <div>
                         <label>Prix (MAD)</label>
-                        <asp:TextBox ID="txtPrice" runat="server" CssClass="form-control" type="number" step="0.01" placeholder="0.00"></asp:TextBox>
+                        <asp:TextBox ID="txtPrice" runat="server" CssClass="form-control" type="number" step="0.01"
+                            placeholder="0.00"></asp:TextBox>
                     </div>
                     <div>
                         <label>Stock</label>
-                        <asp:TextBox ID="txtStock" runat="server" CssClass="form-control" type="number" placeholder="0"></asp:TextBox>
+                        <asp:TextBox ID="txtStock" runat="server" CssClass="form-control" type="number" placeholder="0">
+                        </asp:TextBox>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label><i class="fas fa-images"></i> Ajouter des images</label>
-                    <input type="file" id="fuImages" name="fuImages" multiple="multiple" accept="image/*" class="form-control" />
-                    <small style="color: #94a3b8; margin-top: 0.5rem; display: block;">Vous pouvez sélectionner plusieurs images à la fois (Ctrl+Click ou Cmd+Click)</small>
+                    <input type="file" id="fuImages" name="fuImages" multiple="multiple" accept="image/*"
+                        class="form-control" />
+                    <small style="color: #94a3b8; margin-top: 0.5rem; display: block;">Vous pouvez sélectionner
+                        plusieurs images à la fois (Ctrl+Click ou Cmd+Click)</small>
                 </div>
 
                 <script>
                     // S'assurer que le formulaire a l'enctype correct pour l'upload de fichiers
-                    window.addEventListener('DOMContentLoaded', function() {
+                    window.addEventListener('DOMContentLoaded', function () {
                         var form = document.querySelector('form');
                         if (form && !form.getAttribute('enctype')) {
                             form.setAttribute('enctype', 'multipart/form-data');
@@ -408,32 +413,30 @@
                     <div class="images-grid" id="imagesGrid" runat="server">
                         <asp:Repeater ID="rptProductImages" runat="server" OnItemCommand="rptProductImages_ItemCommand">
                             <ItemTemplate>
-                                <div class="image-item <%# Eval("IsPrimary").ToString() == "True" ? "primary" : "" %>">
+                                <div class="image-item <%# Eval(" IsPrimary").ToString()=="True" ? "primary" : "" %>">
                                     <img src='<%# BuildImageUrl(Eval("ImageUrl")) %>' alt="Produit" />
                                     <div class="image-overlay">
-                                        <asp:LinkButton ID="btnSetPrimary" runat="server" 
-                                            CommandName="SetPrimary" 
-                                            CommandArgument='<%# Eval("Id") %>'
-                                            CssClass="image-action-btn primary-btn"
+                                        <asp:LinkButton ID="btnSetPrimary" runat="server" CommandName="SetPrimary"
+                                            CommandArgument='<%# Eval("Id") %>' CssClass="image-action-btn primary-btn"
                                             Visible='<%# Eval("IsPrimary").ToString() != "True" %>'
                                             title="Définir comme photo principale">
                                             <i class="fas fa-star"></i>
                                         </asp:LinkButton>
-                                        <asp:LinkButton ID="btnDeleteImage" runat="server" 
-                                            CommandName="DeleteImage" 
-                                            CommandArgument='<%# Eval("Id") %>'
-                                            CssClass="image-action-btn delete-btn"
+                                        <asp:LinkButton ID="btnDeleteImage" runat="server" CommandName="DeleteImage"
+                                            CommandArgument='<%# Eval("Id") %>' CssClass="image-action-btn delete-btn"
                                             OnClientClick="return confirm('Êtes-vous sûr de vouloir supprimer cette image ?');"
                                             title="Supprimer">
                                             <i class="fas fa-trash"></i>
                                         </asp:LinkButton>
                                     </div>
-                                    <%# Eval("IsPrimary").ToString() == "True" ? "<span class='primary-badge'><i class='fas fa-star'></i> Principale</span>" : "" %>
+                                    <%# Eval("IsPrimary").ToString()=="True"
+                                        ? "<span class='primary-badge'><i class='fas fa-star'></i> Principale</span>"
+                                        : "" %>
                                 </div>
                             </ItemTemplate>
                         </asp:Repeater>
                     </div>
-                    <asp:Label ID="lblNoImages" runat="server" Text="Aucune image pour ce produit." Visible="false" 
+                    <asp:Label ID="lblNoImages" runat="server" Text="Aucune image pour ce produit." Visible="false"
                         style="color: #94a3b8; font-style: italic; display: block; margin-top: 1rem;"></asp:Label>
                 </div>
 
@@ -450,7 +453,8 @@
                 </div>
 
                 <asp:Label ID="lblError" runat="server" Visible="false"
-                    Style="display: block; margin-top: 1.5rem; padding: 1rem; border-radius: 8px; background: rgba(239, 68, 68, 0.1); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.3);"></asp:Label>
+                    Style="display: block; margin-top: 1.5rem; padding: 1rem; border-radius: 8px; background: rgba(239, 68, 68, 0.1); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.3);">
+                </asp:Label>
             </div>
         </asp:Panel>
     </asp:Content>

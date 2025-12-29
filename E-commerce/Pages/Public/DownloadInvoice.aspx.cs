@@ -1,6 +1,7 @@
 using System;
 using System.Web;
 using System.Web.UI;
+using Ecommerce.Data;
 
 namespace Ecommerce.Pages.Public
 {
@@ -29,6 +30,33 @@ namespace Ecommerce.Pages.Public
                 return;
             }
 
+            // Verify order belongs to user
+            int userId = Convert.ToInt32(Session["UserId"]);
+            DbContext db = new DbContext();
+            
+            // Check in Orders table
+            string verifyQuery1 = "SELECT COUNT(*) FROM Orders WHERE Id = @OrderId AND UserId = @UserId";
+            object count1 = db.ExecuteScalar(verifyQuery1, new System.Data.SqlClient.SqlParameter[] {
+                new System.Data.SqlClient.SqlParameter("@OrderId", orderId),
+                new System.Data.SqlClient.SqlParameter("@UserId", userId)
+            });
+            
+            // Check in OrderHistory table
+            string verifyQuery2 = "SELECT COUNT(*) FROM OrderHistory WHERE OrderId = @OrderId AND UserId = @UserId";
+            object count2 = db.ExecuteScalar(verifyQuery2, new System.Data.SqlClient.SqlParameter[] {
+                new System.Data.SqlClient.SqlParameter("@OrderId", orderId),
+                new System.Data.SqlClient.SqlParameter("@UserId", userId)
+            });
+            
+            int orderCount = (count1 != null && count1 != DBNull.Value ? Convert.ToInt32(count1) : 0) +
+                            (count2 != null && count2 != DBNull.Value ? Convert.ToInt32(count2) : 0);
+            
+            if (orderCount == 0)
+            {
+                Response.Write("Order not found or access denied");
+                return;
+            }
+
             try
             {
                 string format = Request.QueryString["format"]?.ToLower() ?? "html";
@@ -49,7 +77,9 @@ namespace Ecommerce.Pages.Public
                     Response.ContentType = "application/pdf";
                     Response.AddHeader("Content-Disposition", $"attachment; filename=Facture_{orderId}.pdf");
                     Response.BinaryWrite(pdfBytes);
-                    Response.End();
+                    Response.Flush();
+                    HttpContext.Current.ApplicationInstance.CompleteRequest();
+                    return;
                 }
                 else
                 {
@@ -67,7 +97,9 @@ namespace Ecommerce.Pages.Public
                     Response.ContentType = "text/html";
                     Response.AddHeader("Content-Disposition", $"inline; filename=Facture_{orderId}.html");
                     Response.Write(invoiceHtml);
-                    Response.End();
+                    Response.Flush();
+                    HttpContext.Current.ApplicationInstance.CompleteRequest();
+                    return;
                 }
             }
             catch (Exception ex)

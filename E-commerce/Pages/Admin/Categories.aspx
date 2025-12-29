@@ -144,6 +144,7 @@
                     opacity: 0;
                     transform: translateY(20px);
                 }
+
                 to {
                     opacity: 1;
                     transform: translateY(0);
@@ -229,8 +230,7 @@
                 <h1><i class="fas fa-tags"></i> Catégories</h1>
                 <p style="color: #64748b; margin-top: 0.5rem; margin-bottom: 0;">Gérez les catégories de produits</p>
             </div>
-            <asp:LinkButton ID="btnAddNew" runat="server" CssClass="btn btn-primary"
-                OnClick="btnAddNew_Click">
+            <asp:LinkButton ID="btnAddNew" runat="server" CssClass="btn btn-primary" OnClick="btnAddNew_Click">
                 <i class="fas fa-plus-circle"></i>
                 <span>Nouvelle Catégorie</span>
             </asp:LinkButton>
@@ -243,9 +243,8 @@
                     <Columns>
                         <asp:TemplateField HeaderText="Image">
                             <ItemTemplate>
-                                <img src='<%# GetCategoryImageUrl(Eval("ImageUrl")) %>' 
-                                    class="category-image" 
-                                    onerror="this.src='https://via.placeholder.com/60x60/e2e8f0/94a3b8?text=No+Image'" />
+                                <img src='<%# GetCategoryImageUrl(Eval("ImageUrl")) %>' class="category-image"
+                                    onerror="this.src='<%# ResolveUrl("~/Assets/Images/placeholder.svg") %>'" />
                             </ItemTemplate>
                         </asp:TemplateField>
                         <asp:BoundField DataField="Name" HeaderText="Nom" />
@@ -258,7 +257,7 @@
                         </asp:TemplateField>
                         <asp:TemplateField HeaderText="Statut">
                             <ItemTemplate>
-                                <span class="status-badge <%# GetStatusClass(Eval("IsActive")) %>">
+                                <span class="status-badge <%# GetStatusClass(Eval(" IsActive")) %>">
                                     <%# GetStatusText(Eval("IsActive")) %>
                                 </span>
                             </ItemTemplate>
@@ -296,14 +295,16 @@
         <asp:Panel ID="pnlEdit" runat="server" Visible="false">
             <div class="form-container">
                 <h2>
-                    <asp:Label ID="lblTitle" runat="server" Text="<i class=&quot;fas fa-plus&quot;></i> Ajouter une Catégorie"></asp:Label>
+                    <asp:Label ID="lblTitle" runat="server"
+                        Text="<i class=&quot;fas fa-plus&quot;></i> Ajouter une Catégorie"></asp:Label>
                 </h2>
 
                 <asp:HiddenField ID="hfCategoryId" runat="server" />
 
                 <div class="form-group">
                     <label>Nom de la catégorie *</label>
-                    <asp:TextBox ID="txtName" runat="server" CssClass="form-control" placeholder="Ex: Agriculture"></asp:TextBox>
+                    <asp:TextBox ID="txtName" runat="server" CssClass="form-control" placeholder="Ex: Agriculture">
+                    </asp:TextBox>
                     <asp:RequiredFieldValidator ID="rfvName" runat="server" ControlToValidate="txtName"
                         ErrorMessage="Le nom est requis" ForeColor="#ef4444" Display="Dynamic" />
                 </div>
@@ -317,7 +318,8 @@
                 <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                     <div>
                         <label>Ordre d'affichage</label>
-                        <asp:TextBox ID="txtDisplayOrder" runat="server" CssClass="form-control" type="number" value="0"></asp:TextBox>
+                        <asp:TextBox ID="txtDisplayOrder" runat="server" CssClass="form-control" type="number"
+                            value="0"></asp:TextBox>
                     </div>
                     <div>
                         <label>Statut</label>
@@ -331,12 +333,14 @@
                 <div class="form-group">
                     <label>Image de la catégorie</label>
                     <asp:FileUpload ID="fuImage" runat="server" CssClass="form-control" />
-                    <small style="color: #94a3b8; margin-top: 0.5rem; display: block;">Laisser vide pour garder l'image actuelle</small>
+                    <small style="color: #94a3b8; margin-top: 0.5rem; display: block;">Laisser vide pour garder l'image
+                        actuelle</small>
                 </div>
 
                 <div class="form-group">
                     <label>URL de l'image (alternative)</label>
-                    <asp:TextBox ID="txtImageUrl" runat="server" CssClass="form-control" placeholder="https://..."></asp:TextBox>
+                    <asp:TextBox ID="txtImageUrl" runat="server" CssClass="form-control" placeholder="https://...">
+                    </asp:TextBox>
                     <small style="color: #94a3b8; margin-top: 0.5rem; display: block;">Ou entrez une URL d'image</small>
                 </div>
 
@@ -353,10 +357,11 @@
                 </div>
 
                 <asp:Label ID="lblError" runat="server" Visible="false"
-                    Style="display: block; margin-top: 1.5rem; padding: 1rem; border-radius: 8px; background: rgba(239, 68, 68, 0.1); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.3);"></asp:Label>
+                    Style="display: block; margin-top: 1.5rem; padding: 1rem; border-radius: 8px; background: rgba(239, 68, 68, 0.1); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.3);">
+                </asp:Label>
                 <asp:Label ID="lblSuccess" runat="server" Visible="false"
-                    Style="display: block; margin-top: 1.5rem; padding: 1rem; border-radius: 8px; background: rgba(16, 185, 129, 0.1); color: #059669; border: 1px solid rgba(16, 185, 129, 0.3);"></asp:Label>
+                    Style="display: block; margin-top: 1.5rem; padding: 1rem; border-radius: 8px; background: rgba(16, 185, 129, 0.1); color: #059669; border: 1px solid rgba(16, 185, 129, 0.3);">
+                </asp:Label>
             </div>
         </asp:Panel>
     </asp:Content>
-

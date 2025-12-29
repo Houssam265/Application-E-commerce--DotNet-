@@ -202,7 +202,7 @@
                                             style="padding: 8px 15px; text-decoration: none;">
                                             <i class="fas fa-eye"></i> Voir les détails
                                         </a>
-                                        <a href='DownloadInvoice.aspx?id=<%# Eval("Id") %>' target="_blank"
+                                        <a href='DownloadInvoice.aspx?id=<%# Eval("Id") %>&format=pdf' target="_blank"
                                             class="btn btn-success"
                                             style="padding: 8px 15px; text-decoration: none; background-color: #16a34a; color: white;">
                                             <i class="fas fa-file-invoice"></i> Télécharger facture
@@ -234,6 +234,14 @@
                             <i class="fas fa-plus"></i> Ajouter une adresse
                         </a>
                     </div>
+
+                    <asp:Panel ID="pnlAddressSuccess" runat="server" Visible="false" CssClass="alert alert-success" style="margin-bottom: 1rem;">
+                        <asp:Literal ID="litAddressSuccess" runat="server"></asp:Literal>
+                    </asp:Panel>
+
+                    <asp:Panel ID="pnlAddressError" runat="server" Visible="false" CssClass="alert alert-danger" style="margin-bottom: 1rem;">
+                        <asp:Literal ID="litAddressError" runat="server"></asp:Literal>
+                    </asp:Panel>
 
                     <asp:Repeater ID="rptAddresses" runat="server" OnItemCommand="rptAddresses_ItemCommand">
                         <HeaderTemplate>

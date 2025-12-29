@@ -23,6 +23,10 @@ namespace Ecommerce.Pages.Public
         protected global::System.Web.UI.WebControls.Panel pnlError;
         protected global::System.Web.UI.WebControls.Literal litSuccess;
         protected global::System.Web.UI.WebControls.Literal litError;
+        protected global::System.Web.UI.WebControls.Panel pnlAddressSuccess;
+        protected global::System.Web.UI.WebControls.Panel pnlAddressError;
+        protected global::System.Web.UI.WebControls.Literal litAddressSuccess;
+        protected global::System.Web.UI.WebControls.Literal litAddressError;
         protected global::System.Web.UI.WebControls.Repeater rptOrders;
         protected global::System.Web.UI.WebControls.Repeater rptAddresses;
         protected global::System.Web.UI.WebControls.Label lblNoOrders;
@@ -41,6 +45,15 @@ namespace Ecommerce.Pages.Public
                 LoadUserInfo();
                 LoadOrders();
                 LoadAddresses();
+            }
+            else
+            {
+                // On postback, reload addresses if we're on the addresses tab
+                string currentTab = Request.QueryString["tab"];
+                if (currentTab == "addresses")
+                {
+                    LoadAddresses();
+                }
             }
         }
 
@@ -235,7 +248,7 @@ namespace Ecommerce.Pages.Public
                     DbContext db = new DbContext();
 
                     // Verify that the address belongs to the user before deleting
-                    string verifyQuery = "SELECT Id FROM Addresses WHERE Id = @Id AND UserId = @UserId";
+                    string verifyQuery = "SELECT Id, IsDefault FROM Addresses WHERE Id = @Id AND UserId = @UserId";
                     SqlParameter[] verifyParams = {
                         new SqlParameter("@Id", addressId),
                         new SqlParameter("@UserId", userId)
@@ -244,43 +257,83 @@ namespace Ecommerce.Pages.Public
 
                     if (verifyDt.Rows.Count > 0)
                     {
-                        // Check if address is used in any orders
+                        // Check if this is the default address
+                        bool isDefault = false;
+                        if (verifyDt.Rows[0]["IsDefault"] != DBNull.Value)
+                        {
+                            isDefault = Convert.ToBoolean(verifyDt.Rows[0]["IsDefault"]);
+                        }
+                        
+                        // Check if address is used in any orders (for informational purposes)
                         string checkOrdersQuery = "SELECT COUNT(*) FROM Orders WHERE ShippingAddressId = @AddressId";
                         SqlParameter[] checkParams = { new SqlParameter("@AddressId", addressId) };
                         int orderCount = Convert.ToInt32(db.ExecuteScalar(checkOrdersQuery, checkParams));
 
-                        if (orderCount > 0)
+                        // If this is the default address, set another address as default (if any exist)
+                        if (isDefault)
                         {
-                            // Address is used in orders, don't delete but show error
-                            litError.Text = "Cette adresse ne peut pas être supprimée car elle est associée à une ou plusieurs commandes.";
-                            pnlError.Visible = true;
-                            LoadAddresses(); // Reload to refresh the list
-                            return;
+                            string setNewDefaultQuery = @"
+                                UPDATE TOP (1) Addresses 
+                                SET IsDefault = 1 
+                                WHERE UserId = @UserId AND Id != @Id AND IsDefault = 0";
+                            SqlParameter[] setDefaultParams = {
+                                new SqlParameter("@UserId", userId),
+                                new SqlParameter("@Id", addressId)
+                            };
+                            db.ExecuteNonQuery(setNewDefaultQuery, setDefaultParams);
                         }
 
-                        // Delete the address
+                        // Delete the address (even if used in orders - orders will keep the reference)
                         string deleteQuery = "DELETE FROM Addresses WHERE Id = @Id AND UserId = @UserId";
                         SqlParameter[] deleteParams = {
                             new SqlParameter("@Id", addressId),
                             new SqlParameter("@UserId", userId)
                         };
-                        db.ExecuteNonQuery(deleteQuery, deleteParams);
+                        int rowsAffected = db.ExecuteNonQuery(deleteQuery, deleteParams);
 
-                        // Reload addresses
-                        LoadAddresses();
-                        litSuccess.Text = "Adresse supprimée avec succès !";
-                        pnlSuccess.Visible = true;
+                        if (rowsAffected > 0)
+                        {
+                            // Reload addresses
+                            LoadAddresses();
+                            
+                            string message = "Adresse supprimée avec succès !";
+                            if (isDefault)
+                            {
+                                message += " Une autre adresse a été définie comme adresse par défaut.";
+                            }
+                            if (orderCount > 0)
+                            {
+                                message += " Note: Cette adresse était utilisée dans " + orderCount + " commande(s).";
+                            }
+                            
+                            // Use address-specific panels
+                            litAddressSuccess.Text = message;
+                            pnlAddressSuccess.Visible = true;
+                            pnlAddressError.Visible = false;
+                            
+                            // Ensure addresses tab is active by redirecting
+                            Response.Redirect("Profile.aspx?tab=addresses");
+                            return;
+                        }
+                        else
+                        {
+                            litAddressError.Text = "Erreur: L'adresse n'a pas pu être supprimée. Veuillez réessayer.";
+                            pnlAddressError.Visible = true;
+                            pnlAddressSuccess.Visible = false;
+                        }
                     }
                     else
                     {
-                        litError.Text = "Adresse introuvable ou vous n'avez pas l'autorisation de la supprimer.";
-                        pnlError.Visible = true;
+                        litAddressError.Text = "Adresse introuvable ou vous n'avez pas l'autorisation de la supprimer.";
+                        pnlAddressError.Visible = true;
+                        pnlAddressSuccess.Visible = false;
                     }
                 }
                 catch (Exception ex)
                 {
-                    litError.Text = "Erreur lors de la suppression: " + Server.HtmlEncode(ex.Message);
-                    pnlError.Visible = true;
+                    litAddressError.Text = "Erreur lors de la suppression: " + Server.HtmlEncode(ex.Message);
+                    pnlAddressError.Visible = true;
+                    pnlAddressSuccess.Visible = false;
                 }
             }
         }

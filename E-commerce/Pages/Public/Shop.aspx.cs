@@ -198,6 +198,12 @@ namespace Ecommerce.Pages.Public
 
             if (commandName == "AddToCart")
             {
+                if (Session["UserId"] == null)
+                {
+                    Response.Redirect("/Pages/Public/Login.aspx?returnUrl=" + Server.UrlEncode(Request.RawUrl));
+                    return;
+                }
+
                 try
                 {
                     // Check if product is in stock
@@ -297,7 +303,7 @@ namespace Ecommerce.Pages.Public
 
         protected void ShowNotification(string message, string type)
         {
-            string script = $"showNotification('{message.Replace("'", "\\'")}', '{type}');";
+            string script = $"window.addEventListener('load', function() {{ showNotification('{message.Replace("'", "\\'")}', '{type}'); }});";
             ClientScript.RegisterStartupScript(this.GetType(), "Notification_" + Guid.NewGuid().ToString("N"), script, true);
         }
 
@@ -330,7 +336,7 @@ namespace Ecommerce.Pages.Public
 
             if (string.IsNullOrEmpty(url))
             {
-                return "https://via.placeholder.com/300x250/f5f5f5/051922?text=Produit";
+                return ResolveUrl("~/Assets/Images/placeholder.svg");
             }
 
             // Absolute URL (https, http)

@@ -42,12 +42,14 @@
                         <li><a href="/Pages/Public/Shop.aspx" class='<%= Request.Path.Contains("Shop.aspx") ? "active" : "" %>'>Boutique</a></li>
                         <li><a href="/Pages/Public/About.aspx" class='<%= Request.Path.Contains("About.aspx") ? "active" : "" %>'>À propos</a></li>
                         <li><a href="/Pages/Public/Contact.aspx" class='<%= Request.Path.Contains("Contact.aspx") ? "active" : "" %>'>Contact</a></li>
+                        <% if (Session["UserEmail"] != null) { %>
                         <li><a href="/Pages/Public/Cart.aspx" class='<%= Request.Path.Contains("Cart.aspx") ? "active" : "" %>'>
                             <i class="fas fa-shopping-cart"></i> Panier
                             <% if (Session["CartCount"] != null && Convert.ToInt32(Session["CartCount"]) > 0) { %>
                                 <span class="badge badge-primary" style="margin-left: 5px;"><%: Session["CartCount"] %></span>
                             <% } %>
                         </a></li>
+                        <% } %>
                         <% if (Session["Role"] != null && Session["Role"].ToString() == "Admin") { %>
                             <li><a href="/Pages/Admin/Dashboard.aspx" style="color: var(--primary-color);">
                                 <i class="fas fa-cog"></i> Admin
@@ -66,25 +68,30 @@
                         </a>
                     <% } else { %>
                         <div class="notifications" style="position: relative; margin-right: 1rem;">
-                            <a href="javascript:void(0);" class="notif-btn" onclick="toggleNotifMenu(event); return false;" style="position:relative;">
-                                <i class="fas fa-bell"></i>
-                                <span id="notifDot" runat="server" class="notif-dot" style="position:absolute; right:-2px; top:-2px; width:10px; height:10px; background:#ef4444; border-radius:50%; display:none;"></span>
+                            <a href="javascript:void(0);" class="notif-btn" onclick="toggleNotifMenu(event); return false;" style="position:relative; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px;">
+                                <i class="fas fa-bell" style="font-size: 18px;"></i>
+                                <span id="notifDot" runat="server" class="notif-dot" style="position:absolute; right:2px; top:2px; width:10px; height:10px; background:#ef4444; border-radius:50%; display:none;"></span>
                                 <asp:Literal ID="litNotifCount" runat="server"></asp:Literal>
                             </a>
-                            <div class="notif-dropdown" id="notifDropdown" style="display:none; position:absolute; right:0; top:120%; background:#fff; border:1px solid #e2e8f0; border-radius:10px; min-width:300px; box-shadow:0 8px 24px rgba(0,0,0,0.12); z-index:1000;">
-                                <div class="notif-header" style="display:flex; justify-content:space-between; align-items:center; padding:0.75rem 1rem; border-bottom:1px solid #e2e8f0;">
-                                    <span>Notifications</span>
-                                    <asp:LinkButton ID="btnMarkAllRead" runat="server" CssClass="notif-action" OnClick="MarkAllRead_Click">Tout marquer comme lu</asp:LinkButton>
+                            <div class="notif-dropdown" id="notifDropdown" style="display:none; position:absolute; right:0; top:120%; background:#fff; border:1px solid #e2e8f0; border-radius:10px; width:380px; box-shadow:0 8px 24px rgba(0,0,0,0.12); z-index:1000;">
+                                <div class="notif-header" style="display:flex; flex-direction:column; gap:0.5rem; align-items:center; padding:0.75rem 1rem; border-bottom:1px solid #e2e8f0;">
+                                    <span style="font-weight:600; color:#0f172a;">Notifications</span>
+                                    <asp:LinkButton ID="btnMarkAllRead" runat="server" CssClass="notif-action" style="display:inline-flex; align-items:center; justify-content:center; width:100%; padding:0.5rem 0.75rem; border:1px solid #e2e8f0; border-radius:8px; background:#f8fafc; color:#0f172a; font-size:0.85rem; text-decoration:none;" OnClick="MarkAllRead_Click">Tout marquer comme lu</asp:LinkButton>
                                 </div>
                                 <asp:Repeater ID="rptNotifications" runat="server" OnItemCommand="rptNotifications_ItemCommand">
                                     <ItemTemplate>
-                                        <div id="notifItem" runat="server" class="notif-item" style="display:flex; justify-content:space-between; gap:0.5rem; padding:0.75rem 1rem; border-bottom:1px solid #f1f5f9;">
-                                            <div class="notif-info" style="flex:1;">
-                                                <div class="notif-title" style="font-weight:600;"><%# Eval("Title") %></div>
-                                                <div class="notif-meta" style="font-size:0.85rem; color:#64748b;"><%# Eval("CreatedAt", "{0:dd/MM/yyyy HH:mm}") %></div>
-                                                <asp:HyperLink ID="lnkNotifAction" runat="server" CssClass="btn btn-outline" />
+                                        <div id="notifItem" runat="server" class="notif-item" style="display:flex; align-items:flex-start; gap:0.75rem; padding:1rem; border-bottom:1px solid #f1f5f9;">
+                                            <div class="notif-icon" style="background:#e0f2f1; color:#28a745; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                                <i class="fas fa-info"></i>
                                             </div>
-                                            <asp:LinkButton ID="btnMarkRead" runat="server" CommandName="MarkRead" CommandArgument='<%# Eval("Id") %>' CssClass="notif-mark" style="color:#2563eb;">Lu</asp:LinkButton>
+                                            <div class="notif-content" style="flex:1; min-width:0;">
+                                                <div class="notif-title" style="font-weight:600; color:#1e293b; margin-bottom:0.25rem;"><%# Eval("Title") %></div>
+                                                <div class="notif-meta" style="font-size:0.75rem; color:#94a3b8; margin-bottom:0.75rem;"><%# Eval("CreatedAt", "{0:dd/MM/yyyy HH:mm}") %></div>
+                                                <div class="notif-actions" style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem;">
+                                                    <asp:HyperLink ID="lnkNotifAction" runat="server" CssClass="btn btn-sm btn-outline-primary" style="font-size:0.8rem; padding: 0.45rem 1rem; border-radius: 8px; white-space:nowrap;" />
+                                                    <asp:LinkButton ID="btnMarkRead" runat="server" CommandName="MarkRead" CommandArgument='<%# Eval("Id") %>' CssClass="notif-mark" style="color:#2563eb; font-size:0.85rem; text-decoration:none; white-space:nowrap;">Marquer comme lu</asp:LinkButton>
+                                                </div>
+                                            </div>
                                         </div>
                                     </ItemTemplate>
                                 </asp:Repeater>

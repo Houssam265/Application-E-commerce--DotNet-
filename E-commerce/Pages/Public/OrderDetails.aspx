@@ -156,7 +156,7 @@
                 </div>
 
                 <div style="margin-top: 2rem; text-align: center;">
-                    <a href="Profile.aspx" class="btn btn-outline">
+                    <a href="Profile.aspx?tab=orders" class="btn btn-outline">
                         <i class="fas fa-arrow-left"></i> Retour à mes commandes
                     </a>
                 </div>

@@ -40,12 +40,15 @@ namespace Ecommerce.Utils
         .status-cancelled {{ background-color: #fee2e2; color: #991b1b; }}
         .order-box {{ background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin: 20px 0; }}
         .order-box h3 {{ margin: 0 0 15px 0; font-size: 18px; color: #111827; }}
-        .product-table {{ width: 100%; border-collapse: collapse; margin: 15px 0; }}
-        .product-table th {{ background-color: #f3f4f6; padding: 10px; text-align: left; border-bottom: 2px solid #e5e7eb; font-size: 13px; }}
-        .product-table td {{ padding: 12px 10px; border-bottom: 1px solid #e5e7eb; font-size: 14px; }}
+        .product-table {{ width: 100%; border-collapse: collapse; margin: 15px 0; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); }}
+        .product-table th {{ background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%); padding: 14px 12px; text-align: left; border-bottom: 2px solid #d1d5db; font-size: 13px; font-weight: 600; color: #374151; text-transform: uppercase; letter-spacing: 0.5px; }}
+        .product-table td {{ padding: 14px 12px; border-bottom: 1px solid #e5e7eb; font-size: 14px; color: #1f2937; }}
+        .product-table tbody tr:hover {{ background-color: #f9fafb; }}
+        .product-table tbody tr:last-child td {{ border-bottom: none; }}
         .product-img {{ width: 60px; height: 60px; object-fit: cover; border-radius: 6px; }}
         .total-row {{ font-weight: bold; background-color: #f9fafb; }}
-        .button {{ display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; margin: 20px 0; }}
+        .button {{ display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); color: #ffffff !important; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3); }}
+        .button:hover {{ transform: translateY(-2px); box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4); }}
         .footer {{ background-color: #f9fafb; padding: 30px 20px; text-align: center; color: #6b7280; font-size: 13px; border-top: 1px solid #e5e7eb; }}
         .footer a {{ color: #22c55e; text-decoration: none; }}
         .divider {{ height: 1px; background-color: #e5e7eb; margin: 25px 0; }}
@@ -164,7 +167,10 @@ namespace Ecommerce.Utils
                     break;
             }
 
-            sb.Append("<a href='#' class='button'>Voir ma commande</a>");
+            // Get base URL from config or use relative path
+            string baseUrl = System.Configuration.ConfigurationManager.AppSettings["BaseUrl"] ?? "http://localhost:50500";
+            string orderUrl = $"{baseUrl}/Pages/Public/Profile.aspx?tab=orders";
+            sb.Append($"<a href='{orderUrl}' class='button' style='text-decoration: none;'>Voir ma commande</a>");
 
             sb.Append(GetEmailFooter());
             return sb.ToString();
@@ -248,7 +254,9 @@ namespace Ecommerce.Utils
             sb.Append("</div>");
 
             sb.Append("<p>Si vous avez d'autres questions, n'hésitez pas à nous contacter.</p>");
-            sb.Append("<a href='#' class='button'>Voir mes réclamations</a>");
+            string baseUrl = System.Configuration.ConfigurationManager.AppSettings["BaseUrl"] ?? "http://localhost:50500";
+            string complaintsUrl = $"{baseUrl}/Pages/Public/Profile.aspx?tab=complaints";
+            sb.Append($"<a href='{complaintsUrl}' class='button' style='text-decoration: none;'>Voir mes réclamations</a>");
 
             sb.Append(GetEmailFooter());
             return sb.ToString();
@@ -273,7 +281,9 @@ namespace Ecommerce.Utils
                 sb.Append("<p>Vous pouvez maintenant vous connecter et accéder à tous les services de notre plateforme.</p>");
                 sb.Append("</div>");
                 sb.Append("<p>Si vous avez des questions ou besoin d'assistance, n'hésitez pas à nous contacter.</p>");
-                sb.Append("<a href='#' class='button'>Se connecter</a>");
+                string baseUrl = System.Configuration.ConfigurationManager.AppSettings["BaseUrl"] ?? "http://localhost:50500";
+                string loginUrl = $"{baseUrl}/Pages/Public/Login.aspx";
+                sb.Append($"<a href='{loginUrl}' class='button' style='text-decoration: none;'>Se connecter</a>");
             }
             else
             {
@@ -356,7 +366,9 @@ namespace Ecommerce.Utils
             }
 
             sb.Append("<p>Nous préparons votre commande et vous tiendrons informé(e) de son évolution.</p>");
-            sb.Append("<a href='#' class='button'>Suivre ma commande</a>");
+            string baseUrl = System.Configuration.ConfigurationManager.AppSettings["BaseUrl"] ?? "http://localhost:50500";
+            string orderUrl = $"{baseUrl}/Pages/Public/Profile.aspx?tab=orders";
+            sb.Append($"<a href='{orderUrl}' class='button' style='text-decoration: none;'>Suivre ma commande</a>");
 
             sb.Append(GetEmailFooter());
             return sb.ToString();

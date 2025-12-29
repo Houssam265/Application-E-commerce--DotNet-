@@ -3,185 +3,329 @@
 
     <asp:Content ID="Content1" ContentPlaceHolderID="HeadContent" runat="server">
         <style>
-            .complaint-card {
-                background: white;
-                border-radius: 8px;
-                padding: 20px;
-                margin-bottom: 15px;
-                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            }
-
-            .complaint-header {
+            .page-header {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                margin-bottom: 15px;
+                margin-bottom: 2rem;
+                padding-bottom: 1.5rem;
+                border-bottom: 1px solid #e2e8f0;
             }
 
-            .complaint-title {
-                font-size: 18px;
+            .page-header h1 {
+                margin: 0;
+                color: #1e293b;
+            }
+
+            .page-header p {
+                color: #64748b;
+                margin-top: 0.5rem;
+                margin-bottom: 0;
+            }
+
+            .categories-table-container {
+                background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+                border: 1px solid #e2e8f0;
+                border-radius: 16px;
+                padding: 1.5rem;
+                overflow-x: auto;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+                transition: all 0.3s ease;
+            }
+
+            .categories-table-container:hover {
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            }
+
+            .grid-view {
+                width: 100%;
+                border-collapse: collapse;
+                margin: 0;
+            }
+
+            .grid-view th,
+            .grid-view td {
+                text-align: left;
+                padding: 1.25rem 1rem;
+                border-bottom: 1px solid #e2e8f0;
+            }
+
+            .grid-view th {
+                background: rgba(59, 130, 246, 0.08);
+                color: #475569;
                 font-weight: 600;
-                color: #111827;
+                text-transform: uppercase;
+                font-size: 0.85rem;
+                letter-spacing: 0.5px;
+            }
+
+            .grid-view tbody tr {
+                transition: all 0.2s ease;
+            }
+
+            .grid-view tbody tr:hover {
+                background: rgba(59, 130, 246, 0.05);
+                transform: scale(1.01);
+            }
+
+            .grid-view td {
+                color: #1e293b;
+            }
+
+            .form-control {
+                background: #ffffff;
+                color: #1e293b;
+                border: 1px solid #e2e8f0;
+                padding: 0.75rem 1rem;
+                width: 100%;
+                border-radius: 10px;
+                font-size: 0.95rem;
+                transition: all 0.3s ease;
+            }
+
+            .form-control:focus {
+                outline: none;
+                border-color: #3b82f6;
+                background: #ffffff;
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            }
+
+            .btn-primary {
+                background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+                border: none;
+                border-radius: 10px;
+                padding: 0.75rem 1.5rem;
+                font-weight: 600;
+                transition: all 0.3s ease;
+                box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+            }
+
+            .btn-primary:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
+            }
+
+            .status-badge {
+                padding: 0.375rem 0.75rem;
+                border-radius: 6px;
+                font-size: 0.875rem;
+                font-weight: 600;
+                display: inline-block;
+            }
+
+            .status-pending {
+                background: rgba(245, 158, 11, 0.15);
+                color: #d97706;
+            }
+
+            .status-inprogress {
+                background: rgba(59, 130, 246, 0.15);
+                color: #2563eb;
+            }
+
+            .status-resolved {
+                background: rgba(16, 185, 129, 0.15);
+                color: #059669;
+            }
+
+            .status-closed {
+                background: rgba(148, 163, 184, 0.15);
+                color: #64748b;
             }
 
             .priority-badge {
-                padding: 4px 12px;
-                border-radius: 12px;
-                font-size: 12px;
+                font-size: 0.75rem;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                padding: 0.25rem 0.5rem;
+                border-radius: 4px;
                 font-weight: 600;
             }
 
             .priority-high {
-                background-color: #fee2e2;
-                color: #991b1b;
+                color: #dc2626;
+                background: rgba(239, 68, 68, 0.15);
             }
 
             .priority-medium {
-                background-color: #fef3c7;
-                color: #92400e;
+                color: #b45309;
+                background: rgba(245, 158, 11, 0.15);
             }
 
             .priority-low {
-                background-color: #dbeafe;
-                color: #1e40af;
+                color: #15803d;
+                background: rgba(16, 185, 129, 0.15);
             }
 
-            .status-badge {
-                padding: 6px 14px;
-                border-radius: 16px;
-                font-size: 13px;
-                font-weight: 600;
+            .empty-state {
+                padding: 4rem 2rem;
+                text-align: center;
+                color: #64748b;
             }
 
-            .status-pending {
-                background-color: #fef3c7;
-                color: #92400e;
+            .empty-state i {
+                font-size: 3rem;
+                margin-bottom: 1rem;
+                opacity: 0.5;
             }
 
-            .status-inprogress {
-                background-color: #dbeafe;
-                color: #1e40af;
+            .action-buttons {
+                display: flex;
+                gap: 0.75rem;
             }
 
-            .status-resolved {
-                background-color: #d1fae5;
-                color: #065f46;
-            }
-
-            .status-closed {
-                background-color: #e5e7eb;
-                color: #374151;
-            }
-
-            .filter-section {
-                background: white;
-                padding: 20px;
+            .action-btn {
+                padding: 0.5rem 1rem;
                 border-radius: 8px;
-                margin-bottom: 20px;
+                font-weight: 600;
+                font-size: 0.875rem;
+                border: none;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                text-decoration: none;
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5rem;
             }
 
-            .complaint-details {
-                background: #f9fafb;
-                padding: 15px;
-                border-radius: 6px;
-                margin: 10px 0;
+            .action-btn.edit {
+                background: rgba(59, 130, 246, 0.15);
+                color: #2563eb;
+                border: 1px solid rgba(59, 130, 246, 0.25);
             }
 
-            .response-box {
-                background: #f0fdf4;
-                border: 1px solid #86efac;
-                padding: 15px;
-                border-radius: 6px;
-                margin: 15px 0;
+            .action-btn.edit:hover {
+                background: rgba(59, 130, 246, 0.25);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(59, 130, 246, 0.2);
+            }
+
+            .form-container {
+                background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+                border: 1px solid #e2e8f0;
+                border-radius: 16px;
+                padding: 2rem;
+                max-width: 700px;
+                margin-top: 2rem;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+                transition: all 0.3s ease;
+                animation: fadeInUp 0.5s ease-out;
+            }
+
+            @keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
             }
         </style>
     </asp:Content>
 
     <asp:Content ID="Content2" ContentPlaceHolderID="MainContent" runat="server">
-        <div class="container-fluid py-4">
-            <h2><i class="fas fa-exclamation-circle"></i> Gestion des Réclamations</h2>
+        <div class="page-header">
+            <div>
+                <h1><i class="fas fa-exclamation-circle"></i> Gestion des Réclamations</h1>
+                <p>Suivi et traitement des tickets support</p>
+            </div>
+        </div>
 
-            <div class="filter-section">
-                <div class="row align-items-end">
-                    <div class="col-md-3">
-                        <label>Statut</label>
-                        <asp:DropDownList ID="ddlStatusFilter" runat="server" CssClass="form-control"
-                            AutoPostBack="true" OnSelectedIndexChanged="ddlStatusFilter_SelectedIndexChanged">
-                            <asp:ListItem Value="" Text="Tous les statuts" />
-                            <asp:ListItem Value="Pending" Text="En attente" />
-                            <asp:ListItem Value="InProgress" Text="En cours" />
-                            <asp:ListItem Value="Resolved" Text="Résolue" />
-                            <asp:ListItem Value="Closed" Text="Fermée" />
-                        </asp:DropDownList>
-                    </div>
-                    <div class="col-md-3">
-                        <label>Priorité</label>
-                        <asp:DropDownList ID="ddlPriorityFilter" runat="server" CssClass="form-control"
-                            AutoPostBack="true" OnSelectedIndexChanged="ddlPriorityFilter_SelectedIndexChanged">
-                            <asp:ListItem Value="" Text="Toutes les priorités" />
-                            <asp:ListItem Value="High" Text="Haute" />
-                            <asp:ListItem Value="Medium" Text="Moyenne" />
-                            <asp:ListItem Value="Low" Text="Basse" />
-                        </asp:DropDownList>
-                    </div>
-                    <div class="col-md-4">
-                        <label>Recherche</label>
-                        <asp:TextBox ID="txtSearch" runat="server" CssClass="form-control"
-                            Placeholder="Rechercher par sujet, nom client, email ou numéro de commande..." />
-                    </div>
-                    <div class="col-md-2">
-                        <asp:Button ID="btnSearch" runat="server" Text="Rechercher" CssClass="btn btn-primary w-100"
-                            OnClick="btnSearch_Click" />
-                    </div>
+        <div class="categories-table-container" style="margin-bottom: 1.5rem;">
+            <div style="display: flex; align-items: flex-end; gap: 1rem; flex-wrap: wrap;">
+                <div style="flex: 0 0 auto; min-width: 150px;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #475569; font-size: 0.9rem;">Statut</label>
+                    <asp:DropDownList ID="ddlStatusFilter" runat="server" CssClass="form-control"
+                        AutoPostBack="true" OnSelectedIndexChanged="ddlStatusFilter_SelectedIndexChanged">
+                        <asp:ListItem Value="" Text="Tous les statuts" />
+                        <asp:ListItem Value="Pending" Text="En attente" />
+                        <asp:ListItem Value="InProgress" Text="En cours" />
+                        <asp:ListItem Value="Resolved" Text="Résolue" />
+                        <asp:ListItem Value="Closed" Text="Fermée" />
+                    </asp:DropDownList>
+                </div>
+                <div style="flex: 0 0 auto; min-width: 150px;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #475569; font-size: 0.9rem;">Priorité</label>
+                    <asp:DropDownList ID="ddlPriorityFilter" runat="server" CssClass="form-control"
+                        AutoPostBack="true" OnSelectedIndexChanged="ddlPriorityFilter_SelectedIndexChanged">
+                        <asp:ListItem Value="" Text="Toutes les priorités" />
+                        <asp:ListItem Value="High" Text="Haute" />
+                        <asp:ListItem Value="Medium" Text="Moyenne" />
+                        <asp:ListItem Value="Low" Text="Basse" />
+                    </asp:DropDownList>
+                </div>
+                <div style="flex: 1 1 auto; min-width: 250px;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #475569; font-size: 0.9rem;">Recherche</label>
+                    <asp:TextBox ID="txtSearch" runat="server" CssClass="form-control"
+                        Placeholder="Sujet, nom client, email, N° commande..." />
+                </div>
+                <div style="flex: 0 0 auto;">
+                    <asp:Button ID="btnSearch" runat="server" Text="Rechercher" CssClass="btn btn-primary"
+                        OnClick="btnSearch_Click" style="margin-bottom: 0;" />
                 </div>
             </div>
+        </div>
+
+        <div class="categories-table-container">
 
             <asp:Panel ID="pnlList" runat="server">
                 <asp:Repeater ID="rptComplaints" runat="server" OnItemCommand="rptComplaints_ItemCommand">
+                    <HeaderTemplate>
+                        <table class="grid-view">
+                            <thead>
+                                <tr>
+                                    <th>Sujet</th>
+                                    <th>Client</th>
+                                    <th>Priorité</th>
+                                    <th>Statut</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    </HeaderTemplate>
                     <ItemTemplate>
-                        <div class="complaint-card">
-                            <div class="complaint-header">
-                                <div>
-                                    <span class="complaint-title">
-                                        <%# Eval("Subject") %>
-                                    </span><br />
-                                    <small class="text-muted">
-                                        <i class="fas fa-user"></i>
-                                        <%# Eval("FullName") %> (<%# Eval("Email") %>) • <i class="fas fa-calendar"></i>
-                                                <%# System.Convert.ToDateTime(Eval("CreatedAt")).ToString("dd/MM/yyyy HH:mm") %>
-                                                    <%# Eval("OrderNumber") != System.DBNull.Value ? " • Commande: " +
-                                                        Eval("OrderNumber") : "" %>
-                                    </small>
-                                </div>
-                                <div>
-                                    <span class='priority-badge priority-<%# Eval("Priority").ToString().ToLower() %>'>
-                                        <%# GetPriorityLabel(Eval("Priority").ToString()) %>
-                                    </span>
-                                    <span class='status-badge status-<%# Eval("Status").ToString().ToLower() %>'>
-                                        <%# GetStatusLabel(Eval("Status").ToString()) %>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="complaint-details"><strong>Description:</strong><br />
-                                <%# Eval("Description") %>
-                            </div>
-                            <asp:LinkButton ID="btnView" runat="server" CssClass="btn btn-sm btn-primary"
-                                CommandName="ViewComplaint" CommandArgument='<%# Eval("Id") %>'>
-                                <i class="fas fa-eye"></i> Voir détails et répondre
-                            </asp:LinkButton>
-                        </div>
+                        <tr>
+                            <td><%# Eval("Subject") %></td>
+                            <td><%# Eval("FullName") %> (<%# Eval("Email") %>)</td>
+                            <td>
+                                <span class='priority-badge priority-<%# Eval("Priority").ToString().ToLower() %>'>
+                                    <%# GetPriorityLabel(Eval("Priority").ToString()) %>
+                                </span>
+                            </td>
+                            <td>
+                                <span class='status-badge status-<%# Eval("Status").ToString().ToLower() %>'>
+                                    <%# GetStatusLabel(Eval("Status").ToString()) %>
+                                </span>
+                            </td>
+                            <td><%# System.Convert.ToDateTime(Eval("CreatedAt")).ToString("dd/MM/yyyy HH:mm") %></td>
+                            <td>
+                                <asp:LinkButton ID="btnView" runat="server" CommandName="ViewComplaint"
+                                    CommandArgument='<%# Eval("Id") %>' CssClass="action-btn edit">
+                                    <i class="fas fa-comments"></i>
+                                    <span>Voir</span>
+                                </asp:LinkButton>
+                            </td>
+                        </tr>
                     </ItemTemplate>
+                    <FooterTemplate>
+                            </tbody>
+                        </table>
+                    </FooterTemplate>
                 </asp:Repeater>
             </asp:Panel>
 
-            <asp:Panel ID="pnlNoComplaints" runat="server" Visible="false" CssClass="text-center py-5">
-                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                <p class="text-muted">Aucune réclamation trouvée.</p>
+            <asp:Panel ID="pnlNoComplaints" runat="server" Visible="false" CssClass="empty-state">
+                <i class="fas fa-exclamation-circle"></i>
+                <h3>Aucune réclamation trouvée</h3>
+                <p>Les réclamations apparaîtront ici</p>
             </asp:Panel>
 
             <asp:Panel ID="pnlDetails" runat="server" Visible="false">
-                <div class="card">
-                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <div class="details-card">
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
                         <h5 class="mb-0"><i class="fas fa-file-alt"></i> Détails de la Réclamation</h5>
                         <asp:LinkButton ID="btnBack" runat="server" CssClass="btn btn-sm btn-light"
                             OnClick="btnBack_Click">
@@ -246,7 +390,8 @@
                                 <asp:ListItem Value="Resolved" Text="Résolue (sera automatiquement fermée)" />
                                 <asp:ListItem Value="Closed" Text="Fermée" />
                             </asp:DropDownList>
-                            <small class="text-muted">Note: Si vous sélectionnez "Résolue", la réclamation sera automatiquement fermée et ne pourra plus être modifiée.</small>
+                            <small class="text-muted">Note: Si vous sélectionnez "Résolue", la réclamation sera
+                                automatiquement fermée et ne pourra plus être modifiée.</small>
                         </div>
                         <div class="mb-3">
                             <label>Votre réponse</label>

@@ -124,7 +124,7 @@ namespace Ecommerce.Pages.Admin
                         }
                     }
                     if (!isFirst) sb.Append(",");
-                    sb.Append(amount.ToString("F2"));
+                    sb.Append(amount.ToString("F2", System.Globalization.CultureInfo.InvariantCulture));
                     isFirst = false;
                 }
                 
@@ -206,7 +206,7 @@ namespace Ecommerce.Pages.Admin
                 {
                     string name = row["Name"].ToString();
                     if (name.Length > 25) name = name.Substring(0, 25) + "...";
-                    labels.Add(name.Replace("\"", "\\\"").Replace("'", "\\'"));
+                    labels.Add(name.Replace("\"", "\\\""));
                     int totalSold = Convert.ToInt32(row["TotalSold"]);
                     data.Add(totalSold);
                 }
