@@ -76,16 +76,22 @@ namespace Ecommerce
             
             if (!string.IsNullOrEmpty(imageUrlStr))
             {
-                // Si c'est une URL absolue (http/https), la retourner telle quelle
+                // Normaliser les chemins stockés (URL absolue, chemin app, ou simple nom de fichier)
+                string resolvedUrl;
                 if (imageUrlStr.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || 
                     imageUrlStr.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
                 {
-                    return $"<img src='{imageUrlStr}' alt='{categoryNameStr}' onerror=\"this.style.display='none'; this.nextElementSibling.style.display='block';\">" +
-                           "<i class='fas fa-seedling category-icon' style='color: var(--primary-color); display: none;'></i>";
+                    resolvedUrl = imageUrlStr;
+                }
+                else if (imageUrlStr.StartsWith("~/") || imageUrlStr.StartsWith("/"))
+                {
+                    resolvedUrl = ResolveUrl(imageUrlStr);
+                }
+                else
+                {
+                    resolvedUrl = ResolveUrl("~/Assets/Images/Categories/" + imageUrlStr);
                 }
                 
-                // Si c'est un simple nom de fichier ou chemin relatif
-                string resolvedUrl = ResolveUrl("~/Assets/Images/Categories/" + imageUrlStr);
                 return $"<img src='{resolvedUrl}' alt='{categoryNameStr}' onerror=\"this.style.display='none'; this.nextElementSibling.style.display='block';\">" +
                        "<i class='fas fa-seedling category-icon' style='color: var(--primary-color); display: none;'></i>";
             }

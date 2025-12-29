@@ -38,11 +38,11 @@
                 </button>
                 <nav>
                     <ul class="nav-links">
-                        <li><a href="/" class='<%= Request.Path == "/" || Request.Path == "/Default.aspx" ? "active" : "" %>'>Accueil</a></li>
-                        <li><a href="/Pages/Public/Shop.aspx" class='<%= Request.Path.Contains("Shop.aspx") ? "active" : "" %>'>Boutique</a></li>
-                        <li><a href="/Pages/Public/About.aspx" class='<%= Request.Path.Contains("About.aspx") ? "active" : "" %>'>À propos</a></li>
-                        <li><a href="/Pages/Public/Contact.aspx" class='<%= Request.Path.Contains("Contact.aspx") ? "active" : "" %>'>Contact</a></li>
-                        <li><a href="/Pages/Public/Cart.aspx" class='<%= Request.Path.Contains("Cart.aspx") ? "active" : "" %>'>
+                        <li><a href="/" class='<%= Request.Path.Equals("/", StringComparison.OrdinalIgnoreCase) || Request.Path.EndsWith("/Default.aspx", StringComparison.OrdinalIgnoreCase) ? "active" : "" %>'>Accueil</a></li>
+                        <li><a href="/Pages/Public/Shop.aspx" class='<%= Request.Path.IndexOf("Shop.aspx", StringComparison.OrdinalIgnoreCase) >= 0 ? "active" : "" %>'>Boutique</a></li>
+                        <li><a href="/Pages/Public/About.aspx" class='<%= Request.Path.IndexOf("About.aspx", StringComparison.OrdinalIgnoreCase) >= 0 ? "active" : "" %>'>À propos</a></li>
+                        <li><a href="/Pages/Public/Contact.aspx" class='<%= Request.Path.IndexOf("Contact.aspx", StringComparison.OrdinalIgnoreCase) >= 0 ? "active" : "" %>'>Contact</a></li>
+                        <li><a href="/Pages/Public/Cart.aspx" class='<%= Request.Path.IndexOf("Cart.aspx", StringComparison.OrdinalIgnoreCase) >= 0 ? "active" : "" %>'>
                             <i class="fas fa-shopping-cart"></i> Panier
                             <% if (Session["CartCount"] != null && Convert.ToInt32(Session["CartCount"]) > 0) { %>
                                 <span class="badge badge-primary" style="margin-left: 5px;"><%: Session["CartCount"] %></span>
