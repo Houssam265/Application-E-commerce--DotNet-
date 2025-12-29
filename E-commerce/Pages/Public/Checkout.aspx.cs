@@ -322,6 +322,33 @@ namespace Ecommerce.Pages.Public
                 CartHelper.ClearCart();
                 Session["CartCount"] = 0;
 
+                // Send Confirmation Email
+                try 
+                {
+                    string userEmailQuery = "SELECT Email FROM Users WHERE Id = @UserId";
+                    DataTable userEmailDt = db.ExecuteQuery(userEmailQuery, new SqlParameter[] { new SqlParameter("@UserId", userId) });
+                    
+                    if (userEmailDt.Rows.Count > 0)
+                    {
+                        string userEmail = userEmailDt.Rows[0]["Email"].ToString();
+                        string productsHtml = EmailTemplates.GenerateProductTableHtml(dtSummary, true); // Use dtSummary which already has totals
+                        
+                        string emailBody = EmailTemplates.GetOrderConfirmationEmailTemplate(
+                            txtFullName.Text.Trim(),
+                            orderNumber,
+                            productsHtml,
+                            total
+                        );
+
+                        SecurityHelper.SendEmail(userEmail, $"Confirmation de commande {orderNumber}", emailBody);
+                    }
+                }
+                catch (Exception emailEx)
+                {
+                    // Log error but don't stop the order process
+                    Console.WriteLine("Failed to send order confirmation email: " + emailEx.Message);
+                }
+
                 // Redirect to confirmation
                 Response.Redirect("OrderConfirmation.aspx?id=" + orderId);
             }
