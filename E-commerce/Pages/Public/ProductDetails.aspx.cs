@@ -1,6 +1,7 @@
 using System;
 using System.Data;
 using System.Data.SqlClient;
+using System.Linq;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 using System.Collections.Generic;
@@ -29,6 +30,7 @@ namespace Ecommerce.Pages.Public
         protected global::System.Web.UI.WebControls.Literal litStockStatus;
         protected global::System.Web.UI.WebControls.Repeater rptReviews;
         protected global::System.Web.UI.WebControls.Label lblNoReviews;
+        protected global::System.Web.UI.WebControls.Repeater rptProductImages;
 
         private int productId = 0;
 
@@ -52,6 +54,7 @@ namespace Ecommerce.Pages.Public
             if (!IsPostBack)
             {
                 LoadProduct(productId);
+                LoadProductImages(productId);
                 LoadReviews(productId);
                 CheckCanAddReview(productId);
                 CheckWishlistStatus(productId);
@@ -86,14 +89,34 @@ namespace Ecommerce.Pages.Public
             DbContext db = new DbContext();
             
             // Check if user already reviewed this product
-            string checkQuery = "SELECT COUNT(*) FROM Reviews WHERE ProductId = @ProductId AND UserId = @UserId";
-            SqlParameter[] checkParams = {
+            string checkReviewQuery = "SELECT COUNT(*) FROM Reviews WHERE ProductId = @ProductId AND UserId = @UserId";
+            SqlParameter[] checkReviewParams = {
                 new SqlParameter("@ProductId", productId),
                 new SqlParameter("@UserId", userId)
             };
             
-            int count = (int)db.ExecuteScalar(checkQuery, checkParams);
-            pnlAddReview.Visible = (count == 0);
+            int reviewCount = (int)db.ExecuteScalar(checkReviewQuery, checkReviewParams);
+            if (reviewCount > 0)
+            {
+                pnlAddReview.Visible = false;
+                return;
+            }
+            
+            // Check if user has ordered this product AND the order is delivered
+            string checkOrderQuery = @"
+                SELECT COUNT(*) 
+                FROM OrderItems oi
+                INNER JOIN Orders o ON oi.OrderId = o.Id
+                WHERE oi.ProductId = @ProductId 
+                AND o.UserId = @UserId 
+                AND o.Status = 'Delivered'";
+            SqlParameter[] checkOrderParams = {
+                new SqlParameter("@ProductId", productId),
+                new SqlParameter("@UserId", userId)
+            };
+            
+            int orderCount = (int)db.ExecuteScalar(checkOrderQuery, checkOrderParams);
+            pnlAddReview.Visible = (orderCount > 0);
         }
 
         private void LoadProduct(int id)
@@ -161,8 +184,9 @@ namespace Ecommerce.Pages.Public
                         btnAddToCart.Enabled = false;
                     }
                     
+                    // Load main image (primary image from ProductImages or fallback to ImageUrl)
                     string imageUrl = row["ImageUrl"]?.ToString() ?? "";
-                    imgMain.ImageUrl = GetImageUrl(imageUrl);
+                    imgMain.ImageUrl = GetImageUrlForRepeater(imageUrl);
                     
                     // Update view count
                     db.ExecuteNonQuery("UPDATE Products SET ViewCount = ViewCount + 1 WHERE Id = @Id", parameters);
@@ -504,7 +528,40 @@ namespace Ecommerce.Pages.Public
             ClientScript.RegisterStartupScript(this.GetType(), "Notification_" + Guid.NewGuid().ToString("N"), script, true);
         }
 
-        protected string GetImageUrl(object imageUrlObj)
+        private void LoadProductImages(int productId)
+        {
+            try
+            {
+                DbContext db = new DbContext();
+                string query = @"SELECT * FROM ProductImages 
+                                 WHERE ProductId = @ProductId 
+                                 ORDER BY IsPrimary DESC, DisplayOrder ASC";
+                SqlParameter[] parameters = { new SqlParameter("@ProductId", productId) };
+                DataTable dt = db.ExecuteQuery(query, parameters);
+                
+                if (dt.Rows.Count > 0)
+                {
+                    rptProductImages.DataSource = dt;
+                    rptProductImages.DataBind();
+                    
+                    // Set main image to primary image if available
+                    DataRow primaryRow = dt.Rows.Cast<DataRow>()
+                        .FirstOrDefault(r => Convert.ToBoolean(r["IsPrimary"]));
+                    if (primaryRow != null)
+                    {
+                        string primaryImageUrl = primaryRow["ImageUrl"].ToString();
+                        imgMain.ImageUrl = GetImageUrlForRepeater(primaryImageUrl);
+                    }
+                }
+                else
+                {
+                    // No additional images, keep the main image from Products table
+                }
+            }
+            catch { }
+        }
+
+        protected string GetImageUrlForRepeater(object imageUrlObj)
         {
             if (imageUrlObj == null || imageUrlObj == DBNull.Value)
             {
@@ -545,6 +602,18 @@ namespace Ecommerce.Pages.Public
 
             // Sinon, essayer de résoudre tel quel
             return ResolveUrl("~/Assets/Images/Products/" + imageUrl);
+        }
+
+        // Helper method for thumbnail class
+        protected string GetThumbnailClass(object isPrimary)
+        {
+            if (isPrimary != null && isPrimary != DBNull.Value)
+            {
+                bool primary = false;
+                bool.TryParse(isPrimary.ToString(), out primary);
+                return primary ? "active" : "";
+            }
+            return "";
         }
     }
 }

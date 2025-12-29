@@ -222,6 +222,75 @@
                     transform: translateY(0);
                 }
             }
+
+            .search-filter-container {
+                background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+                border: 1px solid #e2e8f0;
+                border-radius: 12px;
+                padding: 1.5rem;
+                margin-bottom: 1.5rem;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            }
+
+            .filter-row {
+                display: flex;
+                gap: 1rem;
+                align-items: center;
+                flex-wrap: wrap;
+                margin-bottom: 1rem;
+            }
+
+            .filter-row:last-child {
+                margin-bottom: 0;
+            }
+
+            .filter-group {
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
+                min-width: 150px;
+            }
+
+            .filter-group label {
+                font-size: 0.85rem;
+                color: #64748b;
+                font-weight: 500;
+            }
+
+            .search-filter-container .search-input {
+                flex: 1;
+                padding: 0.75rem 1rem;
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+                font-size: 0.95rem;
+                transition: all 0.3s ease;
+            }
+
+            .search-filter-container .search-input:focus {
+                outline: none;
+                border-color: #3b82f6;
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            }
+
+            .search-filter-container .search-btn {
+                padding: 0.75rem 1.5rem;
+                background: #3b82f6;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                font-weight: 600;
+                transition: all 0.3s ease;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+            .search-filter-container .search-btn:hover {
+                background: #2563eb;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+            }
         </style>
     </asp:Content>
 
@@ -233,11 +302,11 @@
             </div>
         </div>
 
-        <div class="categories-table-container" style="margin-bottom: 1.5rem;">
-            <div style="display: flex; align-items: flex-end; gap: 1rem; flex-wrap: wrap;">
-                <div style="flex: 0 0 auto; min-width: 150px;">
-                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #475569; font-size: 0.9rem;">Statut</label>
-                    <asp:DropDownList ID="ddlStatusFilter" runat="server" CssClass="form-control"
+        <div class="search-filter-container">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label><i class="fas fa-info-circle"></i> Statut</label>
+                    <asp:DropDownList ID="ddlStatusFilter" runat="server" CssClass="search-input"
                         AutoPostBack="true" OnSelectedIndexChanged="ddlStatusFilter_SelectedIndexChanged">
                         <asp:ListItem Value="" Text="Tous les statuts" />
                         <asp:ListItem Value="Pending" Text="En attente" />
@@ -246,9 +315,9 @@
                         <asp:ListItem Value="Closed" Text="Fermée" />
                     </asp:DropDownList>
                 </div>
-                <div style="flex: 0 0 auto; min-width: 150px;">
-                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #475569; font-size: 0.9rem;">Priorité</label>
-                    <asp:DropDownList ID="ddlPriorityFilter" runat="server" CssClass="form-control"
+                <div class="filter-group">
+                    <label><i class="fas fa-exclamation-triangle"></i> Priorité</label>
+                    <asp:DropDownList ID="ddlPriorityFilter" runat="server" CssClass="search-input"
                         AutoPostBack="true" OnSelectedIndexChanged="ddlPriorityFilter_SelectedIndexChanged">
                         <asp:ListItem Value="" Text="Toutes les priorités" />
                         <asp:ListItem Value="High" Text="Haute" />
@@ -256,15 +325,17 @@
                         <asp:ListItem Value="Low" Text="Basse" />
                     </asp:DropDownList>
                 </div>
-                <div style="flex: 1 1 auto; min-width: 250px;">
-                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #475569; font-size: 0.9rem;">Recherche</label>
-                    <asp:TextBox ID="txtSearch" runat="server" CssClass="form-control"
+                <div class="filter-group" style="flex: 2;">
+                    <label><i class="fas fa-search"></i> Recherche</label>
+                    <asp:TextBox ID="txtSearch" runat="server" CssClass="search-input"
                         Placeholder="Sujet, nom client, email, N° commande..." />
                 </div>
-                <div style="flex: 0 0 auto;">
-                    <asp:Button ID="btnSearch" runat="server" Text="Rechercher" CssClass="btn btn-primary"
-                        OnClick="btnSearch_Click" style="margin-bottom: 0;" />
                 </div>
+            <div class="filter-row">
+                <asp:LinkButton ID="btnSearch" runat="server" CssClass="search-btn" OnClick="btnSearch_Click">
+                    <i class="fas fa-search"></i>
+                    <span>Rechercher</span>
+                </asp:LinkButton>
             </div>
         </div>
 

@@ -1733,11 +1733,11 @@ footer .footer-copyright {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
+    width: 58px;
     height: 40px;
     background: transparent;
     border: 1px solid var(--border-color);
-    border-radius: 50%;
+    border-radius: 12px;
     color: var(--text-dark);
     transition: var(--transition);
     position: relative;

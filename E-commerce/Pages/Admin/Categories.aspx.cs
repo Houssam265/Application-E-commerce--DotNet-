@@ -31,6 +31,7 @@ namespace Ecommerce.Pages.Admin
         protected global::System.Web.UI.WebControls.TextBox txtSearch;
         protected global::System.Web.UI.WebControls.LinkButton btnSearch;
         protected global::System.Web.UI.WebControls.LinkButton btnClear;
+        protected global::System.Web.UI.WebControls.DropDownList ddlStatusFilter;
 
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -40,26 +41,32 @@ namespace Ecommerce.Pages.Admin
             }
         }
 
-        private void LoadCategories(string searchTerm = "")
+        private void LoadCategories(string searchTerm = "", string status = "")
         {
             try
             {
                 DbContext db = new DbContext();
-                string query = "SELECT * FROM Categories";
+                string query = "SELECT * FROM Categories WHERE 1=1";
+                System.Collections.Generic.List<SqlParameter> parameters = new System.Collections.Generic.List<SqlParameter>();
                 
                 if (!string.IsNullOrEmpty(searchTerm))
                 {
-                    query += " WHERE Name LIKE @Search OR Description LIKE @Search";
+                    query += " AND (Name LIKE @Search OR Description LIKE @Search)";
+                    parameters.Add(new SqlParameter("@Search", "%" + searchTerm + "%"));
+                }
+                
+                if (!string.IsNullOrEmpty(status))
+                {
+                    query += " AND IsActive = @Status";
+                    parameters.Add(new SqlParameter("@Status", status == "1"));
                 }
                 
                 query += " ORDER BY DisplayOrder ASC, Name ASC";
                 
                 DataTable dt;
-                if (!string.IsNullOrEmpty(searchTerm))
+                if (parameters.Count > 0)
                 {
-                    dt = db.ExecuteQuery(query, new SqlParameter[] { 
-                        new SqlParameter("@Search", "%" + searchTerm + "%") 
-                    });
+                    dt = db.ExecuteQuery(query, parameters.ToArray());
                 }
                 else
                 {
@@ -78,23 +85,33 @@ namespace Ecommerce.Pages.Admin
 
         protected void btnSearch_Click(object sender, EventArgs e)
         {
-            string searchTerm = txtSearch.Text.Trim();
-            LoadCategories(searchTerm);
-            btnClear.Visible = !string.IsNullOrEmpty(searchTerm);
+            try
+            {
+                string searchTerm = txtSearch != null ? txtSearch.Text.Trim() : "";
+                string status = ddlStatusFilter != null && ddlStatusFilter.SelectedValue != null ? ddlStatusFilter.SelectedValue : "";
+                LoadCategories(searchTerm, status);
+            }
+            catch (Exception ex)
+            {
+                lblError.Text = "Erreur lors de la recherche: " + ex.Message;
+                lblError.Visible = true;
+            }
         }
 
         protected void btnClear_Click(object sender, EventArgs e)
         {
             txtSearch.Text = "";
+            if (ddlStatusFilter.Items.Count > 0)
+                ddlStatusFilter.SelectedIndex = 0;
             LoadCategories();
-            btnClear.Visible = false;
         }
 
         protected void gvCategories_PageIndexChanging(object sender, GridViewPageEventArgs e)
         {
             gvCategories.PageIndex = e.NewPageIndex;
-            string searchTerm = txtSearch.Text.Trim();
-            LoadCategories(searchTerm);
+            string searchTerm = txtSearch != null ? txtSearch.Text.Trim() : "";
+            string status = ddlStatusFilter != null && ddlStatusFilter.SelectedValue != null ? ddlStatusFilter.SelectedValue : "";
+            LoadCategories(searchTerm, status);
         }
 
         protected void btnAddNew_Click(object sender, EventArgs e)
@@ -205,7 +222,8 @@ namespace Ecommerce.Pages.Admin
                 // Recharger la liste après un court délai
                 System.Threading.Thread.Sleep(500);
                 string searchTerm = txtSearch != null ? txtSearch.Text.Trim() : "";
-                LoadCategories(searchTerm);
+                string status = ddlStatusFilter != null ? ddlStatusFilter.SelectedValue : "";
+                LoadCategories(searchTerm, status);
                 
                 pnlEdit.Visible = false;
                 pnlList.Visible = true;
@@ -251,7 +269,8 @@ namespace Ecommerce.Pages.Admin
                         lblSuccess.Text = "Catégorie " + statusText + " avec succès!";
                         lblSuccess.Visible = true;
                         string searchTerm = txtSearch != null ? txtSearch.Text.Trim() : "";
-                        LoadCategories(searchTerm);
+                        string status = ddlStatusFilter != null ? ddlStatusFilter.SelectedValue : "";
+                        LoadCategories(searchTerm, status);
                     }
                 }
                 catch (Exception ex)

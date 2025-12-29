@@ -34,34 +34,83 @@ namespace Ecommerce.Pages.Admin
         protected global::System.Web.UI.WebControls.TextBox txtSearch;
         protected global::System.Web.UI.WebControls.LinkButton btnSearch;
         protected global::System.Web.UI.WebControls.LinkButton btnClear;
+        protected global::System.Web.UI.WebControls.DropDownList ddlCategoryFilter;
+        protected global::System.Web.UI.WebControls.DropDownList ddlStatusFilter;
+        protected global::System.Web.UI.WebControls.TextBox txtPriceMin;
+        protected global::System.Web.UI.WebControls.TextBox txtPriceMax;
 
         protected void Page_Load(object sender, EventArgs e)
         {
             if (!IsPostBack)
             {
-                LoadProducts();
                 LoadCategories();
+                LoadCategoriesFilter();
+                LoadProducts();
             }
         }
 
-        private void LoadProducts(string searchTerm = "")
+        private void LoadCategoriesFilter()
         {
             DbContext db = new DbContext();
-            string query = "SELECT * FROM Products";
+            DataTable dt = db.ExecuteQuery("SELECT Id, Name FROM Categories WHERE IsActive = 1 ORDER BY Name ASC");
+            ddlCategoryFilter.Items.Clear();
+            ddlCategoryFilter.Items.Add(new ListItem("Toutes les catégories", ""));
+            foreach (DataRow row in dt.Rows)
+            {
+                ddlCategoryFilter.Items.Add(new ListItem(row["Name"].ToString(), row["Id"].ToString()));
+            }
+        }
+
+        private void LoadProducts(string searchTerm = "", string categoryId = "", string status = "", string priceMin = "", string priceMax = "")
+        {
+            DbContext db = new DbContext();
+            string query = "SELECT * FROM Products WHERE 1=1";
+            System.Collections.Generic.List<SqlParameter> parameters = new System.Collections.Generic.List<SqlParameter>();
             
             if (!string.IsNullOrEmpty(searchTerm))
             {
-                query += " WHERE Name LIKE @Search OR Description LIKE @Search";
+                query += " AND (Name LIKE @Search OR Description LIKE @Search)";
+                parameters.Add(new SqlParameter("@Search", "%" + searchTerm + "%"));
+            }
+            
+            if (!string.IsNullOrEmpty(categoryId))
+            {
+                query += " AND CategoryId = @CategoryId";
+                parameters.Add(new SqlParameter("@CategoryId", categoryId));
+            }
+            
+            if (!string.IsNullOrEmpty(status))
+            {
+                query += " AND IsActive = @Status";
+                parameters.Add(new SqlParameter("@Status", status == "1"));
+            }
+            
+            if (!string.IsNullOrEmpty(priceMin))
+            {
+                decimal minPrice;
+                if (decimal.TryParse(priceMin, out minPrice))
+                {
+                    query += " AND Price >= @PriceMin";
+                    parameters.Add(new SqlParameter("@PriceMin", minPrice));
+                }
+            }
+            
+            if (!string.IsNullOrEmpty(priceMax))
+            {
+                decimal maxPrice;
+                if (decimal.TryParse(priceMax, out maxPrice))
+                {
+                    query += " AND Price <= @PriceMax";
+                    parameters.Add(new SqlParameter("@PriceMax", maxPrice));
+                }
             }
             
             query += " ORDER BY CreatedAt DESC";
             
             DataTable dt;
-            if (!string.IsNullOrEmpty(searchTerm))
+            if (parameters.Count > 0)
             {
-                dt = db.ExecuteQuery(query, new SqlParameter[] { 
-                    new SqlParameter("@Search", "%" + searchTerm + "%") 
-                });
+                dt = db.ExecuteQuery(query, parameters.ToArray());
             }
             else
             {
@@ -74,23 +123,42 @@ namespace Ecommerce.Pages.Admin
 
         protected void btnSearch_Click(object sender, EventArgs e)
         {
-            string searchTerm = txtSearch.Text.Trim();
-            LoadProducts(searchTerm);
-            btnClear.Visible = !string.IsNullOrEmpty(searchTerm);
+            try
+            {
+                string searchTerm = txtSearch != null ? txtSearch.Text.Trim() : "";
+                string categoryId = ddlCategoryFilter != null && ddlCategoryFilter.SelectedValue != null ? ddlCategoryFilter.SelectedValue : "";
+                string status = ddlStatusFilter != null && ddlStatusFilter.SelectedValue != null ? ddlStatusFilter.SelectedValue : "";
+                string priceMin = txtPriceMin != null ? txtPriceMin.Text.Trim() : "";
+                string priceMax = txtPriceMax != null ? txtPriceMax.Text.Trim() : "";
+                LoadProducts(searchTerm, categoryId, status, priceMin, priceMax);
+            }
+            catch (Exception ex)
+            {
+                // Log error if needed
+            }
         }
 
         protected void btnClear_Click(object sender, EventArgs e)
         {
             txtSearch.Text = "";
+            if (ddlCategoryFilter.Items.Count > 0)
+                ddlCategoryFilter.SelectedIndex = 0;
+            if (ddlStatusFilter.Items.Count > 0)
+                ddlStatusFilter.SelectedIndex = 0;
+            txtPriceMin.Text = "";
+            txtPriceMax.Text = "";
             LoadProducts();
-            btnClear.Visible = false;
         }
 
         protected void gvProducts_PageIndexChanging(object sender, GridViewPageEventArgs e)
         {
             gvProducts.PageIndex = e.NewPageIndex;
-            string searchTerm = txtSearch.Text.Trim();
-            LoadProducts(searchTerm);
+            string searchTerm = txtSearch != null ? txtSearch.Text.Trim() : "";
+            string categoryId = ddlCategoryFilter != null && ddlCategoryFilter.SelectedValue != null ? ddlCategoryFilter.SelectedValue : "";
+            string status = ddlStatusFilter != null && ddlStatusFilter.SelectedValue != null ? ddlStatusFilter.SelectedValue : "";
+            string priceMin = txtPriceMin != null ? txtPriceMin.Text.Trim() : "";
+            string priceMax = txtPriceMax != null ? txtPriceMax.Text.Trim() : "";
+            LoadProducts(searchTerm, categoryId, status, priceMin, priceMax);
         }
 
         private void LoadCategories()
@@ -112,8 +180,8 @@ namespace Ecommerce.Pages.Admin
             hfProductId.Value = "";
             txtName.Text = "";
             txtDescription.Text = "";
-            txtPrice.Text = "";
-            txtStock.Text = "";
+            txtPrice.Text = "0.00";
+            txtStock.Text = "0";
             lblTitle.Text = "<i class=\"fas fa-plus\"></i> Ajouter un Produit";
             
             // Masquer la galerie pour un nouveau produit
@@ -267,7 +335,11 @@ namespace Ecommerce.Pages.Admin
                 pnlList.Visible = true;
                 btnAddNew.Visible = true;
                 string searchTerm = txtSearch != null ? txtSearch.Text.Trim() : "";
-                LoadProducts(searchTerm); 
+                string categoryId = ddlCategoryFilter != null ? ddlCategoryFilter.SelectedValue : "";
+                string status = ddlStatusFilter != null ? ddlStatusFilter.SelectedValue : "";
+                string priceMin = txtPriceMin != null ? txtPriceMin.Text.Trim() : "";
+                string priceMax = txtPriceMax != null ? txtPriceMax.Text.Trim() : "";
+                LoadProducts(searchTerm, categoryId, status, priceMin, priceMax); 
             }
             catch (Exception ex)
             {
@@ -306,7 +378,11 @@ namespace Ecommerce.Pages.Admin
                             });
                         
                         string searchTerm = txtSearch != null ? txtSearch.Text.Trim() : "";
-                        LoadProducts(searchTerm);
+                        string categoryId = ddlCategoryFilter != null ? ddlCategoryFilter.SelectedValue : "";
+                        string status = ddlStatusFilter != null ? ddlStatusFilter.SelectedValue : "";
+                        string priceMin = txtPriceMin != null ? txtPriceMin.Text.Trim() : "";
+                        string priceMax = txtPriceMax != null ? txtPriceMax.Text.Trim() : "";
+                        LoadProducts(searchTerm, categoryId, status, priceMin, priceMax);
                     }
                 }
                 catch (Exception ex)

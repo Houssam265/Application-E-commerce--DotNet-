@@ -131,10 +131,32 @@
                 border-radius: 12px;
                 padding: 1.5rem;
                 margin-bottom: 1.5rem;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            }
+
+            .filter-row {
                 display: flex;
                 gap: 1rem;
                 align-items: center;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+                flex-wrap: wrap;
+                margin-bottom: 1rem;
+            }
+
+            .filter-row:last-child {
+                margin-bottom: 0;
+            }
+
+            .filter-group {
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
+                min-width: 150px;
+            }
+
+            .filter-group label {
+                font-size: 0.85rem;
+                color: #64748b;
+                font-weight: 500;
             }
 
             .search-filter-container .search-input {
@@ -212,16 +234,39 @@
         </div>
 
         <div class="search-filter-container">
-            <asp:TextBox ID="txtSearch" runat="server" CssClass="search-input" placeholder="Rechercher par nom, email..." />
-            <asp:LinkButton ID="btnSearch" runat="server" CssClass="search-btn" OnClick="btnSearch_Click">
-                <i class="fas fa-search"></i>
-                <span>Rechercher</span>
-            </asp:LinkButton>
-            <asp:LinkButton ID="btnClear" runat="server" CssClass="search-btn" OnClick="btnClear_Click" 
-                style="background: #64748b;" Visible="false">
-                <i class="fas fa-times"></i>
-                <span>Effacer</span>
-            </asp:LinkButton>
+            <div class="filter-row">
+                <div class="filter-group" style="flex: 2;">
+                    <label><i class="fas fa-search"></i> Recherche</label>
+                    <asp:TextBox ID="txtSearch" runat="server" CssClass="search-input" placeholder="Nom, email..." />
+                </div>
+                <div class="filter-group">
+                    <label><i class="fas fa-user-tag"></i> Rôle</label>
+                    <asp:DropDownList ID="ddlRoleFilter" runat="server" CssClass="search-input">
+                        <asp:ListItem Value="" Text="Tous" Selected="True"></asp:ListItem>
+                        <asp:ListItem Value="Admin" Text="Admin"></asp:ListItem>
+                        <asp:ListItem Value="Customer" Text="Client"></asp:ListItem>
+                    </asp:DropDownList>
+                </div>
+                <div class="filter-group">
+                    <label><i class="fas fa-toggle-on"></i> Statut</label>
+                    <asp:DropDownList ID="ddlStatusFilter" runat="server" CssClass="search-input">
+                        <asp:ListItem Value="" Text="Tous" Selected="True"></asp:ListItem>
+                        <asp:ListItem Value="1" Text="Actif"></asp:ListItem>
+                        <asp:ListItem Value="0" Text="Inactif"></asp:ListItem>
+                    </asp:DropDownList>
+                </div>
+            </div>
+            <div class="filter-row">
+                <asp:LinkButton ID="btnSearch" runat="server" CssClass="search-btn" OnClick="btnSearch_Click">
+                    <i class="fas fa-search"></i>
+                    <span>Rechercher</span>
+                </asp:LinkButton>
+                <asp:LinkButton ID="btnClear" runat="server" CssClass="search-btn" OnClick="btnClear_Click" 
+                    style="background: #64748b;">
+                    <i class="fas fa-times"></i>
+                    <span>Effacer les filtres</span>
+                </asp:LinkButton>
+            </div>
         </div>
         <div class="users-table-container">
             <asp:GridView ID="gvUsers" runat="server" CssClass="grid-view" AutoGenerateColumns="False" 

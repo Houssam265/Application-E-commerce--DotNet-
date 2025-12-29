@@ -11,7 +11,7 @@ namespace Ecommerce.Pages.Admin
     {
         protected global::System.Web.UI.WebControls.DropDownList ddlStatusFilter;
         protected global::System.Web.UI.WebControls.TextBox txtSearch;
-        protected global::System.Web.UI.WebControls.Button btnSearch;
+        protected global::System.Web.UI.WebControls.LinkButton btnSearch;
         protected global::System.Web.UI.WebControls.Label lblTotalArchived;
         protected global::System.Web.UI.WebControls.Repeater rptOrders;
         protected global::System.Web.UI.WebControls.Panel pnlNoOrders;

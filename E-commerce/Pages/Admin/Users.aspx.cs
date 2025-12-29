@@ -14,6 +14,8 @@ namespace Ecommerce.Pages.Admin
         protected global::System.Web.UI.WebControls.TextBox txtSearch;
         protected global::System.Web.UI.WebControls.LinkButton btnSearch;
         protected global::System.Web.UI.WebControls.LinkButton btnClear;
+        protected global::System.Web.UI.WebControls.DropDownList ddlRoleFilter;
+        protected global::System.Web.UI.WebControls.DropDownList ddlStatusFilter;
 
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -23,24 +25,36 @@ namespace Ecommerce.Pages.Admin
             }
         }
 
-        private void LoadUsers(string searchTerm = "")
+        private void LoadUsers(string searchTerm = "", string role = "", string status = "")
         {
             DbContext db = new DbContext();
-            string query = "SELECT Id, FullName, Email, Role, CreatedAt, IsActive FROM Users";
+            string query = "SELECT Id, FullName, Email, Role, CreatedAt, IsActive FROM Users WHERE 1=1";
+            System.Collections.Generic.List<SqlParameter> parameters = new System.Collections.Generic.List<SqlParameter>();
             
             if (!string.IsNullOrEmpty(searchTerm))
             {
-                query += " WHERE FullName LIKE @Search OR Email LIKE @Search";
+                query += " AND (FullName LIKE @Search OR Email LIKE @Search)";
+                parameters.Add(new SqlParameter("@Search", "%" + searchTerm + "%"));
+            }
+            
+            if (!string.IsNullOrEmpty(role))
+            {
+                query += " AND Role = @Role";
+                parameters.Add(new SqlParameter("@Role", role));
+            }
+            
+            if (!string.IsNullOrEmpty(status))
+            {
+                query += " AND IsActive = @Status";
+                parameters.Add(new SqlParameter("@Status", status == "1"));
             }
             
             query += " ORDER BY CreatedAt DESC";
             
             DataTable dt;
-            if (!string.IsNullOrEmpty(searchTerm))
+            if (parameters.Count > 0)
             {
-                dt = db.ExecuteQuery(query, new SqlParameter[] { 
-                    new SqlParameter("@Search", "%" + searchTerm + "%") 
-                });
+                dt = db.ExecuteQuery(query, parameters.ToArray());
             }
             else
             {
@@ -53,23 +67,36 @@ namespace Ecommerce.Pages.Admin
 
         protected void btnSearch_Click(object sender, EventArgs e)
         {
-            string searchTerm = txtSearch.Text.Trim();
-            LoadUsers(searchTerm);
-            btnClear.Visible = !string.IsNullOrEmpty(searchTerm);
+            try
+            {
+                string searchTerm = txtSearch != null ? txtSearch.Text.Trim() : "";
+                string role = ddlRoleFilter != null && ddlRoleFilter.SelectedValue != null ? ddlRoleFilter.SelectedValue : "";
+                string status = ddlStatusFilter != null && ddlStatusFilter.SelectedValue != null ? ddlStatusFilter.SelectedValue : "";
+                LoadUsers(searchTerm, role, status);
+            }
+            catch (Exception ex)
+            {
+                // Log error if needed
+            }
         }
 
         protected void btnClear_Click(object sender, EventArgs e)
         {
             txtSearch.Text = "";
+            if (ddlRoleFilter.Items.Count > 0)
+                ddlRoleFilter.SelectedIndex = 0;
+            if (ddlStatusFilter.Items.Count > 0)
+                ddlStatusFilter.SelectedIndex = 0;
             LoadUsers();
-            btnClear.Visible = false;
         }
 
         protected void gvUsers_PageIndexChanging(object sender, GridViewPageEventArgs e)
         {
             gvUsers.PageIndex = e.NewPageIndex;
-            string searchTerm = txtSearch.Text.Trim();
-            LoadUsers(searchTerm);
+            string searchTerm = txtSearch != null ? txtSearch.Text.Trim() : "";
+            string role = ddlRoleFilter != null && ddlRoleFilter.SelectedValue != null ? ddlRoleFilter.SelectedValue : "";
+            string status = ddlStatusFilter != null && ddlStatusFilter.SelectedValue != null ? ddlStatusFilter.SelectedValue : "";
+            LoadUsers(searchTerm, role, status);
         }
 
         protected void gvUsers_RowCommand(object sender, GridViewCommandEventArgs e)
@@ -119,7 +146,9 @@ namespace Ecommerce.Pages.Admin
                 }
                 
                 string searchTerm = txtSearch != null ? txtSearch.Text.Trim() : "";
-                LoadUsers(searchTerm);
+                string role = ddlRoleFilter != null ? ddlRoleFilter.SelectedValue : "";
+                string status = ddlStatusFilter != null ? ddlStatusFilter.SelectedValue : "";
+                LoadUsers(searchTerm, role, status);
             }
         }
 

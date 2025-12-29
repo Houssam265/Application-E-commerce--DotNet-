@@ -32,6 +32,7 @@ namespace Ecommerce.Pages.Admin
         protected global::System.Web.UI.WebControls.TextBox txtSearch;
         protected global::System.Web.UI.WebControls.LinkButton btnSearch;
         protected global::System.Web.UI.WebControls.LinkButton btnClear;
+        protected global::System.Web.UI.WebControls.DropDownList ddlStatusFilter;
 
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -41,7 +42,7 @@ namespace Ecommerce.Pages.Admin
             }
         }
 
-        private void LoadOrders(string searchTerm = "")
+        private void LoadOrders(string searchTerm = "", string status = "")
         {
             DbContext db = new DbContext();
             // Handle case where IsArchived column might not exist yet
@@ -52,19 +53,26 @@ namespace Ecommerce.Pages.Admin
                 WHERE (O.IsArchived IS NULL OR O.IsArchived = 0)
                 AND O.Status NOT IN ('Delivered', 'Cancelled')";
             
+            System.Collections.Generic.List<SqlParameter> parameters = new System.Collections.Generic.List<SqlParameter>();
+            
             if (!string.IsNullOrEmpty(searchTerm))
             {
                 query += " AND (U.FullName LIKE @Search OR O.OrderNumber LIKE @Search)";
+                parameters.Add(new SqlParameter("@Search", "%" + searchTerm + "%"));
+            }
+            
+            if (!string.IsNullOrEmpty(status))
+            {
+                query += " AND O.Status = @Status";
+                parameters.Add(new SqlParameter("@Status", status));
             }
             
             query += " ORDER BY O.OrderDate DESC";
             
             DataTable dt;
-            if (!string.IsNullOrEmpty(searchTerm))
+            if (parameters.Count > 0)
             {
-                dt = db.ExecuteQuery(query, new SqlParameter[] { 
-                    new SqlParameter("@Search", "%" + searchTerm + "%") 
-                });
+                dt = db.ExecuteQuery(query, parameters.ToArray());
             }
             else
             {
@@ -77,23 +85,32 @@ namespace Ecommerce.Pages.Admin
 
         protected void btnSearch_Click(object sender, EventArgs e)
         {
-            string searchTerm = txtSearch.Text.Trim();
-            LoadOrders(searchTerm);
-            btnClear.Visible = !string.IsNullOrEmpty(searchTerm);
+            try
+            {
+                string searchTerm = txtSearch != null ? txtSearch.Text.Trim() : "";
+                string status = ddlStatusFilter != null && ddlStatusFilter.SelectedValue != null ? ddlStatusFilter.SelectedValue : "";
+                LoadOrders(searchTerm, status);
+            }
+            catch (Exception ex)
+            {
+                // Log error if needed
+            }
         }
 
         protected void btnClear_Click(object sender, EventArgs e)
         {
             txtSearch.Text = "";
+            if (ddlStatusFilter.Items.Count > 0)
+                ddlStatusFilter.SelectedIndex = 0;
             LoadOrders();
-            btnClear.Visible = false;
         }
 
         protected void gvOrders_PageIndexChanging(object sender, GridViewPageEventArgs e)
         {
             gvOrders.PageIndex = e.NewPageIndex;
-            string searchTerm = txtSearch.Text.Trim();
-            LoadOrders(searchTerm);
+            string searchTerm = txtSearch != null ? txtSearch.Text.Trim() : "";
+            string status = ddlStatusFilter != null && ddlStatusFilter.SelectedValue != null ? ddlStatusFilter.SelectedValue : "";
+            LoadOrders(searchTerm, status);
         }
 
 
@@ -313,7 +330,8 @@ namespace Ecommerce.Pages.Admin
             }
 
             string searchTerm = txtSearch != null ? txtSearch.Text.Trim() : "";
-            LoadOrders(searchTerm);
+          
+            LoadOrders(searchTerm, status);
             pnlDetails.Visible = false;
             pnlList.Visible = true;
         }
@@ -386,7 +404,7 @@ namespace Ecommerce.Pages.Admin
                 int qty = Convert.ToInt32(quantity);
                 return (price * qty).ToString("C");
             }
-            return "0.00 €";
+            return "0.00 MAD";
         }
 
         private string GetStatusLabel(string status)
