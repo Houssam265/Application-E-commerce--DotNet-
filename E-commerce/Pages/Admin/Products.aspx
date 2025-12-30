@@ -647,6 +647,8 @@
 
         var selectedFiles = [];
         var primaryIndex = 0;
+        var existingGallery = document.getElementById('<%= imagesGallery.ClientID %>');
+        var hasExistingPrimary = !!(existingGallery && existingGallery.querySelector('.primary-badge'));
 
         function rebuildInputFiles() {
             var dt = new DataTransfer();
@@ -662,7 +664,7 @@
                 if (!file || !file.type || file.type.indexOf('image/') !== 0) return;
 
                 var wrapper = document.createElement('div');
-                wrapper.className = 'image-item' + (index === primaryIndex ? ' primary' : '');
+                wrapper.className = 'image-item' + (primaryIndex >= 0 && index === primaryIndex ? ' primary' : '');
 
                 var img = document.createElement('img');
                 img.alt = file.name || 'Image';
@@ -696,7 +698,7 @@
                 deleteBtn.addEventListener('click', function () {
                     selectedFiles.splice(index, 1);
                     if (primaryIndex >= selectedFiles.length) {
-                        primaryIndex = 0;
+                        primaryIndex = hasExistingPrimary ? -1 : 0;
                     }
                     rebuildInputFiles();
                     renderPreview();
@@ -706,7 +708,7 @@
                 overlay.appendChild(deleteBtn);
                 wrapper.appendChild(overlay);
 
-                if (index === primaryIndex) {
+                if (primaryIndex >= 0 && index === primaryIndex) {
                     var badge = document.createElement('span');
                     badge.className = 'primary-badge';
                     badge.innerHTML = '<i class="fas fa-star"></i> Principale';
@@ -725,7 +727,12 @@
 
         input.addEventListener('change', function () {
             selectedFiles = Array.prototype.slice.call(input.files || []);
-            primaryIndex = 0;
+            if (selectedFiles.length === 0) {
+                primaryIndex = hasExistingPrimary ? -1 : 0;
+                renderPreview();
+                return;
+            }
+            primaryIndex = hasExistingPrimary ? -1 : 0;
             renderPreview();
         });
     });
@@ -782,5 +789,3 @@
             </div>
         </asp:Panel>
     </asp:Content>
-
-
