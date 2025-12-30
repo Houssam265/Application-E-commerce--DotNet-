@@ -113,5 +113,32 @@ namespace Ecommerce
             // Pas d'image, afficher l'icône par défaut
             return "<i class='fas fa-seedling category-icon' style='color: var(--primary-color);'></i>";
         }
+
+        protected string GetProductImage(object imageUrl)
+        {
+            if (imageUrl == null || imageUrl == DBNull.Value || string.IsNullOrWhiteSpace(imageUrl.ToString()))
+            {
+                return ResolveUrl("~/Assets/Images/placeholder.svg");
+            }
+
+            string url = imageUrl.ToString().Trim();
+            if (url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            {
+                return url;
+            }
+
+            if (url.StartsWith("~/") || url.StartsWith("../") || url.StartsWith("./"))
+            {
+                return ResolveUrl(url);
+            }
+
+            if (url.StartsWith("/"))
+            {
+                return ResolveUrl("~" + url);
+            }
+
+            return ResolveUrl("~/Assets/Images/Products/" + url);
+        }
     }
 }

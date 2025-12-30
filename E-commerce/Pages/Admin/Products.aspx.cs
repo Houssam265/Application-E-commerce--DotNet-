@@ -224,9 +224,30 @@ namespace Ecommerce.Pages.Admin
                 decimal? compareAt = decimal.TryParse(txtCompareAtPrice.Text, out compareAtPrice) ? (decimal?)compareAtPrice : null;
                 decimal weightValue;
                 decimal? weight = decimal.TryParse(txtWeight.Text, out weightValue) ? (decimal?)weightValue : null;
-                decimal price = decimal.Parse(txtPrice.Text);
-                int stock = int.Parse(txtStock.Text);
-                int catId = int.Parse(ddlCategories.SelectedValue);
+                decimal price;
+                if (!decimal.TryParse(txtPrice.Text, NumberStyles.Number, CultureInfo.CurrentCulture, out price) &&
+                    !decimal.TryParse(txtPrice.Text, NumberStyles.Number, CultureInfo.InvariantCulture, out price))
+                {
+                    lblError.Text = "Erreur: prix invalide.";
+                    lblError.Visible = true;
+                    return;
+                }
+
+                int stock;
+                if (!int.TryParse(txtStock.Text, NumberStyles.Integer, CultureInfo.InvariantCulture, out stock))
+                {
+                    lblError.Text = "Erreur: stock invalide.";
+                    lblError.Visible = true;
+                    return;
+                }
+
+                int catId;
+                if (!int.TryParse(ddlCategories.SelectedValue, out catId))
+                {
+                    lblError.Text = "Erreur: cat\u00e9gorie invalide.";
+                    lblError.Visible = true;
+                    return;
+                }
 
                 DbContext db = new DbContext();
                 string productId = "";

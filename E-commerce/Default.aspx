@@ -47,7 +47,7 @@
                     <ItemTemplate>
                         <a href='/Pages/Public/ProductDetails.aspx?id=<%# Eval("Id") %>' class="product-card">
                             <%# GetFeaturedBadge(Eval("IsFeatured")) %>
-                            <img src='<%# Eval("ImageUrl") %>' alt='<%# Eval("Name") %>'
+                            <img src='<%# GetProductImage(Eval("ImageUrl")) %>' alt='<%# Eval("Name") %>'
                                 onerror="this.src='<%# ResolveUrl("~/Assets/Images/placeholder.svg") %>'" />
                     <div class="product-info">
                         <h3><%# Eval("Name") %></h3>
