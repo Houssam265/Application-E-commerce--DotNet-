@@ -94,7 +94,6 @@ namespace Ecommerce.Pages.Admin
                     FROM Orders 
                     WHERE OrderDate >= DATEADD(day, -7, GETDATE()) 
                         AND Status != 'Cancelled'
-                        AND (IsArchived IS NULL OR IsArchived = 0)
                     GROUP BY CAST(OrderDate AS DATE)
                     ORDER BY SaleDate ASC";
                 
