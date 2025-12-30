@@ -1,6 +1,7 @@
 using System;
 using System.Data;
 using System.Data.SqlClient;
+using System.Globalization;
 using System.IO;
 using System.Web;
 using System.Web.UI;
@@ -394,25 +395,59 @@ namespace Ecommerce.Pages.Admin
 
         private void LoadProductForEdit(string id)
         {
-            DbContext db = new DbContext();
-            DataTable dt = db.ExecuteQuery("SELECT * FROM Products WHERE Id = " + id);
-            if (dt.Rows.Count > 0)
+            try
             {
-                DataRow row = dt.Rows[0];
-                hfProductId.Value = row["Id"].ToString();
-                txtName.Text = row["Name"].ToString();
-                txtDescription.Text = row["Description"].ToString();
-                txtPrice.Text = Convert.ToDecimal(row["Price"]).ToString("N2");
-                txtStock.Text = row["StockQuantity"].ToString();
-                ddlCategories.SelectedValue = row["CategoryId"].ToString();
-                
-                lblTitle.Text = "<i class=\"fas fa-edit\"></i> Modifier le Produit";
-                pnlList.Visible = false;
-                btnAddNew.Visible = false;
-                pnlEdit.Visible = true;
-                
-                // Charger les images du produit
-                LoadProductImages(id);
+                DbContext db = new DbContext();
+                DataTable dt = db.ExecuteQuery("SELECT * FROM Products WHERE Id = @Id",
+                    new SqlParameter[] { new SqlParameter("@Id", id) });
+                if (dt.Rows.Count > 0)
+                {
+                    DataRow row = dt.Rows[0];
+                    hfProductId.Value = row["Id"].ToString();
+                    txtName.Text = row["Name"] != DBNull.Value ? row["Name"].ToString() : "";
+                    txtDescription.Text = row["Description"] != DBNull.Value ? row["Description"].ToString() : "";
+                    
+                    // Handle price with proper null checking
+                    if (row["Price"] != DBNull.Value && row["Price"] != null)
+                    {
+                        decimal price = Convert.ToDecimal(row["Price"]);
+                        txtPrice.Text = price.ToString("F2", CultureInfo.InvariantCulture);
+                    }
+                    else
+                    {
+                        txtPrice.Text = "0.00";
+                    }
+                    
+                    txtStock.Text = row["StockQuantity"] != DBNull.Value ? row["StockQuantity"].ToString() : "0";
+                    
+                    // Ensure categories are loaded before setting selected value
+                    if (ddlCategories.Items.Count == 0)
+                    {
+                        LoadCategories();
+                    }
+                    
+                    if (row["CategoryId"] != DBNull.Value)
+                    {
+                        string categoryId = row["CategoryId"].ToString();
+                        if (ddlCategories.Items.FindByValue(categoryId) != null)
+                        {
+                            ddlCategories.SelectedValue = categoryId;
+                        }
+                    }
+                    
+                    lblTitle.Text = "<i class=\"fas fa-edit\"></i> Modifier le Produit";
+                    pnlList.Visible = false;
+                    btnAddNew.Visible = false;
+                    pnlEdit.Visible = true;
+                    
+                    // Charger les images du produit
+                    LoadProductImages(id);
+                }
+            }
+            catch (Exception ex)
+            {
+                lblError.Text = "Erreur lors du chargement: " + ex.Message;
+                lblError.Visible = true;
             }
         }
 

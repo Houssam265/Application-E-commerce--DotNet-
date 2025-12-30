@@ -1854,8 +1854,8 @@ footer .footer-copyright {
 }
 
 header .container {
-    padding-left: 15px;
-    padding-right: 15px;
+    padding-left: 30px;
+    padding-right: 30px;
     max-width: 100%;
     /* allows header to take full width on large screens to fit Admin menu */
 }

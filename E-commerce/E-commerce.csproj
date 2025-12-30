@@ -71,6 +71,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Assets\Styles\chatbot.css" />
+    <Content Include="Database\Migration_v3.0.sql" />
     <Content Include="Global.asax" />
     <Content Include="Web.config" />
     <Content Include="Site.Master" />

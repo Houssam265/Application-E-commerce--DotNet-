@@ -12,58 +12,7 @@ namespace Ecommerce.Data
 
         public DbContext()
         {
-            // Try multiple connection string names for flexibility
-            // Priority: EcommerceDB2 > EcommerceDB > First available connection string
-            ConnectionStringSettings connectionStringSettings = null;
-            
-            // Try EcommerceDB2 first
-            connectionStringSettings = ConfigurationManager.ConnectionStrings["EcommerceDB2"];
-            
-            // Fallback to EcommerceDB
-            if (connectionStringSettings == null)
-            {
-                connectionStringSettings = ConfigurationManager.ConnectionStrings["EcommerceDB"];
-            }
-            
-            // Last resort: use the first available connection string (excluding system ones)
-            if (connectionStringSettings == null)
-            {
-                foreach (ConnectionStringSettings cs in ConfigurationManager.ConnectionStrings)
-                {
-                    // Skip system connection strings (they start with LocalSqlServer, etc.)
-                    if (cs.Name != "LocalSqlServer" && !string.IsNullOrEmpty(cs.ConnectionString))
-                    {
-                        connectionStringSettings = cs;
-                        break;
-                    }
-                }
-            }
-            
-            if (connectionStringSettings == null)
-            {
-                // Debug: List all available connection strings
-                var availableConnections = new System.Text.StringBuilder();
-                availableConnections.AppendLine("Available connection strings:");
-                foreach (ConnectionStringSettings cs in ConfigurationManager.ConnectionStrings)
-                {
-                    availableConnections.AppendLine($"  - {cs.Name}");
-                }
-                
-                throw new ConfigurationErrorsException(
-                    $"No valid connection string found in Web.config.\n\n" +
-                    $"Tried: 'EcommerceDB2', 'EcommerceDB'\n\n" +
-                    $"{availableConnections.ToString()}\n\n" +
-                    "Please ensure your Web.config contains:\n" +
-                    "<connectionStrings>\n" +
-                    "  <add name=\"EcommerceDB2\" connectionString=\"...\" providerName=\"System.Data.SqlClient\" />\n" +
-                    "</connectionStrings>");
-            }
-            
-            _connectionString = connectionStringSettings.ConnectionString;
-            if (string.IsNullOrEmpty(_connectionString))
-            {
-                throw new ConfigurationErrorsException($"Connection string '{connectionStringSettings.Name}' is empty in Web.config.");
-            }
+            _connectionString = ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
         }
 
         public SqlConnection GetConnection()

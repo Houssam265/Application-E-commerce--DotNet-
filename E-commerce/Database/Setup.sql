@@ -229,7 +229,7 @@ CREATE TABLE Notifications (
 
 -- Admin User (Password: admin123)
 INSERT INTO Users (Email, PasswordHash, FullName, Role, IsActive, EmailVerified)
-VALUES ('admin@ecommerce.ma', '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918', 'Administrateur', 'Admin', 1, 1);
+VALUES ('admin@ecommerce.ma', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 'Administrateur', 'Admin', 1, 1);
 
 -- Categories
 INSERT INTO Categories (Name, Description, ImageUrl, DisplayOrder) VALUES 
