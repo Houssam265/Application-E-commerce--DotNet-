@@ -1,116 +1,552 @@
 using System;
-using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
-using System.Linq;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 using Ecommerce.Data;
+using Ecommerce.Utils;
 
 namespace Ecommerce.Pages.Public
 {
     public partial class Checkout : Page
     {
-        // Controls
+        protected global::System.Web.UI.WebControls.TextBox txtFullName;
         protected global::System.Web.UI.WebControls.TextBox txtStreet;
         protected global::System.Web.UI.WebControls.TextBox txtCity;
         protected global::System.Web.UI.WebControls.TextBox txtZip;
-        protected global::System.Web.UI.WebControls.TextBox txtCountry;
+        protected global::System.Web.UI.WebControls.DropDownList ddlCountry;
+        protected global::System.Web.UI.WebControls.TextBox txtPhone;
         protected global::System.Web.UI.WebControls.Panel pnlError;
         protected global::System.Web.UI.WebControls.Literal litError;
         protected global::System.Web.UI.WebControls.Repeater rptSummary;
+        protected global::System.Web.UI.WebControls.Label lblSubTotal;
+        protected global::System.Web.UI.WebControls.Label lblShipping;
         protected global::System.Web.UI.WebControls.Label lblTotal;
         protected global::System.Web.UI.WebControls.Button btnPlaceOrder;
+        protected global::System.Web.UI.WebControls.Panel pnlEmptyCart;
+        protected global::System.Web.UI.WebControls.Panel pnlCheckout;
+        protected global::System.Web.UI.WebControls.TextBox txtBankName;
+        protected global::System.Web.UI.WebControls.TextBox txtAccountNumber;
+        protected global::System.Web.UI.WebControls.TextBox txtAccountHolder;
+        protected global::System.Web.UI.WebControls.TextBox txtTransferReference;
+        protected global::System.Web.UI.WebControls.TextBox txtPromoCode;
+        protected global::System.Web.UI.WebControls.Button btnApplyPromo;
+        protected global::System.Web.UI.WebControls.Panel pnlPromoCodeSuccess;
+        protected global::System.Web.UI.WebControls.Panel pnlPromoCodeError;
+        protected global::System.Web.UI.WebControls.Panel pnlDiscount;
+        protected global::System.Web.UI.WebControls.Literal litPromoSuccess;
+        protected global::System.Web.UI.WebControls.Literal litPromoError;
+        protected global::System.Web.UI.WebControls.Literal litPromoCodeDisplay;
+        protected global::System.Web.UI.WebControls.Label lblDiscount;
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            if (Session["UserEmail"] == null)
+            if (Session["UserId"] == null)
             {
-                Response.Redirect("Login.aspx?returnUrl=Checkout.aspx");
+                Response.Redirect("Login.aspx?returnUrl=" + Server.UrlEncode(Request.RawUrl));
                 return;
             }
 
             if (!IsPostBack)
             {
-                LoadSummary();
+                LoadCheckoutData();
+                
+                // Check if there's an applied promo code from session
+                if (Session["AppliedPromoCode"] != null)
+                {
+                    txtPromoCode.Text = Session["AppliedPromoCode"].ToString();
+                    pnlPromoCodeSuccess.Visible = true;
+                    litPromoSuccess.Text = $"Code promo appliqué ! Réduction de {GetAppliedDiscount():F2} MAD.";
+                }
             }
         }
 
-        private void LoadSummary()
+        private void LoadCheckoutData()
         {
-            List<CartItem> cart = Session["Cart"] as List<CartItem>;
-            if (cart == null || cart.Count == 0)
+            try
             {
-                Response.Redirect("Cart.aspx");
-                return;
-            }
+                DataTable cartItems = CartHelper.GetCartItems();
+                
+                if (cartItems.Rows.Count == 0)
+                {
+                    pnlEmptyCart.Visible = true;
+                    pnlCheckout.Visible = false;
+                    return;
+                }
 
-            rptSummary.DataSource = cart;
-            rptSummary.DataBind();
-            lblTotal.Text = cart.Sum(i => i.Total).ToString("C");
+                pnlEmptyCart.Visible = false;
+                pnlCheckout.Visible = true;
+
+                // Load user info and default address
+                int userId = Convert.ToInt32(Session["UserId"]);
+                DbContext db = new DbContext();
+                
+                // Load default address if exists (automatically fill the form)
+                string addrQuery = "SELECT TOP 1 * FROM Addresses WHERE UserId = @UserId AND IsDefault = 1 ORDER BY Id DESC";
+                SqlParameter[] addrParams = { new SqlParameter("@UserId", userId) };
+                DataTable addrDt = db.ExecuteQuery(addrQuery, addrParams);
+                
+                if (addrDt.Rows.Count > 0)
+                {
+                    // Use default address info
+                    txtFullName.Text = addrDt.Rows[0]["FullName"].ToString();
+                    txtStreet.Text = addrDt.Rows[0]["Street"].ToString();
+                    txtCity.Text = addrDt.Rows[0]["City"].ToString();
+                    txtZip.Text = addrDt.Rows[0]["ZipCode"].ToString();
+                    ddlCountry.SelectedValue = addrDt.Rows[0]["Country"].ToString();
+                    if (addrDt.Rows[0]["Phone"] != DBNull.Value)
+                        txtPhone.Text = addrDt.Rows[0]["Phone"].ToString();
+                }
+                else
+                {
+                    // No default address, load user info as fallback
+                    string userQuery = "SELECT FullName, Phone FROM Users WHERE Id = @UserId";
+                    SqlParameter[] userParams = { new SqlParameter("@UserId", userId) };
+                    DataTable userDt = db.ExecuteQuery(userQuery, userParams);
+                    
+                    if (userDt.Rows.Count > 0)
+                    {
+                        txtFullName.Text = userDt.Rows[0]["FullName"].ToString();
+                        if (userDt.Rows[0]["Phone"] != DBNull.Value)
+                            txtPhone.Text = userDt.Rows[0]["Phone"].ToString();
+                    }
+                }
+
+                // Create a new DataTable with TotalPrice column
+                DataTable dtSummary = cartItems.Clone();
+                dtSummary.Columns.Add("TotalPrice", typeof(decimal));
+
+                // Prepare cart items for summary
+                foreach (DataRow row in cartItems.Rows)
+                {
+                    DataRow newRow = dtSummary.NewRow();
+                    newRow["Id"] = row["Id"];
+                    newRow["ProductId"] = row["ProductId"];
+                    newRow["VariantId"] = row["VariantId"];
+                    newRow["Quantity"] = row["Quantity"];
+                    newRow["Name"] = row["Name"];
+                    newRow["Price"] = row["Price"];
+                    newRow["ImageUrl"] = row["ImageUrl"];
+                    newRow["StockQuantity"] = row["StockQuantity"];
+                    newRow["PriceAdjustment"] = row["PriceAdjustment"];
+                    newRow["VariantType"] = row["VariantType"];
+                    newRow["VariantValue"] = row["VariantValue"];
+
+                    decimal unitPrice = Convert.ToDecimal(row["Price"]);
+                    decimal adjustment = row["PriceAdjustment"] != DBNull.Value ? Convert.ToDecimal(row["PriceAdjustment"]) : 0;
+                    unitPrice += adjustment;
+                    int quantity = Convert.ToInt32(row["Quantity"]);
+                    newRow["TotalPrice"] = unitPrice * quantity;
+
+                    dtSummary.Rows.Add(newRow);
+                }
+
+                rptSummary.DataSource = dtSummary;
+                rptSummary.DataBind();
+
+                // Calculate totals
+                decimal subTotal = CartHelper.GetCartTotal();
+                decimal shippingCost = CalculateShipping(subTotal);
+                decimal discountAmount = GetAppliedDiscount();
+                decimal total = subTotal + shippingCost - discountAmount;
+                
+                // Ensure total doesn't go negative
+                if (total < 0)
+                    total = 0;
+
+                lblSubTotal.Text = subTotal.ToString("F2");
+                lblShipping.Text = shippingCost > 0 ? shippingCost.ToString("F2") + " MAD" : "Gratuit";
+                
+                // Display discount if applied
+                if (discountAmount > 0)
+                {
+                    pnlDiscount.Visible = true;
+                    lblDiscount.Text = discountAmount.ToString("F2");
+                    litPromoCodeDisplay.Text = Session["AppliedPromoCode"]?.ToString() ?? "";
+                }
+                else
+                {
+                    pnlDiscount.Visible = false;
+                }
+                
+                lblTotal.Text = total.ToString("F2");
+            }
+            catch (Exception ex)
+            {
+                litError.Text = "Erreur lors du chargement: " + Server.HtmlEncode(ex.Message);
+                pnlError.Visible = true;
+            }
+        }
+
+        private decimal CalculateShipping(decimal subTotal)
+        {
+            // Free shipping for orders over 500 MAD
+            if (subTotal >= 500)
+                return 0;
+
+            // Standard shipping cost
+            return 30.00m;
         }
 
         protected void btnPlaceOrder_Click(object sender, EventArgs e)
         {
             try
             {
-                int userId = Convert.ToInt32(Session["UserId"]);
-                List<CartItem> cart = Session["Cart"] as List<CartItem>;
-                decimal total = cart.Sum(i => i.Total);
+                // Validate form
+                if (string.IsNullOrEmpty(txtFullName.Text) || string.IsNullOrEmpty(txtStreet.Text) || 
+                    string.IsNullOrEmpty(txtCity.Text) || string.IsNullOrEmpty(txtZip.Text))
+                {
+                    litError.Text = "Veuillez remplir tous les champs obligatoires.";
+                    pnlError.Visible = true;
+                    return;
+                }
 
-                string street = txtStreet.Text;
-                string city = txtCity.Text;
-                string zip = txtZip.Text;
-                string country = txtCountry.Text;
+                // Validate payment method - if bank transfer, check required fields
+                string paymentMethod = Request.Form["paymentMethod"];
+                if (paymentMethod == "bank")
+                {
+                    if (string.IsNullOrEmpty(txtBankName.Text) || string.IsNullOrEmpty(txtAccountNumber.Text) || 
+                        string.IsNullOrEmpty(txtAccountHolder.Text))
+                    {
+                        litError.Text = "Veuillez remplir tous les champs obligatoires pour le virement bancaire.";
+                        pnlError.Visible = true;
+                        return;
+                    }
+                }
+
+                int userId = Convert.ToInt32(Session["UserId"]);
+                DataTable cartItems = CartHelper.GetCartItems();
+                
+                if (cartItems.Rows.Count == 0)
+                {
+                    litError.Text = "Votre panier est vide.";
+                    pnlError.Visible = true;
+                    return;
+                }
 
                 DbContext db = new DbContext();
-                string addrQuery = "INSERT INTO Addresses (UserId, Street, City, ZipCode, Country) OUTPUT INSERTED.Id VALUES (@UserId, @Street, @City, @Zip, @Country)";
-                SqlParameter[] addrParams = {
+
+                // *** CRITICAL FIX: VALIDATE STOCK BEFORE CREATING ORDER ***
+                // This prevents creating orders with insufficient stock
+                foreach (DataRow row in cartItems.Rows)
+                {
+                    int productId = Convert.ToInt32(row["ProductId"]);
+                    int? variantId = row["VariantId"] != DBNull.Value ? (int?)Convert.ToInt32(row["VariantId"]) : null;
+                    int quantity = Convert.ToInt32(row["Quantity"]);
+                    int available = GetAvailableStock(db, productId, variantId);
+                    
+                    if (quantity > available)
+                    {
+                        litError.Text = $"❌ La quantité demandée pour '{Server.HtmlEncode(row["Name"].ToString())}' ({quantity}) dépasse le stock disponible ({available}). Veuillez ajuster votre panier.";
+                        pnlError.Visible = true;
+                        return;
+                    }
+                }
+
+                // Check if address already exists (to avoid duplicates) - use exact match
+                string phoneValue = string.IsNullOrWhiteSpace(txtPhone.Text) ? null : Server.HtmlEncode(txtPhone.Text.Trim());
+                string fullNameValue = Server.HtmlEncode(txtFullName.Text.Trim());
+                string streetValue = Server.HtmlEncode(txtStreet.Text.Trim());
+                string cityValue = Server.HtmlEncode(txtCity.Text.Trim());
+                string zipValue = Server.HtmlEncode(txtZip.Text.Trim());
+                string countryValue = ddlCountry.SelectedValue;
+
+                string checkAddrQuery = @"SELECT Id FROM Addresses 
+                                         WHERE UserId = @UserId 
+                                         AND LTRIM(RTRIM(FullName)) = LTRIM(RTRIM(@FullName))
+                                         AND LTRIM(RTRIM(Street)) = LTRIM(RTRIM(@Street))
+                                         AND LTRIM(RTRIM(City)) = LTRIM(RTRIM(@City))
+                                         AND LTRIM(RTRIM(ZipCode)) = LTRIM(RTRIM(@Zip))
+                                         AND LTRIM(RTRIM(Country)) = LTRIM(RTRIM(@Country))
+                                         AND (LTRIM(RTRIM(ISNULL(Phone, ''))) = LTRIM(RTRIM(ISNULL(@Phone, ''))) 
+                                              OR (Phone IS NULL AND @Phone IS NULL))";
+                SqlParameter[] checkAddrParams = {
                     new SqlParameter("@UserId", userId),
-                    new SqlParameter("@Street", street),
-                    new SqlParameter("@City", city),
-                    new SqlParameter("@Zip", zip),
-                    new SqlParameter("@Country", country)
+                    new SqlParameter("@FullName", fullNameValue),
+                    new SqlParameter("@Street", streetValue),
+                    new SqlParameter("@City", cityValue),
+                    new SqlParameter("@Zip", zipValue),
+                    new SqlParameter("@Country", countryValue),
+                    new SqlParameter("@Phone", phoneValue ?? (object)DBNull.Value)
                 };
 
-                int addrId = (int)db.ExecuteScalar(addrQuery, addrParams);
+                object existingAddrId = db.ExecuteScalar(checkAddrQuery, checkAddrParams);
+                int addrId;
 
-                string orderQuery = "INSERT INTO Orders (UserId, TotalAmount, Status, ShippingAddressId) OUTPUT INSERTED.Id VALUES (@UserId, @Total, 'Pending', @AddrId)";
+                if (existingAddrId != null && existingAddrId != DBNull.Value)
+                {
+                    // Address already exists, use it
+                    addrId = Convert.ToInt32(existingAddrId);
+                    
+                    // Set it as default for future orders
+                    string updateDefaultQuery = "UPDATE Addresses SET IsDefault = 1 WHERE Id = @Id AND UserId = @UserId";
+                    SqlParameter[] updateDefaultParams = {
+                        new SqlParameter("@Id", addrId),
+                        new SqlParameter("@UserId", userId)
+                    };
+                    db.ExecuteNonQuery(updateDefaultQuery, updateDefaultParams);
+                    
+                    // Unset other default addresses
+                    string unsetDefaultQuery = "UPDATE Addresses SET IsDefault = 0 WHERE UserId = @UserId AND Id != @Id";
+                    SqlParameter[] unsetParams = { 
+                        new SqlParameter("@UserId", userId),
+                        new SqlParameter("@Id", addrId)
+                    };
+                    db.ExecuteNonQuery(unsetDefaultQuery, unsetParams);
+                }
+                else
+                {
+                    // Address doesn't exist, create new one
+                    // Unset other default addresses before creating new one (the new address will be default)
+                    string unsetDefaultQuery = "UPDATE Addresses SET IsDefault = 0 WHERE UserId = @UserId";
+                    SqlParameter[] unsetParams = { new SqlParameter("@UserId", userId) };
+                    db.ExecuteNonQuery(unsetDefaultQuery, unsetParams);
+
+                    // Create address as default
+                    string addrQuery = @"INSERT INTO Addresses (UserId, FullName, Street, City, ZipCode, Country, Phone, IsDefault) 
+                                         OUTPUT INSERTED.Id 
+                                         VALUES (@UserId, @FullName, @Street, @City, @Zip, @Country, @Phone, 1)";
+                    SqlParameter[] addrParams = {
+                        new SqlParameter("@UserId", userId),
+                        new SqlParameter("@FullName", fullNameValue),
+                        new SqlParameter("@Street", streetValue),
+                        new SqlParameter("@City", cityValue),
+                        new SqlParameter("@Zip", zipValue),
+                        new SqlParameter("@Country", countryValue),
+                        new SqlParameter("@Phone", phoneValue ?? (object)DBNull.Value)
+                    };
+
+                    addrId = (int)db.ExecuteScalar(addrQuery, addrParams);
+                }
+
+                // Calculate totals
+                decimal subTotal = CartHelper.GetCartTotal();
+                decimal shippingCost = CalculateShipping(subTotal);
+                decimal discountAmount = GetAppliedDiscount();
+                decimal total = subTotal + shippingCost - discountAmount;
+                
+                // Ensure total doesn't go negative
+                if (total < 0)
+                    total = 0;
+
+                // Generate order number
+                string orderNumber = "CMD-" + DateTime.Now.ToString("yyyyMMdd") + "-" + Guid.NewGuid().ToString().Substring(0, 8).ToUpper();
+
+                // Get applied promo code info
+                string appliedCouponCode = Session["AppliedPromoCode"]?.ToString();
+                int? appliedCouponId = Session["AppliedCouponId"] as int?;
+                
+                // Create order
+                string orderQuery = @"INSERT INTO Orders (OrderNumber, UserId, TotalAmount, SubTotal, ShippingCost, DiscountAmount, CouponCode, Status, ShippingAddressId, ShippingMethod) 
+                                      OUTPUT INSERTED.Id 
+                                      VALUES (@OrderNumber, @UserId, @Total, @SubTotal, @Shipping, @Discount, @CouponCode, 'Pending', @AddrId, 'Standard')";
                 SqlParameter[] orderParams = {
+                    new SqlParameter("@OrderNumber", orderNumber),
                     new SqlParameter("@UserId", userId),
                     new SqlParameter("@Total", total),
+                    new SqlParameter("@SubTotal", subTotal),
+                    new SqlParameter("@Shipping", shippingCost),
+                    new SqlParameter("@Discount", discountAmount),
+                    new SqlParameter("@CouponCode", !string.IsNullOrEmpty(appliedCouponCode) ? appliedCouponCode : (object)DBNull.Value),
                     new SqlParameter("@AddrId", addrId)
                 };
 
                 int orderId = (int)db.ExecuteScalar(orderQuery, orderParams);
-
-                foreach (var item in cart)
+                
+                // Record coupon usage if a coupon was applied
+                if (appliedCouponId.HasValue && discountAmount > 0)
                 {
-                    string itemQuery = "INSERT INTO OrderItems (OrderId, ProductId, Quantity, UnitPrice, VariantId) VALUES (@OrderId, @ProductId, @Qty, @Price, @VarId)";
-                   
-                    List<SqlParameter> itemParams = new List<SqlParameter> {
-                        new SqlParameter("@OrderId", orderId),
-                        new SqlParameter("@ProductId", item.ProductId),
-                        new SqlParameter("@Qty", item.Quantity),
-                        new SqlParameter("@Price", item.Price)
-                    };
-
-                    if (!string.IsNullOrEmpty(item.VariantId))
-                        itemParams.Add(new SqlParameter("@VarId", item.VariantId));
-                    else
-                        itemParams.Add(new SqlParameter("@VarId", DBNull.Value));
-
-                    db.ExecuteNonQuery(itemQuery, itemParams.ToArray());
+                    CouponHelper.RecordCouponUsage(appliedCouponId.Value, userId, orderId, discountAmount);
                 }
 
-                Session["Cart"] = null;
-                Response.Redirect("OrderConfirmation.aspx?id=" + orderId);
+                // Create order items and update stock
+                foreach (DataRow row in cartItems.Rows)
+                {
+                    int productId = Convert.ToInt32(row["ProductId"]);
+                    int? variantId = row["VariantId"] != DBNull.Value ? (int?)Convert.ToInt32(row["VariantId"]) : null;
+                    int quantity = Convert.ToInt32(row["Quantity"]);
+                    decimal unitPrice = Convert.ToDecimal(row["Price"]);
+                    decimal adjustment = row["PriceAdjustment"] != DBNull.Value ? Convert.ToDecimal(row["PriceAdjustment"]) : 0;
+                    unitPrice += adjustment;
+                    decimal totalPrice = unitPrice * quantity;
+                    string productName = row["Name"].ToString();
 
+                    string itemQuery = @"INSERT INTO OrderItems (OrderId, ProductId, VariantId, ProductName, Quantity, UnitPrice, TotalPrice) 
+                                        VALUES (@OrderId, @ProductId, @VariantId, @ProductName, @Qty, @UnitPrice, @TotalPrice)";
+                    SqlParameter[] itemParams = {
+                        new SqlParameter("@OrderId", orderId),
+                        new SqlParameter("@ProductId", productId),
+                        new SqlParameter("@VariantId", variantId ?? (object)DBNull.Value),
+                        new SqlParameter("@ProductName", Server.HtmlEncode(productName)),
+                        new SqlParameter("@Qty", quantity),
+                        new SqlParameter("@UnitPrice", unitPrice),
+                        new SqlParameter("@TotalPrice", totalPrice)
+                    };
+
+                    db.ExecuteNonQuery(itemQuery, itemParams);
+
+                    // Update stock (variant first if exists)
+                    if (variantId.HasValue)
+                    {
+                        string updateVarStock = "UPDATE ProductVariants SET StockQuantity = CASE WHEN StockQuantity >= @Qty THEN StockQuantity - @Qty ELSE StockQuantity END WHERE Id = @VarId";
+                        db.ExecuteNonQuery(updateVarStock, new SqlParameter[] {
+                            new SqlParameter("@Qty", quantity),
+                            new SqlParameter("@VarId", variantId.Value)
+                        });
+                    }
+
+                    string updateStockQuery = "UPDATE Products SET StockQuantity = CASE WHEN StockQuantity >= @Qty THEN StockQuantity - @Qty ELSE StockQuantity END WHERE Id = @ProductId";
+                    SqlParameter[] stockParams = {
+                        new SqlParameter("@Qty", quantity),
+                        new SqlParameter("@ProductId", productId)
+                    };
+                    db.ExecuteNonQuery(updateStockQuery, stockParams);
+                }
+
+                // Clear cart and applied promo code
+                CartHelper.ClearCart();
+                Session["CartCount"] = 0;
+                Session["AppliedPromoCode"] = null;
+                Session["AppliedCouponId"] = null;
+                Session["AppliedDiscount"] = null;
+
+                // Create dtSummary for email (same structure as in LoadCheckoutData)
+                DataTable dtSummary = cartItems.Clone();
+                dtSummary.Columns.Add("TotalPrice", typeof(decimal));
+
+                foreach (DataRow row in cartItems.Rows)
+                {
+                    DataRow newRow = dtSummary.NewRow();
+                    newRow["Id"] = row["Id"];
+                    newRow["ProductId"] = row["ProductId"];
+                    newRow["VariantId"] = row["VariantId"];
+                    newRow["Quantity"] = row["Quantity"];
+                    newRow["Name"] = row["Name"];
+                    newRow["Price"] = row["Price"];
+                    newRow["ImageUrl"] = row["ImageUrl"];
+                    newRow["StockQuantity"] = row["StockQuantity"];
+                    newRow["PriceAdjustment"] = row["PriceAdjustment"];
+                    newRow["VariantType"] = row["VariantType"];
+                    newRow["VariantValue"] = row["VariantValue"];
+
+                    decimal unitPrice = Convert.ToDecimal(row["Price"]);
+                    decimal adjustment = row["PriceAdjustment"] != DBNull.Value ? Convert.ToDecimal(row["PriceAdjustment"]) : 0;
+                    unitPrice += adjustment;
+                    int quantity = Convert.ToInt32(row["Quantity"]);
+                    newRow["TotalPrice"] = unitPrice * quantity;
+
+                    dtSummary.Rows.Add(newRow);
+                }
+
+                // Send Confirmation Email
+                try 
+                {
+                    string userEmailQuery = "SELECT Email FROM Users WHERE Id = @UserId";
+                    DataTable userEmailDt = db.ExecuteQuery(userEmailQuery, new SqlParameter[] { new SqlParameter("@UserId", userId) });
+                    
+                    if (userEmailDt.Rows.Count > 0)
+                    {
+                        string userEmail = userEmailDt.Rows[0]["Email"].ToString();
+                        string productsHtml = EmailTemplates.GenerateProductTableHtml(dtSummary, true); // Use dtSummary which already has totals
+                        
+                        string emailBody = EmailTemplates.GetOrderConfirmationEmailTemplate(
+                            txtFullName.Text.Trim(),
+                            orderNumber,
+                            productsHtml,
+                            total
+                        );
+
+                        SecurityHelper.SendEmail(userEmail, $"Confirmation de commande {orderNumber}", emailBody);
+                    }
+                }
+                catch (Exception emailEx)
+                {
+                    // Log error but don't stop the order process
+                    Console.WriteLine("Failed to send order confirmation email: " + emailEx.Message);
+                }
+
+                // Redirect to confirmation
+                Response.Redirect("OrderConfirmation.aspx?id=" + orderId);
             }
             catch (Exception ex)
             {
+                litError.Text = "Erreur lors de la commande: " + Server.HtmlEncode(ex.Message);
                 pnlError.Visible = true;
-                litError.Text = "Erreur lors de la commande: " + ex.Message;
             }
+        }
+
+
+        private int GetAvailableStock(DbContext db, int productId, int? variantId)
+        {
+            if (variantId.HasValue)
+            {
+                object v = db.ExecuteScalar("SELECT StockQuantity FROM ProductVariants WHERE Id = @Id", new SqlParameter[] { new SqlParameter("@Id", variantId.Value) });
+                if (v != null && v != DBNull.Value)
+                    return Convert.ToInt32(v);
+            }
+            object p = db.ExecuteScalar("SELECT StockQuantity FROM Products WHERE Id = @Id", new SqlParameter[] { new SqlParameter("@Id", productId) });
+            return (p != null && p != DBNull.Value) ? Convert.ToInt32(p) : 0;
+        }
+
+        protected void btnApplyPromo_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                string promoCode = txtPromoCode.Text.Trim();
+                
+                if (string.IsNullOrEmpty(promoCode))
+                {
+                    litPromoError.Text = "Veuillez entrer un code promo.";
+                    pnlPromoCodeError.Visible = true;
+                    pnlPromoCodeSuccess.Visible = false;
+                    return;
+                }
+
+                decimal subTotal = CartHelper.GetCartTotal();
+                CouponValidationResult result = CouponHelper.ValidateCoupon(promoCode, subTotal);
+
+                if (result.IsValid)
+                {
+                    // Store in session
+                    Session["AppliedPromoCode"] = promoCode.ToUpper();
+                    Session["AppliedCouponId"] = result.CouponId;
+                    Session["AppliedDiscount"] = result.DiscountAmount;
+
+                    // Display success message
+                    litPromoSuccess.Text = $"Code promo appliqué ! Réduction de {result.DiscountAmount:F2} MAD.";
+                    pnlPromoCodeSuccess.Visible = true;
+                    pnlPromoCodeError.Visible = false;
+                    
+                    // Reload checkout data to update totals
+                    LoadCheckoutData();
+                }
+                else
+                {
+                    litPromoError.Text = result.ErrorMessage;
+                    pnlPromoCodeError.Visible = true;
+                    pnlPromoCodeSuccess.Visible = false;
+                    
+                    // Clear session
+                    Session["AppliedPromoCode"] = null;
+                    Session["AppliedCouponId"] = null;
+                    Session["AppliedDiscount"] = null;
+                }
+            }
+            catch (Exception ex)
+            {
+                litPromoError.Text = "Erreur lors de l'application du code promo: " + Server.HtmlEncode(ex.Message);
+                pnlPromoCodeError.Visible = true;
+                pnlPromoCodeSuccess.Visible = false;
+            }
+        }
+
+        private decimal GetAppliedDiscount()
+        {
+            if (Session["AppliedDiscount"] != null)
+            {
+                return Convert.ToDecimal(Session["AppliedDiscount"]);
+            }
+            return 0;
         }
     }
 }

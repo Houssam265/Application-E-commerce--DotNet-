@@ -1,14 +1,21 @@
 using System;
 using System.Data;
+using System.Data.SqlClient;
 using System.Web.UI;
+using System.Web.UI.WebControls;
 using Ecommerce.Data;
+using Ecommerce.Utils;
 
 namespace Ecommerce.Pages.Admin
 {
     public partial class Users : Page
     {
-        // Controls
         protected global::System.Web.UI.WebControls.GridView gvUsers;
+        protected global::System.Web.UI.WebControls.TextBox txtSearch;
+        protected global::System.Web.UI.WebControls.LinkButton btnSearch;
+        protected global::System.Web.UI.WebControls.LinkButton btnClear;
+        protected global::System.Web.UI.WebControls.DropDownList ddlRoleFilter;
+        protected global::System.Web.UI.WebControls.DropDownList ddlStatusFilter;
 
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -18,12 +25,220 @@ namespace Ecommerce.Pages.Admin
             }
         }
 
-        private void LoadUsers()
+        private void LoadUsers(string searchTerm = "", string role = "", string status = "")
         {
             DbContext db = new DbContext();
-            DataTable dt = db.ExecuteQuery("SELECT * FROM Users ORDER BY CreatedAt DESC");
+            string query = "SELECT Id, FullName, Email, Role, CreatedAt, IsActive FROM Users WHERE 1=1";
+            System.Collections.Generic.List<SqlParameter> parameters = new System.Collections.Generic.List<SqlParameter>();
+            
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                query += " AND (FullName LIKE @Search OR Email LIKE @Search)";
+                parameters.Add(new SqlParameter("@Search", "%" + searchTerm + "%"));
+            }
+            
+            if (!string.IsNullOrEmpty(role))
+            {
+                query += " AND Role = @Role";
+                parameters.Add(new SqlParameter("@Role", role));
+            }
+            
+            if (!string.IsNullOrEmpty(status))
+            {
+                query += " AND IsActive = @Status";
+                parameters.Add(new SqlParameter("@Status", status == "1"));
+            }
+            
+            query += " ORDER BY CreatedAt DESC";
+            
+            DataTable dt;
+            if (parameters.Count > 0)
+            {
+                dt = db.ExecuteQuery(query, parameters.ToArray());
+            }
+            else
+            {
+                dt = db.ExecuteQuery(query);
+            }
+            
             gvUsers.DataSource = dt;
             gvUsers.DataBind();
         }
+
+        protected void btnSearch_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                string searchTerm = txtSearch != null ? txtSearch.Text.Trim() : "";
+                string role = ddlRoleFilter != null && ddlRoleFilter.SelectedValue != null ? ddlRoleFilter.SelectedValue : "";
+                string status = ddlStatusFilter != null && ddlStatusFilter.SelectedValue != null ? ddlStatusFilter.SelectedValue : "";
+                LoadUsers(searchTerm, role, status);
+            }
+            catch (Exception ex)
+            {
+                // Log error if needed
+            }
+        }
+
+        protected void btnClear_Click(object sender, EventArgs e)
+        {
+            txtSearch.Text = "";
+            if (ddlRoleFilter.Items.Count > 0)
+                ddlRoleFilter.SelectedIndex = 0;
+            if (ddlStatusFilter.Items.Count > 0)
+                ddlStatusFilter.SelectedIndex = 0;
+            LoadUsers();
+        }
+
+        protected void gvUsers_PageIndexChanging(object sender, GridViewPageEventArgs e)
+        {
+            gvUsers.PageIndex = e.NewPageIndex;
+            string searchTerm = txtSearch != null ? txtSearch.Text.Trim() : "";
+            string role = ddlRoleFilter != null && ddlRoleFilter.SelectedValue != null ? ddlRoleFilter.SelectedValue : "";
+            string status = ddlStatusFilter != null && ddlStatusFilter.SelectedValue != null ? ddlStatusFilter.SelectedValue : "";
+            LoadUsers(searchTerm, role, status);
+        }
+
+        protected void gvUsers_RowCommand(object sender, GridViewCommandEventArgs e)
+        {
+            if (e.CommandName == "ToggleActive")
+            {
+                string userId = e.CommandArgument.ToString();
+                DbContext db = new DbContext();
+                
+                // Get current status and user info
+                string checkQuery = "SELECT IsActive, Email, FullName FROM Users WHERE Id = @Id";
+                SqlParameter[] checkParams = { new SqlParameter("@Id", userId) };
+                DataTable userDt = db.ExecuteQuery(checkQuery, checkParams);
+                
+                if (userDt.Rows.Count == 0)
+                {
+                    return;
+                }
+                
+                bool currentStatus = Convert.ToBoolean(userDt.Rows[0]["IsActive"]);
+                string userEmail = userDt.Rows[0]["Email"].ToString();
+                string userName = userDt.Rows[0]["FullName"] != DBNull.Value ? userDt.Rows[0]["FullName"].ToString() : userEmail;
+                bool newStatus = !currentStatus;
+                
+                // Update status
+                string updateQuery = "UPDATE Users SET IsActive = @IsActive WHERE Id = @Id";
+                SqlParameter[] updateParams = {
+                    new SqlParameter("@IsActive", newStatus),
+                    new SqlParameter("@Id", userId)
+                };
+                db.ExecuteNonQuery(updateQuery, updateParams);
+                
+                // Send email notification
+                try
+                {
+                    string emailSubject = newStatus 
+                        ? "Votre compte a été réactivé - E-commerce Platform"
+                        : "Votre compte a été désactivé - E-commerce Platform";
+                    
+                    string emailBody = EmailTemplates.GetAccountStatusEmailTemplate(userName, newStatus);
+                    
+                    SecurityHelper.SendEmail(userEmail, emailSubject, emailBody);
+                }
+                catch
+                {
+                    // Log error but don't prevent the status update
+                }
+                
+                string searchTerm = txtSearch != null ? txtSearch.Text.Trim() : "";
+                string role = ddlRoleFilter != null ? ddlRoleFilter.SelectedValue : "";
+                string status = ddlStatusFilter != null ? ddlStatusFilter.SelectedValue : "";
+                LoadUsers(searchTerm, role, status);
+            }
+        }
+
+        protected string GetActiveStatus(object isActive)
+        {
+            if (isActive != null && isActive != DBNull.Value)
+            {
+                bool active = Convert.ToBoolean(isActive);
+                return active ? "<span style='color:#10b981'>Oui</span>" : "<span style='color:#ef4444'>Non</span>";
+            }
+            return "<span style='color:#ef4444'>Non</span>";
+        }
+
+        protected string GetToggleButtonText(object isActive)
+        {
+            if (isActive != null && isActive != DBNull.Value)
+            {
+                bool active = Convert.ToBoolean(isActive);
+                return active ? "<span style='background: rgba(220,53,69,0.1); color: var(--danger-color); padding: 5px 10px; border-radius: 5px;'>Désactiver</span>" 
+                             : "<span style='background: rgba(16,185,129,0.1); color: var(--success-color); padding: 5px 10px; border-radius: 5px;'>Activer</span>";
+            }
+            return "<span style='background: rgba(16,185,129,0.1); color: var(--success-color); padding: 5px 10px; border-radius: 5px;'>Activer</span>";
+        }
+
+        protected string GetConfirmMessage(object isActive)
+        {
+            if (isActive != null && isActive != DBNull.Value)
+            {
+                bool active = Convert.ToBoolean(isActive);
+                string action = active ? "désactiver" : "activer";
+                return "return confirm('Êtes-vous sûr de vouloir " + action + " cet utilisateur ?');";
+            }
+            return "return confirm('Êtes-vous sûr de vouloir activer cet utilisateur ?');";
+        }
+
+        // Méthode helper pour obtenir la classe CSS complète du bouton
+        protected string GetFullButtonClass(object isActive)
+        {
+            bool active = false;
+            if (isActive != null && isActive != DBNull.Value)
+            {
+                bool.TryParse(isActive.ToString(), out active);
+            }
+            return active ? "btn btn-secondary" : "btn btn-primary";
+        }
+
+        // Méthode helper pour obtenir l'icône du bouton
+        protected string GetButtonIcon(object isActive)
+        {
+            bool active = false;
+            if (isActive != null && isActive != DBNull.Value)
+            {
+                bool.TryParse(isActive.ToString(), out active);
+            }
+            return active ? "ban" : "check";
+        }
+
+        // Méthode helper pour obtenir la classe CSS du statut
+        protected string GetStatusClass(object isActive)
+        {
+            bool active = false;
+            if (isActive != null && isActive != DBNull.Value)
+            {
+                bool.TryParse(isActive.ToString(), out active);
+            }
+            return active ? "active" : "inactive";
+        }
+
+        // Méthode helper pour obtenir le texte du statut
+        protected string GetStatusText(object isActive)
+        {
+            bool active = false;
+            if (isActive != null && isActive != DBNull.Value)
+            {
+                bool.TryParse(isActive.ToString(), out active);
+            }
+            return active ? "Actif" : "Inactif";
+        }
+
+        // Méthode helper pour obtenir le texte du bouton toggle
+        protected string GetToggleText(object isActive)
+        {
+            bool active = false;
+            if (isActive != null && isActive != DBNull.Value)
+            {
+                bool.TryParse(isActive.ToString(), out active);
+            }
+            return active ? "Désactiver" : "Activer";
+        }
     }
 }
+
+

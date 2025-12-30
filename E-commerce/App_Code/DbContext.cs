@@ -12,7 +12,7 @@ namespace Ecommerce.Data
 
         public DbContext()
         {
-            _connectionString = ConfigurationManager.ConnectionStrings["EcommerceDB"].ConnectionString;
+            _connectionString = ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
         }
 
         public SqlConnection GetConnection()

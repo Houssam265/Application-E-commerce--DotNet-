@@ -6,6 +6,7 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 using Ecommerce.Data;
 using Ecommerce.Utils;
+using System.Collections.Generic;
 
 namespace Ecommerce.Pages.Public
 {
@@ -40,6 +41,12 @@ namespace Ecommerce.Pages.Public
                 return;
             }
 
+            if (!SecurityHelper.IsValidEmail(email))
+            {
+                ShowError("L'email n'est pas valide.");
+                return;
+            }
+
             if (password != confirmPassword)
             {
                 ShowError("Les mots de passe ne correspondent pas.");
@@ -62,17 +69,35 @@ namespace Ecommerce.Pages.Public
 
                 string passwordHash = SecurityHelper.HashPassword(password);
 
-                string insertQuery = "INSERT INTO Users (Email, PasswordHash, FullName, Phone, Role) VALUES (@Email, @PasswordHash, @FullName, @Phone, 'Customer')";
-                SqlParameter[] insertParams = {
-                    new SqlParameter("@Email", email),
-                    new SqlParameter("@PasswordHash", passwordHash),
-                    new SqlParameter("@FullName", fullName),
-                    new SqlParameter("@Phone", phone ?? (object)DBNull.Value)
+                // Ne pas insérer en base avant la vérification
+                // Générer le code et le stocker en session
+                string code = SecurityHelper.GenerateNumericCode(6);
+                DateTime expiry = DateTime.Now.AddMinutes(15);
+
+                var pending = new Dictionary<string, string>
+                {
+                    { "FullName", fullName },
+                    { "Email", email },
+                    { "Phone", string.IsNullOrWhiteSpace(phone) ? "" : phone },
+                    { "PasswordHash", passwordHash },
+                    { "Code", code },
+                    { "Expiry", expiry.ToString("o") }
                 };
+                Session["PendingReg:" + email] = pending;
 
-                db.ExecuteNonQuery(insertQuery, insertParams);
+                // Envoyer l'email de vérification
+                string subject = "Vérification de votre email";
+                string verifyUrl = ResolveUrl("~/Pages/Public/VerifyEmail.aspx?email=" + Server.UrlEncode(email));
+                string body = $"<p>Bonjour {HttpUtility.HtmlEncode(fullName)},</p>" +
+                              "<p>Merci pour votre inscription. Utilisez le code ci-dessous pour vérifier votre adresse email:</p>" +
+                              $"<h2 style='letter-spacing:4px'>{code}</h2>" +
+                              $"<p>Ce code expire dans 15 minutes.</p>" +
+                              $"<p>Vous pouvez saisir ce code sur la page suivante: <a href='{verifyUrl}'>Vérifier mon email</a></p>" +
+                              "<p>— ServicePro</p>";
 
-                Response.Redirect("Login.aspx");
+                SecurityHelper.SendEmail(email, subject, body);
+
+                Response.Redirect("VerifyEmail.aspx?email=" + Server.UrlEncode(email));
             }
             catch (Exception ex)
             {
