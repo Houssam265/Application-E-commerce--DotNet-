@@ -554,19 +554,26 @@
            document.addEventListener('DOMContentLoaded', function () {
                const mainImage = document.querySelector('.main-image');
                if (mainImage) {
-                   // Get all product images (main + thumbnails)
+                   // Get all product images (main + thumbnails) without duplicates
                    allImagesGlobal = [];
-                   allImagesGlobal.push({
-                       src: mainImage.src,
-                       element: mainImage
-                   });
+                   function addUniqueImage(src, element) {
+                       if (!src) return;
+                       const exists = allImagesGlobal.some(function (img) {
+                           return img.src === src;
+                       });
+                       if (!exists) {
+                           allImagesGlobal.push({
+                               src: src,
+                               element: element
+                           });
+                       }
+                   }
+
+                   addUniqueImage(mainImage.src, mainImage);
 
                    // Get thumbnails
                    document.querySelectorAll('.thumbnail').forEach(function (thumb) {
-                       allImagesGlobal.push({
-                           src: thumb.src,
-                           element: thumb
-                       });
+                       addUniqueImage(thumb.src, thumb);
                    });
 
                    // Initialize zoom with navigation

@@ -567,6 +567,12 @@
                         CssClass="form-control" placeholder="Décrivez votre produit..."></asp:TextBox>
                 </div>
 
+                <div class="form-group">
+                    <label>Description courte</label>
+                    <asp:TextBox ID="txtShortDescription" runat="server" TextMode="MultiLine" Rows="2"
+                        CssClass="form-control" placeholder="Resume court pour les listes"></asp:TextBox>
+                </div>
+
                 <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                     <div>
                         <label>Prix (MAD)</label>
@@ -574,10 +580,41 @@
                             placeholder="0.00"></asp:TextBox>
                     </div>
                     <div>
+                        <label>Prix barre (MAD)</label>
+                        <asp:TextBox ID="txtCompareAtPrice" runat="server" CssClass="form-control" type="number" step="0.01"
+                            placeholder="0.00"></asp:TextBox>
+                    </div>
+                </div>
+
+                <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div>
                         <label>Stock</label>
                         <asp:TextBox ID="txtStock" runat="server" CssClass="form-control" type="number" placeholder="0">
                         </asp:TextBox>
                     </div>
+                    <div>
+                        <label>Poids (kg)</label>
+                        <asp:TextBox ID="txtWeight" runat="server" CssClass="form-control" type="number" step="0.01"
+                            placeholder="0.00"></asp:TextBox>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>SKU</label>
+                    <asp:TextBox ID="txtSKU" runat="server" CssClass="form-control" placeholder="Ex: TOM-BIO-001">
+                    </asp:TextBox>
+                </div>
+
+                <div class="form-group" style="display: flex; gap: 1.5rem; align-items: center;">
+                    <label style="margin-bottom: 0;">Statut</label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0;">
+                        <asp:CheckBox ID="chkIsActive" runat="server" Checked="true" />
+                        <span>Actif</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0;">
+                        <asp:CheckBox ID="chkIsFeatured" runat="server" Checked="true" />
+                        <span>Mis en avant</span>
+                    </label>
                 </div>
 
                 <div class="form-group">
@@ -649,3 +686,4 @@
             </div>
         </asp:Panel>
     </asp:Content>
+

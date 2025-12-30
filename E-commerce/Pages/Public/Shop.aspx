@@ -259,37 +259,7 @@
         }
     </style>
     <script>
-        function adjustFiltersHeight() {
-            var filters = document.querySelector('.filters');
-            if (!filters) return;
-
-            var footer = document.querySelector('footer');
-            if (!footer) return;
-
-            var windowHeight = window.innerHeight;
-            var filtersTop = filters.offsetTop;
-            var footerTop = footer.getBoundingClientRect().top + window.scrollY;
-            var scrollY = window.scrollY || window.pageYOffset;
-            
-            // Calculer la distance entre le bas du filtre et le haut du footer
-            var filtersBottom = filtersTop + filters.offsetHeight;
-            var distanceToFooter = footerTop - filtersBottom;
-            
-            // Si le footer approche (moins de 50px), réduire la hauteur max
-            if (distanceToFooter < 50) {
-                var maxHeight = Math.max(300, footerTop - filtersTop - 100);
-                filters.style.maxHeight = maxHeight + 'px';
-            } else {
-                // Sinon, utiliser la hauteur maximale normale
-                var availableHeight = windowHeight - filtersTop - 100;
-                filters.style.maxHeight = Math.min(availableHeight, windowHeight - 200) + 'px';
-            }
-        }
-
-        // Ajuster au chargement et au scroll
-        window.addEventListener('load', adjustFiltersHeight);
-        window.addEventListener('scroll', adjustFiltersHeight);
-        window.addEventListener('resize', adjustFiltersHeight);
+        // La hauteur max du filtre est geree par le CSS pour eviter les reductions brusques.
     </script>
 </asp:Content>
 
@@ -418,3 +388,4 @@
         </div>
     </div>
 </asp:Content>
+

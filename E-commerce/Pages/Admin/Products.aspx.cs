@@ -22,6 +22,12 @@ namespace Ecommerce.Pages.Admin
         protected global::System.Web.UI.WebControls.DropDownList ddlCategories;
         protected global::System.Web.UI.WebControls.TextBox txtName;
         protected global::System.Web.UI.WebControls.TextBox txtDescription;
+        protected global::System.Web.UI.WebControls.TextBox txtShortDescription;
+        protected global::System.Web.UI.WebControls.TextBox txtCompareAtPrice;
+        protected global::System.Web.UI.WebControls.TextBox txtWeight;
+        protected global::System.Web.UI.WebControls.TextBox txtSKU;
+        protected global::System.Web.UI.WebControls.CheckBox chkIsActive;
+        protected global::System.Web.UI.WebControls.CheckBox chkIsFeatured;
         protected global::System.Web.UI.WebControls.TextBox txtPrice;
         protected global::System.Web.UI.WebControls.TextBox txtStock;
         protected global::System.Web.UI.WebControls.LinkButton btnSave;
@@ -181,6 +187,12 @@ namespace Ecommerce.Pages.Admin
             hfProductId.Value = "";
             txtName.Text = "";
             txtDescription.Text = "";
+            txtShortDescription.Text = "";
+            txtCompareAtPrice.Text = "";
+            txtWeight.Text = "";
+            txtSKU.Text = "";
+            chkIsActive.Checked = true;
+            chkIsFeatured.Checked = true;
             txtPrice.Text = "0.00";
             txtStock.Text = "0";
             lblTitle.Text = "<i class=\"fas fa-plus\"></i> Ajouter un Produit";
@@ -203,6 +215,15 @@ namespace Ecommerce.Pages.Admin
             {
                 string name = txtName.Text;
                 string desc = txtDescription.Text;
+                string shortDesc = txtShortDescription.Text;
+                string sku = txtSKU.Text?.Trim() ?? "";
+                bool isActive = chkIsActive.Checked;
+                bool isFeatured = chkIsFeatured.Checked;
+
+                decimal compareAtPrice;
+                decimal? compareAt = decimal.TryParse(txtCompareAtPrice.Text, out compareAtPrice) ? (decimal?)compareAtPrice : null;
+                decimal weightValue;
+                decimal? weight = decimal.TryParse(txtWeight.Text, out weightValue) ? (decimal?)weightValue : null;
                 decimal price = decimal.Parse(txtPrice.Text);
                 int stock = int.Parse(txtStock.Text);
                 int catId = int.Parse(ddlCategories.SelectedValue);
@@ -213,15 +234,21 @@ namespace Ecommerce.Pages.Admin
                 if (string.IsNullOrEmpty(hfProductId.Value))
                 {
                     // Nouveau produit
-                    string query = "INSERT INTO Products (CategoryId, Name, Description, Price, StockQuantity, ImageUrl) VALUES (@CatId, @Name, @Desc, @Price, @Stock, @Img); SELECT CAST(SCOPE_IDENTITY() AS INT);";
+                    string query = @"INSERT INTO Products (CategoryId, Name, Description, ShortDescription, Price, CompareAtPrice, StockQuantity, SKU, Weight, IsActive, IsFeatured, ImageUrl) VALUES (@CatId, @Name, @Desc, @ShortDesc, @Price, @CompareAt, @Stock, @Sku, @Weight, @IsActive, @IsFeatured, @Img); SELECT CAST(SCOPE_IDENTITY() AS INT);";
                     string defaultImage = "placeholder.jpg";
                     
                     SqlParameter[] p = {
                         new SqlParameter("@CatId", catId),
                         new SqlParameter("@Name", name),
                         new SqlParameter("@Desc", desc),
+                        new SqlParameter("@ShortDesc", string.IsNullOrWhiteSpace(shortDesc) ? (object)DBNull.Value : shortDesc),
                         new SqlParameter("@Price", price),
+                        new SqlParameter("@CompareAt", compareAt.HasValue ? (object)compareAt.Value : DBNull.Value),
                         new SqlParameter("@Stock", stock),
+                        new SqlParameter("@Sku", string.IsNullOrWhiteSpace(sku) ? (object)DBNull.Value : sku),
+                        new SqlParameter("@Weight", weight.HasValue ? (object)weight.Value : DBNull.Value),
+                        new SqlParameter("@IsActive", isActive),
+                        new SqlParameter("@IsFeatured", true),
                         new SqlParameter("@Img", defaultImage)
                     };
                     
@@ -244,14 +271,20 @@ namespace Ecommerce.Pages.Admin
                 {
                     // Mise à jour produit existant
                     productId = hfProductId.Value;
-                    string query = "UPDATE Products SET CategoryId=@CatId, Name=@Name, Description=@Desc, Price=@Price, StockQuantity=@Stock WHERE Id=@Id";
+                    string query = @"UPDATE Products SET CategoryId=@CatId, Name=@Name, Description=@Desc, ShortDescription=@ShortDesc, Price=@Price, CompareAtPrice=@CompareAt, StockQuantity=@Stock, SKU=@Sku, Weight=@Weight, IsActive=@IsActive, IsFeatured=@IsFeatured WHERE Id=@Id";
                     
                     SqlParameter[] p = {
                         new SqlParameter("@CatId", catId),
                         new SqlParameter("@Name", name),
                         new SqlParameter("@Desc", desc),
+                        new SqlParameter("@ShortDesc", string.IsNullOrWhiteSpace(shortDesc) ? (object)DBNull.Value : shortDesc),
                         new SqlParameter("@Price", price),
+                        new SqlParameter("@CompareAt", compareAt.HasValue ? (object)compareAt.Value : DBNull.Value),
                         new SqlParameter("@Stock", stock),
+                        new SqlParameter("@Sku", string.IsNullOrWhiteSpace(sku) ? (object)DBNull.Value : sku),
+                        new SqlParameter("@Weight", weight.HasValue ? (object)weight.Value : DBNull.Value),
+                        new SqlParameter("@IsActive", isActive),
+                        new SqlParameter("@IsFeatured", isFeatured),
                         new SqlParameter("@Id", productId)
                     };
                     
@@ -406,6 +439,7 @@ namespace Ecommerce.Pages.Admin
                     hfProductId.Value = row["Id"].ToString();
                     txtName.Text = row["Name"] != DBNull.Value ? row["Name"].ToString() : "";
                     txtDescription.Text = row["Description"] != DBNull.Value ? row["Description"].ToString() : "";
+                    txtShortDescription.Text = row["ShortDescription"] != DBNull.Value ? row["ShortDescription"].ToString() : "";
                     
                     // Handle price with proper null checking
                     if (row["Price"] != DBNull.Value && row["Price"] != null)
@@ -419,6 +453,11 @@ namespace Ecommerce.Pages.Admin
                     }
                     
                     txtStock.Text = row["StockQuantity"] != DBNull.Value ? row["StockQuantity"].ToString() : "0";
+                    txtCompareAtPrice.Text = row["CompareAtPrice"] != DBNull.Value ? Convert.ToDecimal(row["CompareAtPrice"]).ToString("F2", CultureInfo.InvariantCulture) : "";
+                    txtWeight.Text = row["Weight"] != DBNull.Value ? Convert.ToDecimal(row["Weight"]).ToString("F2", CultureInfo.InvariantCulture) : "";
+                    txtSKU.Text = row["SKU"] != DBNull.Value ? row["SKU"].ToString() : "";
+                    chkIsActive.Checked = row["IsActive"] != DBNull.Value && Convert.ToBoolean(row["IsActive"]);
+                    chkIsFeatured.Checked = row["IsFeatured"] != DBNull.Value && Convert.ToBoolean(row["IsFeatured"]);
                     
                     // Ensure categories are loaded before setting selected value
                     if (ddlCategories.Items.Count == 0)
