@@ -624,6 +624,11 @@
                     <small style="color: #94a3b8; margin-top: 0.5rem; display: block;">Vous pouvez sélectionner
                         plusieurs images à la fois (Ctrl+Click ou Cmd+Click)</small>
                 </div>
+                <div class="form-group">
+                    <label>Apercu des images selectionnees</label>
+                    <div id="selectedImagesPreview" class="images-grid"></div>
+                    <small style="color: #94a3b8; margin-top: 0.5rem; display: block;">Les images s'affichent ici avant l'enregistrement.</small>
+                </div>
 
                 <script>
                     // S'assurer que le formulaire a l'enctype correct pour l'upload de fichiers
@@ -634,6 +639,97 @@
                         }
                     });
                 </script>
+                <script>
+    window.addEventListener('DOMContentLoaded', function () {
+        var input = document.getElementById('fuImages');
+        var preview = document.getElementById('selectedImagesPreview');
+        if (!input || !preview) return;
+
+        var selectedFiles = [];
+        var primaryIndex = 0;
+
+        function rebuildInputFiles() {
+            var dt = new DataTransfer();
+            selectedFiles.forEach(function (file) {
+                dt.items.add(file);
+            });
+            input.files = dt.files;
+        }
+
+        function renderPreview() {
+            preview.innerHTML = '';
+            selectedFiles.forEach(function (file, index) {
+                if (!file || !file.type || file.type.indexOf('image/') !== 0) return;
+
+                var wrapper = document.createElement('div');
+                wrapper.className = 'image-item' + (index === primaryIndex ? ' primary' : '');
+
+                var img = document.createElement('img');
+                img.alt = file.name || 'Image';
+                wrapper.appendChild(img);
+
+                var overlay = document.createElement('div');
+                overlay.className = 'image-overlay';
+
+                var primaryBtn = document.createElement('button');
+                primaryBtn.type = 'button';
+                primaryBtn.className = 'image-action-btn primary-btn';
+                primaryBtn.title = 'Definir comme principale';
+                primaryBtn.innerHTML = '<i class="fas fa-star"></i>';
+                primaryBtn.addEventListener('click', function () {
+                    primaryIndex = index;
+                    // Move primary to front so server marks it as primary
+                    if (index !== 0) {
+                        var file = selectedFiles.splice(index, 1)[0];
+                        selectedFiles.unshift(file);
+                        primaryIndex = 0;
+                        rebuildInputFiles();
+                    }
+                    renderPreview();
+                });
+
+                var deleteBtn = document.createElement('button');
+                deleteBtn.type = 'button';
+                deleteBtn.className = 'image-action-btn delete-btn';
+                deleteBtn.title = 'Supprimer';
+                deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+                deleteBtn.addEventListener('click', function () {
+                    selectedFiles.splice(index, 1);
+                    if (primaryIndex >= selectedFiles.length) {
+                        primaryIndex = 0;
+                    }
+                    rebuildInputFiles();
+                    renderPreview();
+                });
+
+                overlay.appendChild(primaryBtn);
+                overlay.appendChild(deleteBtn);
+                wrapper.appendChild(overlay);
+
+                if (index === primaryIndex) {
+                    var badge = document.createElement('span');
+                    badge.className = 'primary-badge';
+                    badge.innerHTML = '<i class="fas fa-star"></i> Principale';
+                    wrapper.appendChild(badge);
+                }
+
+                preview.appendChild(wrapper);
+
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        input.addEventListener('change', function () {
+            selectedFiles = Array.prototype.slice.call(input.files || []);
+            primaryIndex = 0;
+            renderPreview();
+        });
+    });
+</script>
 
                 <!-- Galerie des images existantes -->
                 <div class="form-group" id="imagesGallery" runat="server">
@@ -686,4 +782,5 @@
             </div>
         </asp:Panel>
     </asp:Content>
+
 
