@@ -38,7 +38,7 @@
                 </button>
                 <nav>
                     <ul class="nav-links">
-                        <li><a href="/" class='<%= Request.Path == "/" || Request.Path == "/Default.aspx" ? "active" : "" %>'>Accueil</a></li>
+                        <li><a href="/" class='<%= IsHome() ? "active" : "" %>'>Accueil</a></li>
                         <li><a href="/Pages/Public/Shop.aspx" class='<%= Request.Path.Contains("Shop.aspx") ? "active" : "" %>'>Boutique</a></li>
                         <li><a href="/Pages/Public/About.aspx" class='<%= Request.Path.Contains("About.aspx") ? "active" : "" %>'>À propos</a></li>
                         <li><a href="/Pages/Public/Contact.aspx" class='<%= Request.Path.Contains("Contact.aspx") ? "active" : "" %>'>Contact</a></li>

@@ -73,6 +73,13 @@ namespace Ecommerce
             }
         }
 
+        protected bool IsHome()
+        {
+            string path = Request.AppRelativeCurrentExecutionFilePath;
+            return string.Equals(path, "~/", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(path, "~/Default.aspx", StringComparison.OrdinalIgnoreCase);
+        }
+
         protected void Logout_Click(object sender, EventArgs e)
         {
             Session.Abandon();
@@ -162,8 +169,8 @@ namespace Ecommerce
                 HtmlGenericControl container = e.Item.FindControl("notifItem") as HtmlGenericControl;
                 if (container != null)
                 {
-                    container.Attributes["style"] += isRead 
-                        ? "; background:#ffffff;" 
+                    container.Attributes["style"] += isRead
+                        ? "; background:#ffffff;"
                         : "; background:#f0f9ff; border-left:4px solid #38bdf8;";
                 }
                 HyperLink link = e.Item.FindControl("lnkNotifAction") as HyperLink;
