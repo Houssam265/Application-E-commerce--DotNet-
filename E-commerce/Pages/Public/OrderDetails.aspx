@@ -148,6 +148,12 @@
                             <span>Livraison:</span>
                             <span><asp:Label ID="lblShippingCost" runat="server"></asp:Label></span>
                         </div>
+                        <asp:Panel ID="pnlDiscount" runat="server" Visible="false">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: #16a34a; font-weight: 600;">
+                                <span><i class="fas fa-tag"></i> Réduction:</span>
+                                <span><asp:Label ID="lblDiscount" runat="server"></asp:Label></span>
+                            </div>
+                        </asp:Panel>
                         <div style="display: flex; justify-content: space-between; font-size: 1.3rem; font-weight: 700; color: var(--primary-color); margin-top: 1rem; padding-top: 1rem; border-top: 2px solid var(--primary-color);">
                             <span>Total:</span>
                             <span><asp:Label ID="lblTotal" runat="server"></asp:Label> MAD</span>

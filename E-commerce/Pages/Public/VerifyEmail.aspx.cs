@@ -128,7 +128,8 @@ namespace Ecommerce.Pages.Public
                 Session["PendingReg:" + email] = pending; // réécrire
 
                 string subject = "Nouveau code de vérification";
-                string body = $"<p>Votre nouveau code: <strong>{code}</strong></p><p>Ce code expire dans 15 minutes.</p>";
+                string verifyUrl = ResolveUrl("~/Pages/Public/VerifyEmail.aspx?email=" + Server.UrlEncode(email));
+                string body = EmailTemplates.GetEmailVerificationTemplate(pending["FullName"], code, verifyUrl);
                 SecurityHelper.SendEmail(email, subject, body);
 
                 litSuccess.Text = "Un nouveau code vous a été envoyé.";

@@ -409,16 +409,5 @@
                     style="display:block; margin-top:0.75rem; color:#dc2626;"></asp:Label>
             </div>
 
-            <div style="margin-top:2rem;">
-                <h3><i class="fas fa-star"></i> Avis sur le service</h3>
-                <asp:Panel ID="pnlReviewAdmin" runat="server" Visible="false" CssClass="orders-table-container">
-                    <div style="display:flex; align-items:center; gap:0.75rem;">
-                        <asp:Literal ID="litAdminReviewStars" runat="server"></asp:Literal>
-                        <span id="lblAdminReviewDate" runat="server"></span>
-                    </div>
-                    <p style="margin-top:0.75rem;"><asp:Literal ID="litAdminReviewText" runat="server"></asp:Literal></p>
-                </asp:Panel>
-                <asp:Label ID="lblNoReview" runat="server" Visible="false" Text="Aucun avis pour cette commande." style="color:#64748b;"></asp:Label>
-            </div>
         </asp:Panel>
     </asp:Content>

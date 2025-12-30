@@ -30,31 +30,60 @@ namespace Ecommerce.Pages.Public
                 return;
             }
 
-            // Verify order belongs to user
+            // Verify order belongs to user OR user is admin
             int userId = Convert.ToInt32(Session["UserId"]);
+            string userRole = Session["Role"]?.ToString() ?? "";
+            bool isAdmin = (userRole == "Admin");
+            
             DbContext db = new DbContext();
             
-            // Check in Orders table
-            string verifyQuery1 = "SELECT COUNT(*) FROM Orders WHERE Id = @OrderId AND UserId = @UserId";
-            object count1 = db.ExecuteScalar(verifyQuery1, new System.Data.SqlClient.SqlParameter[] {
-                new System.Data.SqlClient.SqlParameter("@OrderId", orderId),
-                new System.Data.SqlClient.SqlParameter("@UserId", userId)
-            });
-            
-            // Check in OrderHistory table
-            string verifyQuery2 = "SELECT COUNT(*) FROM OrderHistory WHERE OrderId = @OrderId AND UserId = @UserId";
-            object count2 = db.ExecuteScalar(verifyQuery2, new System.Data.SqlClient.SqlParameter[] {
-                new System.Data.SqlClient.SqlParameter("@OrderId", orderId),
-                new System.Data.SqlClient.SqlParameter("@UserId", userId)
-            });
-            
-            int orderCount = (count1 != null && count1 != DBNull.Value ? Convert.ToInt32(count1) : 0) +
-                            (count2 != null && count2 != DBNull.Value ? Convert.ToInt32(count2) : 0);
-            
-            if (orderCount == 0)
+            if (!isAdmin)
             {
-                Response.Write("Order not found or access denied");
-                return;
+                // For regular users, verify order belongs to them
+                // Check in Orders table
+                string verifyQuery1 = "SELECT COUNT(*) FROM Orders WHERE Id = @OrderId AND UserId = @UserId";
+                object count1 = db.ExecuteScalar(verifyQuery1, new System.Data.SqlClient.SqlParameter[] {
+                    new System.Data.SqlClient.SqlParameter("@OrderId", orderId),
+                    new System.Data.SqlClient.SqlParameter("@UserId", userId)
+                });
+                
+                // Check in OrderHistory table
+                string verifyQuery2 = "SELECT COUNT(*) FROM OrderHistory WHERE OrderId = @OrderId AND UserId = @UserId";
+                object count2 = db.ExecuteScalar(verifyQuery2, new System.Data.SqlClient.SqlParameter[] {
+                    new System.Data.SqlClient.SqlParameter("@OrderId", orderId),
+                    new System.Data.SqlClient.SqlParameter("@UserId", userId)
+                });
+                
+                int orderCount = (count1 != null && count1 != DBNull.Value ? Convert.ToInt32(count1) : 0) +
+                                (count2 != null && count2 != DBNull.Value ? Convert.ToInt32(count2) : 0);
+                
+                if (orderCount == 0)
+                {
+                    Response.Write("Order not found or access denied");
+                    return;
+                }
+            }
+            else
+            {
+                // For admins, just verify order exists
+                string verifyQuery1 = "SELECT COUNT(*) FROM Orders WHERE Id = @OrderId";
+                object count1 = db.ExecuteScalar(verifyQuery1, new System.Data.SqlClient.SqlParameter[] {
+                    new System.Data.SqlClient.SqlParameter("@OrderId", orderId)
+                });
+                
+                string verifyQuery2 = "SELECT COUNT(*) FROM OrderHistory WHERE OrderId = @OrderId";
+                object count2 = db.ExecuteScalar(verifyQuery2, new System.Data.SqlClient.SqlParameter[] {
+                    new System.Data.SqlClient.SqlParameter("@OrderId", orderId)
+                });
+                
+                int orderCount = (count1 != null && count1 != DBNull.Value ? Convert.ToInt32(count1) : 0) +
+                                (count2 != null && count2 != DBNull.Value ? Convert.ToInt32(count2) : 0);
+                
+                if (orderCount == 0)
+                {
+                    Response.Write("Order not found");
+                    return;
+                }
             }
 
             try

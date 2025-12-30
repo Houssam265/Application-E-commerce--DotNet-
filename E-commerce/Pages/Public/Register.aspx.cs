@@ -85,15 +85,10 @@ namespace Ecommerce.Pages.Public
                 };
                 Session["PendingReg:" + email] = pending;
 
-                // Envoyer l'email de vérification
+                // Envoyer l'email de vérification en utilisant EmailTemplates
                 string subject = "Vérification de votre email";
                 string verifyUrl = ResolveUrl("~/Pages/Public/VerifyEmail.aspx?email=" + Server.UrlEncode(email));
-                string body = $"<p>Bonjour {HttpUtility.HtmlEncode(fullName)},</p>" +
-                              "<p>Merci pour votre inscription. Utilisez le code ci-dessous pour vérifier votre adresse email:</p>" +
-                              $"<h2 style='letter-spacing:4px'>{code}</h2>" +
-                              $"<p>Ce code expire dans 15 minutes.</p>" +
-                              $"<p>Vous pouvez saisir ce code sur la page suivante: <a href='{verifyUrl}'>Vérifier mon email</a></p>" +
-                              "<p>— ServicePro</p>";
+                string body = EmailTemplates.GetEmailVerificationTemplate(fullName, code, verifyUrl);
 
                 SecurityHelper.SendEmail(email, subject, body);
 

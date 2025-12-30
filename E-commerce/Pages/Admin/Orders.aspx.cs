@@ -24,11 +24,6 @@ namespace Ecommerce.Pages.Admin
         protected global::System.Web.UI.WebControls.LinkButton btnUpdateStatus;
         protected global::System.Web.UI.WebControls.TextBox txtCancelReason;
         protected global::System.Web.UI.WebControls.Label lblStatusError;
-        protected global::System.Web.UI.WebControls.Panel pnlReviewAdmin;
-        protected global::System.Web.UI.WebControls.Literal litAdminReviewStars;
-        protected global::System.Web.UI.WebControls.Literal litAdminReviewText;
-        protected global::System.Web.UI.HtmlControls.HtmlGenericControl lblAdminReviewDate;
-        protected global::System.Web.UI.WebControls.Label lblNoReview;
         protected global::System.Web.UI.WebControls.TextBox txtSearch;
         protected global::System.Web.UI.WebControls.LinkButton btnSearch;
         protected global::System.Web.UI.WebControls.LinkButton btnClear;
@@ -208,8 +203,6 @@ namespace Ecommerce.Pages.Admin
 
                 pnlList.Visible = false;
                 pnlDetails.Visible = true;
-
-                LoadOrderReview(id);
             }
         }
 
@@ -336,41 +329,6 @@ namespace Ecommerce.Pages.Admin
             pnlList.Visible = true;
         }
 
-
-        private void LoadOrderReview(string orderId)
-        {
-            try
-            {
-                DbContext db = new DbContext();
-                DataTable dt = db.ExecuteQuery(
-                    @"SELECT TOP 1 Rating, Comment, ReviewDate 
-                      FROM Reviews 
-                      WHERE OrderId = @OrderId AND ProductId IS NULL 
-                      ORDER BY ReviewDate DESC",
-                    new SqlParameter[] { new SqlParameter("@OrderId", orderId) });
-                if (dt.Rows.Count > 0)
-                {
-                    int rating = Convert.ToInt32(dt.Rows[0]["Rating"]);
-                    string comment = dt.Rows[0]["Comment"] != DBNull.Value ? dt.Rows[0]["Comment"].ToString() : "";
-                    DateTime date = Convert.ToDateTime(dt.Rows[0]["ReviewDate"]);
-                    litAdminReviewStars.Text = RenderStars(rating);
-                    litAdminReviewText.Text = Server.HtmlEncode(comment);
-                    lblAdminReviewDate.InnerText = date.ToString("dd/MM/yyyy HH:mm");
-                    pnlReviewAdmin.Visible = true;
-                    lblNoReview.Visible = false;
-                }
-                else
-                {
-                    pnlReviewAdmin.Visible = false;
-                    lblNoReview.Visible = true;
-                }
-            }
-            catch
-            {
-                pnlReviewAdmin.Visible = false;
-                lblNoReview.Visible = true;
-            }
-        }
 
         private string RenderStars(int rating)
         {

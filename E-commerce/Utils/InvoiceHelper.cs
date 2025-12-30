@@ -137,17 +137,21 @@ namespace Ecommerce.Utils
         
             foreach (DataRow item in items.Rows)
             {
+                string productName = item["ProductName"] != DBNull.Value ? item["ProductName"].ToString() : "";
                 html.Append(@"
             <tr>
-                <td>" + HttpUtility.HtmlEncode(item["ProductName"].ToString()) + @"</td>
+                <td>" + HttpUtility.HtmlEncode(productName) + @"</td>
                 <td style='text-align: center;'>" + item["Quantity"] + @"</td>
                 <td style='text-align: right;'>" + Convert.ToDecimal(item["UnitPrice"]).ToString("F2") + @" MAD</td>
                 <td style='text-align: right;'>" + Convert.ToDecimal(item["TotalPrice"]).ToString("F2") + @" MAD</td>
             </tr>");
             }
             
-            decimal subtotal = Convert.ToDecimal(order["SubTotal"]);
-            decimal shipping = Convert.ToDecimal(order["ShippingCost"]);
+            decimal subtotal = order["SubTotal"] != DBNull.Value ? Convert.ToDecimal(order["SubTotal"]) : 
+                             (order["SubTotalFromOrders"] != DBNull.Value ? Convert.ToDecimal(order["SubTotalFromOrders"]) : 0);
+            decimal shipping = order["ShippingCost"] != DBNull.Value ? Convert.ToDecimal(order["ShippingCost"]) : 
+                             (order["ShippingCostFromOrders"] != DBNull.Value ? Convert.ToDecimal(order["ShippingCostFromOrders"]) : 0);
+            decimal discount = order["DiscountAmount"] != DBNull.Value ? Convert.ToDecimal(order["DiscountAmount"]) : 0;
             decimal total = Convert.ToDecimal(order["TotalAmount"]);
             
             html.Append(@"
@@ -163,7 +167,18 @@ namespace Ecommerce.Utils
             <tr>
                 <td>Frais de livraison:</td>
                 <td style='text-align: right;'>" + shipping.ToString("F2") + @" MAD</td>
-            </tr>
+            </tr>");
+            
+            if (discount > 0)
+            {
+                html.Append(@"
+            <tr style='color: #16a34a; font-weight: 600;'>
+                <td>Réduction:</td>
+                <td style='text-align: right;'>-" + discount.ToString("F2") + @" MAD</td>
+            </tr>");
+            }
+            
+            html.Append(@"
             <tr class='grand-total'>
                 <td>TOTAL:</td>
                 <td style='text-align: right;'>" + total.ToString("F2") + @" MAD</td>
@@ -200,7 +215,7 @@ namespace Ecommerce.Utils
             
             DataTable orderDt = db.ExecuteQuery(orderQuery, new SqlParameter[] { new SqlParameter("@OrderId", orderId) });
             
-            // If not found in Orders, try OrderHistory
+            // If not found in Orders, try OrderHistory and get DiscountAmount from Orders
             if (orderDt.Rows.Count == 0)
             {
                 orderQuery = @"
@@ -209,9 +224,11 @@ namespace Ecommerce.Utils
                         OH.OrderDate, NULL as ShippingAddressId, NULL as SubTotal, NULL as ShippingCost,
                         NULL as PaymentMethod, NULL as PaymentStatus, NULL as CreatedAt, NULL as UpdatedAt,
                         NULL as IsArchived, NULL as ArchivedAt, NULL as StatusLockedAt, OH.Notes,
-                        U2.FullName, U2.Email, NULL as Street, NULL as City, NULL as ZipCode, NULL as Country
+                        U2.FullName, U2.Email, NULL as Street, NULL as City, NULL as ZipCode, NULL as Country,
+                        O.DiscountAmount, O.SubTotal as SubTotalFromOrders, O.ShippingCost as ShippingCostFromOrders
                     FROM OrderHistory OH
                     INNER JOIN Users U2 ON OH.UserId = U2.Id
+                    LEFT JOIN Orders O ON OH.OrderId = O.Id
                     WHERE OH.OrderId = @OrderId";
                 orderDt = db.ExecuteQuery(orderQuery, new SqlParameter[] { new SqlParameter("@OrderId", orderId) });
             }
@@ -327,7 +344,9 @@ namespace Ecommerce.Utils
                 // Table rows
                 foreach (DataRow item in items.Rows)
                 {
-                    itemsTable.AddCell(new PdfPCell(new Phrase(HttpUtility.HtmlEncode(item["ProductName"].ToString()), normalFont)));
+                    string productName = item["ProductName"] != DBNull.Value ? item["ProductName"].ToString() : "";
+                    // Use proper encoding for PDF - iTextSharp handles encoding automatically with Phrase
+                    itemsTable.AddCell(new PdfPCell(new Phrase(productName, normalFont)));
                     itemsTable.AddCell(new PdfPCell(new Phrase(item["Quantity"].ToString(), normalFont)) { HorizontalAlignment = Element.ALIGN_CENTER });
                     itemsTable.AddCell(new PdfPCell(new Phrase(Convert.ToDecimal(item["UnitPrice"]).ToString("F2") + " MAD", normalFont)) { HorizontalAlignment = Element.ALIGN_RIGHT });
                     itemsTable.AddCell(new PdfPCell(new Phrase(Convert.ToDecimal(item["TotalPrice"]).ToString("F2") + " MAD", normalFont)) { HorizontalAlignment = Element.ALIGN_RIGHT });
@@ -343,8 +362,11 @@ namespace Ecommerce.Utils
                 totalsTable.HorizontalAlignment = Element.ALIGN_RIGHT;
                 totalsTable.SetWidths(new float[] { 1, 1 });
                 
-                decimal subtotal = Convert.ToDecimal(order["SubTotal"] ?? 0);
-                decimal shipping = Convert.ToDecimal(order["ShippingCost"] ?? 0);
+                decimal subtotal = order["SubTotal"] != DBNull.Value ? Convert.ToDecimal(order["SubTotal"]) : 
+                                 (order["SubTotalFromOrders"] != DBNull.Value ? Convert.ToDecimal(order["SubTotalFromOrders"]) : 0);
+                decimal shipping = order["ShippingCost"] != DBNull.Value ? Convert.ToDecimal(order["ShippingCost"]) : 
+                                 (order["ShippingCostFromOrders"] != DBNull.Value ? Convert.ToDecimal(order["ShippingCostFromOrders"]) : 0);
+                decimal discount = order["DiscountAmount"] != DBNull.Value ? Convert.ToDecimal(order["DiscountAmount"]) : 0;
                 decimal total = Convert.ToDecimal(order["TotalAmount"]);
                 
                 totalsTable.AddCell(new PdfPCell(new Phrase("Sous-total:", normalFont)) { Border = PdfPCell.NO_BORDER, HorizontalAlignment = Element.ALIGN_LEFT });
@@ -352,6 +374,22 @@ namespace Ecommerce.Utils
                 
                 totalsTable.AddCell(new PdfPCell(new Phrase("Frais de livraison:", normalFont)) { Border = PdfPCell.NO_BORDER, HorizontalAlignment = Element.ALIGN_LEFT });
                 totalsTable.AddCell(new PdfPCell(new Phrase(shipping.ToString("F2") + " MAD", normalFont)) { Border = PdfPCell.NO_BORDER, HorizontalAlignment = Element.ALIGN_RIGHT });
+                
+                // Add discount row if exists
+                if (discount > 0)
+                {
+                    PdfPCell discountLabelCell = new PdfPCell(new Phrase("Réduction:", normalFont));
+                    discountLabelCell.Border = PdfPCell.NO_BORDER;
+                    discountLabelCell.HorizontalAlignment = Element.ALIGN_LEFT;
+                    discountLabelCell.BackgroundColor = new BaseColor(240, 253, 244);
+                    totalsTable.AddCell(discountLabelCell);
+                    
+                    PdfPCell discountValueCell = new PdfPCell(new Phrase("-" + discount.ToString("F2") + " MAD", normalFont));
+                    discountValueCell.Border = PdfPCell.NO_BORDER;
+                    discountValueCell.HorizontalAlignment = Element.ALIGN_RIGHT;
+                    discountValueCell.BackgroundColor = new BaseColor(240, 253, 244);
+                    totalsTable.AddCell(discountValueCell);
+                }
                 
                 PdfPCell totalLabelCell = new PdfPCell(new Phrase("TOTAL:", boldFont));
                 totalLabelCell.Border = PdfPCell.NO_BORDER;
