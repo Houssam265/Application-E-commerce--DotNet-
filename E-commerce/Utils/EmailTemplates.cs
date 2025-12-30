@@ -168,7 +168,7 @@ namespace Ecommerce.Utils
             }
 
             // Get base URL from config or use relative path
-            string baseUrl = System.Configuration.ConfigurationManager.AppSettings["BaseUrl"] ?? "http://localhost:50500";
+            string baseUrl = System.Configuration.ConfigurationManager.AppSettings["BaseUrl"] ?? "http://fromourlands.somee.com";
             string orderUrl = $"{baseUrl}/Pages/Public/Profile.aspx?tab=orders";
             sb.Append($"<a href='{orderUrl}' class='button' style='text-decoration: none;'>Voir ma commande</a>");
 
@@ -254,7 +254,7 @@ namespace Ecommerce.Utils
             sb.Append("</div>");
 
             sb.Append("<p>Si vous avez d'autres questions, n'hésitez pas à nous contacter.</p>");
-            string baseUrl = System.Configuration.ConfigurationManager.AppSettings["BaseUrl"] ?? "http://localhost:50500";
+            string baseUrl = System.Configuration.ConfigurationManager.AppSettings["BaseUrl"] ?? "http://fromourlands.somee.com";
             string complaintsUrl = $"{baseUrl}/Pages/Public/Profile.aspx?tab=complaints";
             sb.Append($"<a href='{complaintsUrl}' class='button' style='text-decoration: none;'>Voir mes réclamations</a>");
 
@@ -281,7 +281,7 @@ namespace Ecommerce.Utils
                 sb.Append("<p>Vous pouvez maintenant vous connecter et accéder à tous les services de notre plateforme.</p>");
                 sb.Append("</div>");
                 sb.Append("<p>Si vous avez des questions ou besoin d'assistance, n'hésitez pas à nous contacter.</p>");
-                string baseUrl = System.Configuration.ConfigurationManager.AppSettings["BaseUrl"] ?? "http://localhost:50500";
+                string baseUrl = System.Configuration.ConfigurationManager.AppSettings["BaseUrl"] ?? "http://fromourlands.somee.com";
                 string loginUrl = $"{baseUrl}/Pages/Public/Login.aspx";
                 sb.Append($"<a href='{loginUrl}' class='button' style='text-decoration: none;'>Se connecter</a>");
             }
@@ -366,7 +366,7 @@ namespace Ecommerce.Utils
             }
 
             sb.Append("<p>Nous préparons votre commande et vous tiendrons informé(e) de son évolution.</p>");
-            string baseUrl = System.Configuration.ConfigurationManager.AppSettings["BaseUrl"] ?? "http://localhost:50500";
+            string baseUrl = System.Configuration.ConfigurationManager.AppSettings["BaseUrl"] ?? "http://fromourlands.somee.com";
             string orderUrl = $"{baseUrl}/Pages/Public/Profile.aspx?tab=orders";
             sb.Append($"<a href='{orderUrl}' class='button' style='text-decoration: none;'>Suivre ma commande</a>");
 
