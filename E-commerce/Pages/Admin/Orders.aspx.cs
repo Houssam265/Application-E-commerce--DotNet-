@@ -249,6 +249,37 @@ namespace Ecommerce.Pages.Admin
                 return;
             }
 
+            // RESTORE STOCK IF CANCELLED
+            if (status == "Cancelled")
+            {
+                string getItemsQuery = "SELECT ProductId, VariantId, Quantity FROM OrderItems WHERE OrderId = @OrderId";
+                DataTable dtItems = db.ExecuteQuery(getItemsQuery, new SqlParameter[] { new SqlParameter("@OrderId", id) });
+
+                foreach (DataRow row in dtItems.Rows)
+                {
+                    int qty = Convert.ToInt32(row["Quantity"]);
+                    int prodId = Convert.ToInt32(row["ProductId"]);
+                    
+                    if (row["VariantId"] != DBNull.Value)
+                    {
+                        int varId = Convert.ToInt32(row["VariantId"]);
+                        string updateStock = "UPDATE ProductVariants SET StockQuantity = StockQuantity + @Qty WHERE Id = @Id";
+                        db.ExecuteNonQuery(updateStock, new SqlParameter[] { 
+                            new SqlParameter("@Qty", qty),
+                            new SqlParameter("@Id", varId)
+                        });
+                    }
+                    else
+                    {
+                        string updateStock = "UPDATE Products SET StockQuantity = StockQuantity + @Qty WHERE Id = @Id";
+                        db.ExecuteNonQuery(updateStock, new SqlParameter[] { 
+                            new SqlParameter("@Qty", qty),
+                            new SqlParameter("@Id", prodId)
+                        });
+                    }
+                }
+            }
+
             string updateQuery = "UPDATE Orders SET Status = @Status, Notes = @Notes, UpdatedAt = GETDATE() WHERE Id = @Id";
             SqlParameter[] updateParams = {
                 new SqlParameter("@Status", status),
