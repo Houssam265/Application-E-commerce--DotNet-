@@ -291,6 +291,144 @@
                 transform: translateY(-2px);
                 box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
             }
+
+            /* Enhanced Status Dropdown Styling */
+            .status-dropdown-container {
+                position: relative;
+                margin-bottom: 1.5rem;
+            }
+
+            .status-dropdown-container label {
+                display: block;
+                font-weight: 600;
+                color: #1e293b;
+                margin-bottom: 0.75rem;
+                font-size: 0.95rem;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+            .status-dropdown-container label i {
+                color: #3b82f6;
+                font-size: 1rem;
+            }
+
+            #ddlStatus {
+                background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+                border: 2px solid #e2e8f0;
+                border-radius: 12px;
+                padding: 0.875rem 1.25rem;
+                padding-right: 3rem;
+                font-size: 1rem;
+                font-weight: 500;
+                color: #1e293b;
+                width: 100%;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                appearance: none;
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath fill='%233b82f6' d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+                background-repeat: no-repeat;
+                background-position: right 1rem center;
+                background-size: 1rem;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            }
+
+            #ddlStatus:hover {
+                border-color: #3b82f6;
+                background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+                box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+                transform: translateY(-1px);
+            }
+
+            #ddlStatus:focus {
+                outline: none;
+                border-color: #3b82f6;
+                box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1), 0 4px 12px rgba(59, 130, 246, 0.2);
+                background: #ffffff;
+            }
+
+            #ddlStatus:disabled {
+                background: #f1f5f9;
+                border-color: #cbd5e1;
+                color: #94a3b8;
+                cursor: not-allowed;
+                opacity: 0.7;
+            }
+
+            /* Status-specific styling for options */
+            #ddlStatus option {
+                padding: 0.75rem 1rem;
+                font-weight: 500;
+            }
+
+            #ddlStatus option[value="Pending"] {
+                background-color: #fef3c7;
+                color: #d97706;
+            }
+
+            #ddlStatus option[value="InProgress"] {
+                background-color: #dbeafe;
+                color: #2563eb;
+            }
+
+            #ddlStatus option[value="Resolved"] {
+                background-color: #d1fae5;
+                color: #059669;
+            }
+
+            #ddlStatus option[value="Closed"] {
+                background-color: #f1f5f9;
+                color: #64748b;
+            }
+
+            .status-dropdown-help {
+                margin-top: 0.5rem;
+                font-size: 0.875rem;
+                color: #64748b;
+                padding: 0.75rem 1rem;
+                background: rgba(59, 130, 246, 0.05);
+                border-left: 3px solid #3b82f6;
+                border-radius: 6px;
+                line-height: 1.6;
+            }
+
+            .status-dropdown-help i {
+                color: #3b82f6;
+                margin-right: 0.5rem;
+            }
+
+            /* Status indicator badge next to dropdown */
+            .status-indicator {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5rem;
+                margin-top: 0.5rem;
+                padding: 0.5rem 1rem;
+                border-radius: 8px;
+                font-size: 0.875rem;
+                font-weight: 600;
+            }
+
+            .status-indicator.pending {
+                background: rgba(245, 158, 11, 0.15);
+                color: #d97706;
+            }
+
+            .status-indicator.inprogress {
+                background: rgba(59, 130, 246, 0.15);
+                color: #2563eb;
+            }
+
+            .status-indicator.resolved {
+                background: rgba(16, 185, 129, 0.15);
+                color: #059669;
+            }
+
+            .status-indicator.closed {
+                background: rgba(148, 163, 184, 0.15);
+                color: #64748b;
+            }
         </style>
     </asp:Content>
 
@@ -453,16 +591,21 @@
                         <hr />
 
                         <h6><i class="fas fa-reply"></i> Répondre à la réclamation</h6>
-                        <div class="mb-3">
-                            <label>Statut de la réclamation</label>
-                            <asp:DropDownList ID="ddlStatus" runat="server" CssClass="form-control">
+                        <div class="status-dropdown-container">
+                            <label>
+                                <i class="fas fa-tasks"></i>
+                                Statut de la réclamation
+                            </label>
+                            <asp:DropDownList ID="ddlStatus" runat="server">
                                 <asp:ListItem Value="Pending" Text="En attente" />
                                 <asp:ListItem Value="InProgress" Text="En cours de traitement" />
                                 <asp:ListItem Value="Resolved" Text="Résolue (sera automatiquement fermée)" />
                                 <asp:ListItem Value="Closed" Text="Fermée" />
                             </asp:DropDownList>
-                            <small class="text-muted">Note: Si vous sélectionnez "Résolue", la réclamation sera
-                                automatiquement fermée et ne pourra plus être modifiée.</small>
+                            <div class="status-dropdown-help">
+                                <i class="fas fa-info-circle"></i>
+                                <strong>Note importante:</strong> Si vous sélectionnez "Résolue", la réclamation sera automatiquement fermée et ne pourra plus être modifiée.
+                            </div>
                         </div>
                         <div class="mb-3">
                             <label>Votre réponse</label>
@@ -490,4 +633,63 @@
                 </div>
             </asp:Panel>
         </div>
+
+        <script type="text/javascript">
+            // Enhanced dropdown styling with dynamic status colors
+            function initStatusDropdown() {
+                var statusDropdown = document.getElementById('<%= ddlStatus.ClientID %>');
+                if (!statusDropdown) return;
+
+                // Function to get status color
+                function getStatusColor(status) {
+                    switch(status) {
+                        case 'Pending': return '#d97706';
+                        case 'InProgress': return '#2563eb';
+                        case 'Resolved': return '#059669';
+                        case 'Closed': return '#64748b';
+                        default: return '#e2e8f0';
+                    }
+                }
+
+                // Function to update dropdown border color based on selected value
+                function updateDropdownStyle() {
+                    if (statusDropdown.disabled) {
+                        statusDropdown.style.borderLeftColor = '#cbd5e1';
+                        return;
+                    }
+                    var value = statusDropdown.value;
+                    var color = getStatusColor(value);
+                    statusDropdown.style.borderLeftColor = color;
+                    statusDropdown.style.borderLeftWidth = '4px';
+                }
+
+                // Update on load
+                updateDropdownStyle();
+
+                // Update on change
+                statusDropdown.addEventListener('change', updateDropdownStyle);
+
+                // Update when enabled/disabled state changes (for postback scenarios)
+                var observer = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        if (mutation.type === 'attributes' && mutation.attributeName === 'disabled') {
+                            updateDropdownStyle();
+                        }
+                    });
+                });
+                observer.observe(statusDropdown, { attributes: true, attributeFilter: ['disabled'] });
+            }
+
+            // Initialize on page load
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initStatusDropdown);
+            } else {
+                initStatusDropdown();
+            }
+
+            // Re-initialize after postback (for ASP.NET Web Forms)
+            if (typeof Sys !== 'undefined' && Sys.WebForms && Sys.WebForms.PageRequestManager) {
+                Sys.WebForms.PageRequestManager.getInstance().add_endRequest(initStatusDropdown);
+            }
+        </script>
     </asp:Content>

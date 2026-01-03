@@ -26,6 +26,7 @@
 </head>
 <body>
     <form runat="server">
+        <asp:ScriptManager ID="ScriptManager1" runat="server" />
         <header>
             <div class="container nav-wrapper">
                 <a href="/" class="logo">
