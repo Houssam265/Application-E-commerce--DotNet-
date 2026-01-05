@@ -12,8 +12,11 @@ namespace Ecommerce.Utils
         private static string GetLogoUrl()
         {
             // Utiliser un logo en SVG encodé en base64 pour éviter les problèmes d'affichage
-            return "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjYwIiB2aWV3Qm94PSIwIDAgMjAwIDYwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iNjAiIGZpbGw9IiMxNmE" +
-"zNGEiIHJ4PSI1Ii8+PHRleHQgeD0iMTAwIiB5PSIzNSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjI0IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkUtY29tbWVyY2U8L3RleHQ+PC9zdmc+";
+            // SVG amélioré avec meilleure compatibilité email - URL encodée
+            string svgContent = "<svg width=\"200\" height=\"60\" viewBox=\"0 0 200 60\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"200\" height=\"60\" fill=\"#16a34a\" rx=\"5\"/><text x=\"100\" y=\"35\" font-family=\"Arial, sans-serif\" font-size=\"24\" font-weight=\"bold\" fill=\"white\" text-anchor=\"middle\" dominant-baseline=\"middle\">E-commerce</text></svg>";
+            // Encoder en URL pour meilleure compatibilité
+            string encoded = System.Web.HttpUtility.UrlEncode(svgContent);
+            return "data:image/svg+xml;charset=utf-8," + encoded;
         }
 
         private static string GetEmailHeader()
@@ -28,7 +31,8 @@ namespace Ecommerce.Utils
         body {{ margin: 0; padding: 0; font-family: 'Inter', 'Segoe UI', Arial, sans-serif; background-color: #f3f4f6; }}
         .email-container {{ max-width: 600px; margin: 0 auto; background-color: #ffffff; }}
         .header {{ background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); padding: 30px 20px; text-align: center; }}
-        .header img {{ height: 50px; }}
+        .header img {{ height: 50px; max-width: 200px; display: block; margin: 0 auto; width: auto; }}
+        .header-logo {{ background-color: #16a34a; color: white; font-size: 24px; font-weight: bold; padding: 15px 30px; border-radius: 5px; display: inline-block; }}
         .content {{ padding: 40px 30px; color: #374151; }}
         .content h2 {{ color: #111827; margin: 0 0 20px 0; font-size: 24px; }}
         .content p {{ line-height: 1.6; margin: 0 0 15px 0; font-size: 15px; }}
@@ -57,7 +61,7 @@ namespace Ecommerce.Utils
 <body>
     <div class='email-container'>
         <div class='header'>
-            <img src='{GetLogoUrl()}' alt='E-commerce Platform' />
+            <div class='header-logo'>E-commerce Platform</div>
         </div>
         <div class='content'>";
         }
@@ -397,6 +401,43 @@ namespace Ecommerce.Utils
             sb.Append("<h3>Message</h3>");
             sb.Append($"<p>{System.Web.HttpUtility.HtmlEncode(message)}</p>");
             sb.Append("</div>");
+
+            sb.Append(GetEmailFooter());
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Generate email verification template
+        /// </summary>
+        public static string GetEmailVerificationTemplate(
+            string fullName,
+            string verificationCode,
+            string verifyUrl)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.Append(GetEmailHeader());
+
+            sb.Append($"<h2>Bonjour {System.Web.HttpUtility.HtmlEncode(fullName)},</h2>");
+            sb.Append("<p>Merci pour votre inscription. Utilisez le code ci-dessous pour vérifier votre adresse email.</p>");
+
+            sb.Append("<div class='order-box' style='background-color: #f0f9ff; border-color: #93c5fd;'>");
+            sb.Append("<h3 style='color: #1e40af;'>🔐 Code de vérification</h3>");
+            sb.Append($"<p style='font-size: 32px; font-weight: bold; text-align: center; color: #1e40af; letter-spacing: 8px; margin: 20px 0; font-family: 'Courier New', monospace;'>");
+            sb.Append(verificationCode);
+            sb.Append("</p>");
+            sb.Append("</div>");
+
+            sb.Append("<p><strong>Instructions :</strong></p>");
+            sb.Append("<ul style='margin: 15px 0; padding-left: 20px;'>");
+            sb.Append("<li>Ce code est valide pendant <strong>15 minutes</strong></li>");
+            sb.Append("<li>Entrez ce code dans le formulaire de vérification</li>");
+            sb.Append("<li>Vous pourrez ensuite activer votre compte</li>");
+            sb.Append("</ul>");
+
+            sb.Append($"<p>Vous pouvez saisir ce code sur la page suivante :</p>");
+            sb.Append($"<a href='{verifyUrl}' class='button' style='text-decoration: none;'>Vérifier mon email</a>");
+
+            sb.Append("<p style='color: #991b1b; margin-top: 20px;'><strong>⚠️ Sécurité :</strong> Ne partagez jamais ce code avec personne. Notre équipe ne vous demandera jamais votre code de vérification.</p>");
 
             sb.Append(GetEmailFooter());
             return sb.ToString();

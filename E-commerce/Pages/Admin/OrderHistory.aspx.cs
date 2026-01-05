@@ -128,6 +128,7 @@ namespace Ecommerce.Pages.Admin
                 System.Web.UI.HtmlControls.HtmlGenericControl reviewStars = (System.Web.UI.HtmlControls.HtmlGenericControl)e.Item.FindControl("reviewStars");
                 System.Web.UI.HtmlControls.HtmlGenericControl reviewComment = (System.Web.UI.HtmlControls.HtmlGenericControl)e.Item.FindControl("reviewComment");
                 System.Web.UI.HtmlControls.HtmlGenericControl reviewDate = (System.Web.UI.HtmlControls.HtmlGenericControl)e.Item.FindControl("reviewDate");
+                Label lblNoReview = (Label)e.Item.FindControl("lblNoReview");
                 
                 if (pnlReview != null)
                 {
@@ -149,6 +150,8 @@ namespace Ecommerce.Pages.Admin
                       ORDER BY ReviewDate DESC",
                     new SqlParameter[] { new SqlParameter("@OrderId", orderId) });
                 
+                Label lblNoReview = (Label)pnlReview.Parent.FindControl("lblNoReview");
+                
                 if (dt.Rows.Count > 0)
                 {
                     int rating = Convert.ToInt32(dt.Rows[0]["Rating"]);
@@ -159,15 +162,19 @@ namespace Ecommerce.Pages.Admin
                     reviewComment.InnerHtml = Server.HtmlEncode(comment);
                     reviewDate.InnerText = "Le " + reviewDateValue.ToString("dd/MM/yyyy à HH:mm");
                     pnlReview.Visible = true;
+                    if (lblNoReview != null) lblNoReview.Visible = false;
                 }
                 else
                 {
                     pnlReview.Visible = false;
+                    if (lblNoReview != null) lblNoReview.Visible = true;
                 }
             }
             catch
             {
                 pnlReview.Visible = false;
+                Label lblNoReview = (Label)pnlReview.Parent.FindControl("lblNoReview");
+                if (lblNoReview != null) lblNoReview.Visible = true;
             }
         }
 

@@ -109,6 +109,9 @@
                     <a href="Profile.aspx?tab=orders" class='tab-button <%= GetActiveTabClass("orders") %>'>
                         <i class="fas fa-shopping-bag"></i> Mes commandes
                     </a>
+                    <a href="Profile.aspx?tab=history" class='tab-button <%= GetActiveTabClass("history") %>'>
+                        <i class="fas fa-history"></i> Historique
+                    </a>
                     <a href="Profile.aspx?tab=addresses" class='tab-button <%= GetActiveTabClass("addresses") %>'>
                         <i class="fas fa-map-marker-alt"></i> Adresses
                     </a>
@@ -164,10 +167,10 @@
                     </div>
                 </div>
 
-                <!-- Tab: Mes commandes -->
+                <!-- Tab: Mes commandes (En cours) -->
                 <div id="tab-orders" class='tab-content <%= GetActiveTabClass("orders") == "active" ? "active" : "" %>'>
                     <div class="card">
-                        <h3 style="margin-bottom: 1.5rem;">Historique des commandes</h3>
+                        <h3 style="margin-bottom: 1.5rem;">Mes commandes en cours</h3>
 
                         <asp:Repeater ID="rptOrders" runat="server">
                             <HeaderTemplate>
@@ -213,15 +216,75 @@
                                 </div>
                             </ItemTemplate>
                             <FooterTemplate>
-                    </div>
-                    </FooterTemplate>
-                    </asp:Repeater>
+                                </div>
+                            </FooterTemplate>
+                        </asp:Repeater>
 
-                    <asp:Label ID="lblNoOrders" runat="server" Text="Aucune commande pour le moment." Visible="false"
-                        style="text-align: center; padding: 3rem; color: var(--text-light); display: block;">
-                    </asp:Label>
+                        <asp:Label ID="lblNoOrders" runat="server" Text="Aucune commande en cours." Visible="false"
+                            style="text-align: center; padding: 3rem; color: var(--text-light); display: block;">
+                        </asp:Label>
+                    </div>
                 </div>
-            </div>
+
+                <!-- Tab: Historique -->
+                <div id="tab-history" class='tab-content <%= GetActiveTabClass("history") == "active" ? "active" : "" %>'>
+                    <div class="card">
+                        <h3 style="margin-bottom: 1.5rem;">Historique des commandes</h3>
+
+                        <asp:Repeater ID="rptHistory" runat="server">
+                            <HeaderTemplate>
+                                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                            </HeaderTemplate>
+                            <ItemTemplate>
+                                <div
+                                    style="padding: 1.5rem; background: var(--bg-light); border-radius: 8px; border: 1px solid var(--border-color);">
+                                    <div
+                                        style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                                        <div>
+                                            <h4 style="margin: 0 0 0.5rem 0;">
+                                                Commande #<%# Eval("OrderNumber") %>
+                                            </h4>
+                                            <p style="margin: 0; color: var(--text-light); font-size: 0.9rem;">
+                                                <i class="fas fa-calendar"></i>
+                                                <%# GetOrderDate(Eval("OrderDate")) %>
+                                            </p>
+                                        </div>
+                                        <div style="text-align: right;">
+                                            <div
+                                                style="font-size: 1.2rem; font-weight: 700; color: var(--primary-color); margin-bottom: 0.5rem;">
+                                                <%# Eval("TotalAmount", "{0:F2}" ) %> MAD
+                                            </div>
+                                            <span class='badge <%# (Eval("Status")?.ToString() ?? "") == "Cancelled" ? "badge-danger" : "badge-success" %>' 
+                                                  style='<%# (Eval("Status")?.ToString() ?? "") == "Cancelled" ? "background-color: #dc2626;" : "background-color: #16a34a;" %>'>
+                                                <%# Eval("Status") %>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; gap: 1rem;">
+                                        <a href='OrderDetails.aspx?id=<%# Eval("Id") %>' class="btn btn-outline"
+                                            style="padding: 8px 15px; text-decoration: none;">
+                                            <i class="fas fa-eye"></i> Voir les détails
+                                        </a>
+                                        <a href='DownloadInvoice.aspx?id=<%# Eval("Id") %>&format=pdf' target="_blank"
+                                            class="btn btn-success"
+                                            style="padding: 8px 15px; text-decoration: none; background-color: #16a34a; color: white;">
+                                            <i class="fas fa-file-invoice"></i> Télécharger facture
+                                        </a>
+                                        <%# GetTrackingButton(Eval("Status"), Eval("Id")) %>
+                                    </div>
+                                    <%# GetCancelReason(Eval("Status"), Eval("Notes")) %>
+                                </div>
+                            </ItemTemplate>
+                            <FooterTemplate>
+                                </div>
+                            </FooterTemplate>
+                        </asp:Repeater>
+
+                        <asp:Label ID="lblNoHistory" runat="server" Text="Aucune commande dans l'historique." Visible="false"
+                            style="text-align: center; padding: 3rem; color: var(--text-light); display: block;">
+                        </asp:Label>
+                    </div>
+                </div>
 
             <!-- Tab: Adresses -->
             <div id="tab-addresses"
@@ -235,11 +298,13 @@
                         </a>
                     </div>
 
-                    <asp:Panel ID="pnlAddressSuccess" runat="server" Visible="false" CssClass="alert alert-success" style="margin-bottom: 1rem;">
+                    <asp:Panel ID="pnlAddressSuccess" runat="server" Visible="false" CssClass="alert alert-success"
+                        style="margin-bottom: 1rem;">
                         <asp:Literal ID="litAddressSuccess" runat="server"></asp:Literal>
                     </asp:Panel>
 
-                    <asp:Panel ID="pnlAddressError" runat="server" Visible="false" CssClass="alert alert-danger" style="margin-bottom: 1rem;">
+                    <asp:Panel ID="pnlAddressError" runat="server" Visible="false" CssClass="alert alert-danger"
+                        style="margin-bottom: 1rem;">
                         <asp:Literal ID="litAddressError" runat="server"></asp:Literal>
                     </asp:Panel>
 

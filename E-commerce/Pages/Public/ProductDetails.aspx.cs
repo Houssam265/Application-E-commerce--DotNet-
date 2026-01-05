@@ -188,8 +188,9 @@ namespace Ecommerce.Pages.Public
                     string imageUrl = row["ImageUrl"]?.ToString() ?? "";
                     imgMain.ImageUrl = GetImageUrlForRepeater(imageUrl);
                     
-                    // Update view count
-                    db.ExecuteNonQuery("UPDATE Products SET ViewCount = ViewCount + 1 WHERE Id = @Id", parameters);
+                    // Update view count - create new parameters array to avoid reuse issue
+                    SqlParameter[] viewCountParams = { new SqlParameter("@Id", id) };
+                    db.ExecuteNonQuery("UPDATE Products SET ViewCount = ViewCount + 1 WHERE Id = @Id", viewCountParams);
                     
                     LoadVariants(id);
                 }
@@ -279,16 +280,36 @@ namespace Ecommerce.Pages.Public
                 return;
             }
 
-            int? variantId = null;
-            if (pnlVariants.Visible && ddlVariants.SelectedValue != "0")
-            {
-                int temp;
-                if (int.TryParse(ddlVariants.SelectedValue, out temp))
-                    variantId = temp;
-            }
-
+            // CHECK AVAILABLE STOCK
             try
             {
+                DbContext db = new DbContext();
+                int availableStock = 0;
+                
+                int? variantId = null;
+                if (pnlVariants.Visible && ddlVariants.SelectedValue != "0")
+                {
+                    if (int.TryParse(ddlVariants.SelectedValue, out int vid))
+                    {
+                        variantId = vid;
+                        string varStockQuery = "SELECT StockQuantity FROM ProductVariants WHERE Id = @Id";
+                        object result = db.ExecuteScalar(varStockQuery, new SqlParameter[] { new SqlParameter("@Id", vid) });
+                        availableStock = result != null ? Convert.ToInt32(result) : 0;
+                    }
+                }
+                else
+                {
+                    string stockQuery = "SELECT StockQuantity FROM Products WHERE Id = @Id";
+                    object result = db.ExecuteScalar(stockQuery, new SqlParameter[] { new SqlParameter("@Id", productId) });
+                    availableStock = result != null ? Convert.ToInt32(result) : 0;
+                }
+
+                if (quantity > availableStock)
+                {
+                    ShowNotification("Stock insuffisant. Il ne reste que " + availableStock + " article(s).", "error");
+                    return;
+                }
+
                 CartHelper.AddToCart(productId, quantity, variantId);
                 ShowNotification("Produit ajouté au panier avec succès !", "success");
                 
@@ -299,6 +320,7 @@ namespace Ecommerce.Pages.Public
             {
                 ShowNotification("Erreur lors de l'ajout au panier: " + Server.HtmlEncode(ex.Message), "error");
             }
+            return;
         }
 
         private void CheckWishlistStatus(int productId)
@@ -524,7 +546,33 @@ namespace Ecommerce.Pages.Public
 
         protected void ShowNotification(string message, string type)
         {
-            string script = $"showNotification('{message.Replace("'", "\\'")}', '{type}');";
+            // Escape single quotes and newlines for JavaScript
+            string escapedMessage = message.Replace("'", "\\'").Replace("\r\n", " ").Replace("\n", " ");
+            string script = $@"
+                (function() {{
+                    var attempts = 0;
+                    var maxAttempts = 50; // Try for up to 5 seconds (50 * 100ms)
+                    
+                    function tryShowNotification() {{
+                        attempts++;
+                        if (typeof showNotification === 'function') {{
+                            showNotification('{escapedMessage}', '{type}');
+                        }} else if (attempts >= maxAttempts) {{
+                            // Fallback after max attempts
+                            alert('{escapedMessage}');
+                        }} else {{
+                            // Wait a bit and try again
+                            setTimeout(tryShowNotification, 100);
+                        }}
+                    }}
+                    
+                    // Start trying immediately
+                    if (document.readyState === 'loading') {{
+                        document.addEventListener('DOMContentLoaded', tryShowNotification);
+                    }} else {{
+                        tryShowNotification();
+                    }}
+                }})();";
             ClientScript.RegisterStartupScript(this.GetType(), "Notification_" + Guid.NewGuid().ToString("N"), script, true);
         }
 

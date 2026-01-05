@@ -133,6 +133,8 @@ namespace Ecommerce.Pages.Public
             {
                 int userId = Convert.ToInt32(Session["UserId"]);
                 DbContext db = new DbContext();
+                
+                // Load existing review
                 DataTable dt = db.ExecuteQuery(
                     @"SELECT TOP 1 Rating, Comment 
                       FROM Reviews 
@@ -143,19 +145,22 @@ namespace Ecommerce.Pages.Public
                         new SqlParameter("@UserId", userId)
                     });
 
-                if (currentStatus == "Delivered" && dt.Rows.Count == 0)
+                if (dt.Rows.Count > 0)
                 {
-                    pnlReview.Visible = true;
-                    pnlReviewDisplay.Visible = false;
-                }
-                else if (dt.Rows.Count > 0)
-                {
+                    // Display existing review
                     int rating = Convert.ToInt32(dt.Rows[0]["Rating"]);
                     string comment = dt.Rows[0]["Comment"] != DBNull.Value ? dt.Rows[0]["Comment"].ToString() : "";
                     litReviewStars.Text = RenderStars(rating);
                     litReviewText.Text = Server.HtmlEncode(comment);
                     pnlReviewDisplay.Visible = true;
                     pnlReview.Visible = false;
+                }
+                else
+                {
+                    // Allow review if order is Delivered or Cancelled
+                    bool canShowForm = (currentStatus == "Delivered" || currentStatus == "Cancelled");
+                    pnlReview.Visible = canShowForm;
+                    pnlReviewDisplay.Visible = false;
                 }
             }
             catch
@@ -182,6 +187,28 @@ namespace Ecommerce.Pages.Public
                 }
 
                 DbContext db = new DbContext();
+                
+                // Load status if not already loaded (e.g. on postback)
+                if (string.IsNullOrEmpty(currentStatus))
+                {
+                    object statusObj = db.ExecuteScalar(
+                        "SELECT Status FROM Orders WHERE Id = @OrderId AND UserId = @UserId",
+                        new SqlParameter[] { 
+                            new SqlParameter("@OrderId", orderId),
+                            new SqlParameter("@UserId", userId)
+                        });
+                    currentStatus = statusObj?.ToString() ?? "";
+                }
+
+                bool canSubmit = (currentStatus == "Delivered" || currentStatus == "Cancelled");
+                if (!canSubmit)
+                {
+                    lblReviewError.Text = "Vous ne pouvez donner un avis que pour une commande livrée ou annulée.";
+                    lblReviewError.Visible = true;
+                    lblReviewSuccess.Visible = false;
+                    return;
+                }
+                
                 object exists = db.ExecuteScalar(
                     @"SELECT COUNT(*) FROM Reviews 
                       WHERE OrderId = @OrderId AND UserId = @UserId AND ProductId IS NULL",

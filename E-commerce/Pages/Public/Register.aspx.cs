@@ -57,43 +57,64 @@ namespace Ecommerce.Pages.Public
             {
                 DbContext db = new DbContext();
                 
-                string checkQuery = "SELECT COUNT(*) FROM Users WHERE Email = @Email";
+                // Check if user exists
+                string checkQuery = "SELECT Id, EmailVerified FROM Users WHERE Email = @Email";
                 SqlParameter[] checkParams = { new SqlParameter("@Email", email) };
-                int count = (int)db.ExecuteScalar(checkQuery, checkParams);
+                DataTable dt = db.ExecuteQuery(checkQuery, checkParams);
 
-                if (count > 0)
-                {
-                    ShowError("Cet email est déjà utilisé.");
-                    return;
-                }
-
-                string passwordHash = SecurityHelper.HashPassword(password);
-
-                // Ne pas insérer en base avant la vérification
-                // Générer le code et le stocker en session
                 string code = SecurityHelper.GenerateNumericCode(6);
                 DateTime expiry = DateTime.Now.AddMinutes(15);
+                string passwordHash = SecurityHelper.HashPassword(password);
 
-                var pending = new Dictionary<string, string>
+                if (dt.Rows.Count > 0)
                 {
-                    { "FullName", fullName },
-                    { "Email", email },
-                    { "Phone", string.IsNullOrWhiteSpace(phone) ? "" : phone },
-                    { "PasswordHash", passwordHash },
-                    { "Code", code },
-                    { "Expiry", expiry.ToString("o") }
-                };
-                Session["PendingReg:" + email] = pending;
+                    bool isVerified = Convert.ToBoolean(dt.Rows[0]["EmailVerified"]);
+                    if (isVerified)
+                    {
+                        ShowError("Cet email est déjà utilisé.");
+                        return;
+                    }
+                    else
+                    {
+                        // Update existing unverified user
+                        string updateQuery = @"UPDATE Users 
+                                               SET FullName = @FullName, 
+                                                   PasswordHash = @PasswordHash, 
+                                                   Phone = @Phone, 
+                                                   EmailVerificationCode = @Code, 
+                                                   EmailVerificationExpiry = @Expiry 
+                                               WHERE Email = @Email";
+                        SqlParameter[] updateParams = {
+                            new SqlParameter("@FullName", fullName),
+                            new SqlParameter("@PasswordHash", passwordHash),
+                            new SqlParameter("@Phone", string.IsNullOrWhiteSpace(phone) ? (object)DBNull.Value : phone),
+                            new SqlParameter("@Code", code),
+                            new SqlParameter("@Expiry", expiry),
+                            new SqlParameter("@Email", email)
+                        };
+                        db.ExecuteNonQuery(updateQuery, updateParams);
+                    }
+                }
+                else
+                {
+                    // Create new user (unverified)
+                    string insertQuery = @"INSERT INTO Users (Email, PasswordHash, FullName, Phone, Role, EmailVerified, IsActive, EmailVerificationCode, EmailVerificationExpiry) 
+                                           VALUES (@Email, @PasswordHash, @FullName, @Phone, 'Customer', 0, 1, @Code, @Expiry)";
+                    SqlParameter[] insertParams = {
+                        new SqlParameter("@Email", email),
+                        new SqlParameter("@PasswordHash", passwordHash),
+                        new SqlParameter("@FullName", fullName),
+                        new SqlParameter("@Phone", string.IsNullOrWhiteSpace(phone) ? (object)DBNull.Value : phone),
+                        new SqlParameter("@Code", code),
+                        new SqlParameter("@Expiry", expiry)
+                    };
+                    db.ExecuteNonQuery(insertQuery, insertParams);
+                }
 
                 // Envoyer l'email de vérification
                 string subject = "Vérification de votre email";
                 string verifyUrl = ResolveUrl("~/Pages/Public/VerifyEmail.aspx?email=" + Server.UrlEncode(email));
-                string body = $"<p>Bonjour {HttpUtility.HtmlEncode(fullName)},</p>" +
-                              "<p>Merci pour votre inscription. Utilisez le code ci-dessous pour vérifier votre adresse email:</p>" +
-                              $"<h2 style='letter-spacing:4px'>{code}</h2>" +
-                              $"<p>Ce code expire dans 15 minutes.</p>" +
-                              $"<p>Vous pouvez saisir ce code sur la page suivante: <a href='{verifyUrl}'>Vérifier mon email</a></p>" +
-                              "<p>— ServicePro</p>";
+                string body = EmailTemplates.GetEmailVerificationTemplate(fullName, code, verifyUrl);
 
                 SecurityHelper.SendEmail(email, subject, body);
 

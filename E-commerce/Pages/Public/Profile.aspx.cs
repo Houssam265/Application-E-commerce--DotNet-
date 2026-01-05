@@ -28,8 +28,10 @@ namespace Ecommerce.Pages.Public
         protected global::System.Web.UI.WebControls.Literal litAddressSuccess;
         protected global::System.Web.UI.WebControls.Literal litAddressError;
         protected global::System.Web.UI.WebControls.Repeater rptOrders;
+        protected global::System.Web.UI.WebControls.Repeater rptHistory;
         protected global::System.Web.UI.WebControls.Repeater rptAddresses;
         protected global::System.Web.UI.WebControls.Label lblNoOrders;
+        protected global::System.Web.UI.WebControls.Label lblNoHistory;
         protected global::System.Web.UI.WebControls.Label lblNoAddresses;
 
         protected void Page_Load(object sender, EventArgs e)
@@ -88,22 +90,51 @@ namespace Ecommerce.Pages.Public
             {
                 int userId = Convert.ToInt32(Session["UserId"]);
                 DbContext db = new DbContext();
-                string query = @"SELECT Id, OrderNumber, OrderDate, TotalAmount, Status, Notes 
+                
+                string query = @"SELECT Id, OrderNumber, OrderDate, TotalAmount, LTRIM(RTRIM(Status)) as Status, Notes 
                                  FROM Orders 
                                  WHERE UserId = @UserId 
                                  ORDER BY OrderDate DESC";
-                SqlParameter[] parameters = { new SqlParameter("@UserId", userId) };
-                DataTable dt = db.ExecuteQuery(query, parameters);
+                
+                DataTable dt = db.ExecuteQuery(query, new SqlParameter[] { new SqlParameter("@UserId", userId) });
+                
+                if (dt != null)
+                {
+                    // Filter Active Orders
+                    DataView dvActive = new DataView(dt);
+                    dvActive.RowFilter = "Status NOT IN ('Delivered', 'Cancelled')";
+                    DataTable dtActive = dvActive.ToTable();
+                    
+                    if (dtActive.Rows.Count > 0)
+                    {
+                        rptOrders.DataSource = dtActive;
+                        rptOrders.DataBind();
+                        lblNoOrders.Visible = false;
+                    }
+                    else
+                    {
+                        rptOrders.DataSource = null;
+                        rptOrders.DataBind();
+                        lblNoOrders.Visible = true;
+                    }
 
-                if (dt.Rows.Count > 0)
-                {
-                    rptOrders.DataSource = dt;
-                    rptOrders.DataBind();
-                    lblNoOrders.Visible = false;
-                }
-                else
-                {
-                    lblNoOrders.Visible = true;
+                    // Filter History Orders
+                    DataView dvHistory = new DataView(dt);
+                    dvHistory.RowFilter = "Status IN ('Delivered', 'Cancelled')";
+                    DataTable dtHistory = dvHistory.ToTable();
+                    
+                    if (dtHistory.Rows.Count > 0)
+                    {
+                        rptHistory.DataSource = dtHistory;
+                        rptHistory.DataBind();
+                        lblNoHistory.Visible = false;
+                    }
+                    else
+                    {
+                        rptHistory.DataSource = null;
+                        rptHistory.DataBind();
+                        lblNoHistory.Visible = true;
+                    }
                 }
             }
             catch { }

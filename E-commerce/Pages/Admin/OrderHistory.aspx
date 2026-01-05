@@ -296,6 +296,7 @@
                                 <th>Date</th>
                                 <th>Total</th>
                                 <th>Statut</th>
+                                <th>Avis</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -311,6 +312,18 @@
                             <span class='status-badge status-<%# Eval("Status").ToString().ToLower() %>'>
                                 <%# GetStatusLabel(Eval("Status").ToString()) %>
                             </span>
+                        </td>
+                        <td>
+                            <asp:Panel ID="pnlReview" runat="server" Visible="false" style="max-width: 300px;">
+                                <div style="margin-bottom: 0.5rem;">
+                                    <div id="reviewStars" runat="server"></div>
+                                </div>
+                                <div id="reviewComment" runat="server" style="font-size: 0.85rem; color: #64748b; margin-bottom: 0.25rem;"></div>
+                                <div id="reviewDate" runat="server" style="font-size: 0.75rem; color: #94a3b8;"></div>
+                            </asp:Panel>
+                            <asp:Label ID="lblNoReview" runat="server" Visible="false" style="color: #94a3b8; font-size: 0.85rem; font-style: italic;">
+                                Aucun avis
+                            </asp:Label>
                         </td>
                         <td>
                             <asp:LinkButton ID="btnDownloadInvoice" runat="server" CssClass="action-btn primary"

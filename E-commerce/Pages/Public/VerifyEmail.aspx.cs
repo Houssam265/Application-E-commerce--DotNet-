@@ -46,54 +46,52 @@ namespace Ecommerce.Pages.Public
 
             try
             {
-                // Lire les données d'inscription en attente depuis la session
-                var pending = Session["PendingReg:" + email] as Dictionary<string, string>;
-                if (pending == null)
+                DbContext db = new DbContext();
+                string query = "SELECT Id, EmailVerificationCode, EmailVerificationExpiry, EmailVerified FROM Users WHERE Email = @Email";
+                SqlParameter[] parameters = { new SqlParameter("@Email", email) };
+                DataTable dt = db.ExecuteQuery(query, parameters);
+
+                if (dt.Rows.Count == 0)
                 {
-                    ShowError("Aucune inscription en attente trouvée pour cet email.");
+                    ShowError("Utilisateur introuvable.");
                     return;
                 }
 
-                // Valider le code et l'expiration
-                string storedCode = pending.ContainsKey("Code") ? pending["Code"] : null;
-                DateTime expiry;
-                if (!pending.ContainsKey("Expiry") || !DateTime.TryParse(pending["Expiry"], out expiry))
+                DataRow row = dt.Rows[0];
+                
+                if (Convert.ToBoolean(row["EmailVerified"]))
                 {
-                    ShowError("Données de vérification invalides.");
-                    return;
+                    // Already verified
+                     Response.Redirect("~/Pages/Public/Login.aspx?verified=1&email=" + Server.UrlEncode(email));
+                     return;
                 }
+
+                string storedCode = row["EmailVerificationCode"] != DBNull.Value ? row["EmailVerificationCode"].ToString() : null;
+                DateTime expiry = row["EmailVerificationExpiry"] != DBNull.Value ? Convert.ToDateTime(row["EmailVerificationExpiry"]) : DateTime.MinValue;
 
                 if (string.IsNullOrEmpty(storedCode))
                 {
-                    ShowError("Aucun code n'est associé à cette inscription.");
+                    ShowError("Aucun code de vérification en attente.");
                     return;
                 }
+                
                 if (expiry < DateTime.Now)
                 {
                     ShowError("Le code a expiré. Veuillez renvoyer un code.");
                     return;
                 }
-                if (!string.Equals(storedCode, code, StringComparison.Ordinal))
+
+                if (!string.Equals(storedCode, code, StringComparison.OrdinalIgnoreCase))
                 {
                     ShowError("Code incorrect.");
                     return;
                 }
 
-                // Insérer le compte uniquement après la vérification réussie
-                DbContext db = new DbContext();
-                string insertQuery = "INSERT INTO Users (Email, PasswordHash, FullName, Phone, Role, EmailVerified) VALUES (@Email, @PasswordHash, @FullName, @Phone, 'Customer', 1)";
-                SqlParameter[] insertParams = {
-                    new SqlParameter("@Email", pending["Email"]),
-                    new SqlParameter("@PasswordHash", pending["PasswordHash"]),
-                    new SqlParameter("@FullName", pending["FullName"]),
-                    new SqlParameter("@Phone", string.IsNullOrWhiteSpace(pending["Phone"]) ? (object)DBNull.Value : pending["Phone"]) 
-                };
-                db.ExecuteNonQuery(insertQuery, insertParams);
+                // Verify User
+                string updateQuery = "UPDATE Users SET EmailVerified = 1, EmailVerificationCode = NULL, EmailVerificationExpiry = NULL WHERE Email = @Email";
+                db.ExecuteNonQuery(updateQuery, new SqlParameter[] { new SqlParameter("@Email", email) });
 
-                // Nettoyer les données en session
-                Session.Remove("PendingReg:" + email);
-
-                // Rediriger vers la page de connexion avec message de succès et email pré-rempli
+                // Rediriger vers la page de connexion
                 Response.Redirect("~/Pages/Public/Login.aspx?verified=1&email=" + Server.UrlEncode(email));
             }
             catch (Exception ex)
@@ -112,23 +110,31 @@ namespace Ecommerce.Pages.Public
             }
             try
             {
-                // Regénérer un code en session (pas en base)
-                var pending = Session["PendingReg:" + email] as Dictionary<string, string>;
-                if (pending == null)
+                DbContext db = new DbContext();
+                string query = "SELECT FullName FROM Users WHERE Email = @Email";
+                DataTable dt = db.ExecuteQuery(query, new SqlParameter[] { new SqlParameter("@Email", email) });
+
+                if (dt.Rows.Count == 0)
                 {
-                    ShowError("Aucune inscription en attente trouvée pour cet email.");
+                    ShowError("Utilisateur introuvable.");
                     return;
                 }
 
+                string fullName = dt.Rows[0]["FullName"].ToString();
                 string code = SecurityHelper.GenerateNumericCode(6);
                 DateTime expiry = DateTime.Now.AddMinutes(15);
 
-                pending["Code"] = code;
-                pending["Expiry"] = expiry.ToString("o");
-                Session["PendingReg:" + email] = pending; // réécrire
+                string updateQuery = "UPDATE Users SET EmailVerificationCode = @Code, EmailVerificationExpiry = @Expiry WHERE Email = @Email";
+                SqlParameter[] updateParams = {
+                    new SqlParameter("@Code", code),
+                    new SqlParameter("@Expiry", expiry),
+                    new SqlParameter("@Email", email)
+                };
+                db.ExecuteNonQuery(updateQuery, updateParams);
 
                 string subject = "Nouveau code de vérification";
-                string body = $"<p>Votre nouveau code: <strong>{code}</strong></p><p>Ce code expire dans 15 minutes.</p>";
+                string verifyUrl = ResolveUrl("~/Pages/Public/VerifyEmail.aspx?email=" + Server.UrlEncode(email));
+                string body = EmailTemplates.GetEmailVerificationTemplate(fullName, code, verifyUrl);
                 SecurityHelper.SendEmail(email, subject, body);
 
                 litSuccess.Text = "Un nouveau code vous a été envoyé.";

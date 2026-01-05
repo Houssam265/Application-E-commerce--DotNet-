@@ -21,6 +21,8 @@ namespace Ecommerce.Pages.Public
         protected global::System.Web.UI.WebControls.Repeater rptOrderItems;
         protected global::System.Web.UI.WebControls.Label lblSubTotal;
         protected global::System.Web.UI.WebControls.Label lblShippingCost;
+        protected global::System.Web.UI.WebControls.Label lblDiscount;
+        protected global::System.Web.UI.WebControls.Panel pnlDiscount;
         protected global::System.Web.UI.WebControls.Label lblTotal;
         protected global::System.Web.UI.HtmlControls.HtmlGenericControl statusBadge;
         protected global::System.Web.UI.WebControls.Panel pnlCancel;
@@ -123,10 +125,23 @@ namespace Ecommerce.Pages.Public
                 // Calculate totals
                 decimal subTotal = Convert.ToDecimal(row["SubTotal"]);
                 decimal shippingCost = Convert.ToDecimal(row["ShippingCost"]);
+                decimal discountAmount = row["DiscountAmount"] != DBNull.Value ? Convert.ToDecimal(row["DiscountAmount"]) : 0;
                 decimal total = Convert.ToDecimal(row["TotalAmount"]);
 
                 lblSubTotal.Text = subTotal.ToString("F2");
                 lblShippingCost.Text = shippingCost > 0 ? shippingCost.ToString("F2") + " MAD" : "Gratuit";
+                
+                // Display discount if exists
+                if (discountAmount > 0)
+                {
+                    pnlDiscount.Visible = true;
+                    lblDiscount.Text = "-" + discountAmount.ToString("F2") + " MAD";
+                }
+                else
+                {
+                    pnlDiscount.Visible = false;
+                }
+                
                 lblTotal.Text = total.ToString("F2");
             }
             catch

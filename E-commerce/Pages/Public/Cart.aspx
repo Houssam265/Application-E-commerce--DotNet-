@@ -257,116 +257,120 @@
                     </div>
                 </asp:Panel>
 
-                <asp:Panel ID="pnlCartItems" runat="server" Visible="false">
-                    <asp:Panel ID="pnlStockError" runat="server" Visible="false" CssClass="stock-error-alert">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <div>
-                            <strong>Stock insuffisant</strong>
-                            <div class="error-details">
-                                <asp:Literal ID="litStockError" runat="server"></asp:Literal>
-                            </div>
-                        </div>
-                    </asp:Panel>
-                    <table class="cart-table">
-                        <thead>
-                            <tr>
-                                <th>Produit</th>
-                                <th>Prix unitaire</th>
-                                <th>Quantité</th>
-                                <th>Total</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <asp:Repeater ID="rptCartItems" runat="server" OnItemCommand="rptCartItems_ItemCommand">
-                                <ItemTemplate>
+                <asp:UpdatePanel ID="updCart" runat="server">
+                    <ContentTemplate>
+                        <asp:Panel ID="pnlCartItems" runat="server" Visible="false">
+                            <asp:Panel ID="pnlStockError" runat="server" Visible="false" CssClass="stock-error-alert">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <div>
+                                    <strong>Stock insuffisant</strong>
+                                    <div class="error-details">
+                                        <asp:Literal ID="litStockError" runat="server"></asp:Literal>
+                                    </div>
+                                </div>
+                            </asp:Panel>
+                            <table class="cart-table">
+                                <thead>
                                     <tr>
-                                        <td>
-                                            <div class="cart-item-info">
-                                                <img src='<%# GetImageUrl(Eval("ImageUrl")) %>' class="cart-item-img"
-                                                    onerror="this.src='/Assets/Images/placeholder.svg'" />
-                                                <div>
-                                                    <div class="cart-item-name">
-                                                        <%# Eval("Name") %>
-                                                    </div>
-                                                    <%# Eval("VariantInfo") !=null &&
-                                                        !string.IsNullOrEmpty(Eval("VariantInfo").ToString())
-                                                        ? "<div class='cart-item-variant'>" + Eval("VariantInfo")
-                                                        + "</div>" : "" %>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <span style="font-weight: 600; color: var(--text-dark);">
-                                                <%# Eval("UnitPrice", "{0:F2}" ) %> MAD
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <div class="qty-controls">
-                                                <asp:LinkButton ID="btnDecrease" runat="server" CommandName="Decrease"
-                                                    CommandArgument='<%# Eval("CartId") %>' CssClass="qty-btn">
-                                                    <i class="fas fa-minus"></i>
-                                                </asp:LinkButton>
-                                                <asp:TextBox ID="txtQty" runat="server" Text='<%# Eval("Quantity") %>'
-                                                    CssClass="qty-input" ReadOnly="true"
-                                                    style="pointer-events: none;" />
-                                                <asp:LinkButton ID="btnIncrease" runat="server" CommandName="Increase"
-                                                    CommandArgument='<%# Eval("CartId") %>' CssClass="qty-btn">
-                                                    <i class="fas fa-plus"></i>
-                                                </asp:LinkButton>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <span
-                                                style="font-weight: 700; color: var(--primary-color); font-size: 1.1rem;">
-                                                <%# Eval("TotalPrice", "{0:F2}" ) %> MAD
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <asp:LinkButton ID="btnRemove" runat="server" CommandName="Remove"
-                                                CommandArgument='<%# Eval("CartId") %>' CssClass="btn-remove">
-                                                <i class="fas fa-trash"></i> Supprimer
-                                            </asp:LinkButton>
-                                        </td>
+                                        <th>Produit</th>
+                                        <th>Prix unitaire</th>
+                                        <th>Quantité</th>
+                                        <th>Total</th>
+                                        <th>Actions</th>
                                     </tr>
-                                </ItemTemplate>
-                            </asp:Repeater>
-                        </tbody>
-                    </table>
+                                </thead>
+                                <tbody>
+                                    <asp:Repeater ID="rptCartItems" runat="server" OnItemCommand="rptCartItems_ItemCommand">
+                                        <ItemTemplate>
+                                            <tr>
+                                                <td>
+                                                    <div class="cart-item-info">
+                                                        <img src='<%# GetImageUrl(Eval("ImageUrl")) %>' class="cart-item-img"
+                                                            onerror="this.src='/Assets/Images/placeholder.svg'" />
+                                                        <div>
+                                                            <div class="cart-item-name">
+                                                                <%# Eval("Name") %>
+                                                            </div>
+                                                            <%# Eval("VariantInfo") !=null &&
+                                                                !string.IsNullOrEmpty(Eval("VariantInfo").ToString())
+                                                                ? "<div class='cart-item-variant'>" + Eval("VariantInfo")
+                                                                + "</div>" : "" %>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <span style="font-weight: 600; color: var(--text-dark);">
+                                                        <%# Eval("UnitPrice", "{0:F2}" ) %> MAD
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div class="qty-controls">
+                                                        <asp:LinkButton ID="btnDecrease" runat="server" CommandName="Decrease"
+                                                            CommandArgument='<%# Eval("CartId") %>' CssClass="qty-btn">
+                                                            <i class="fas fa-minus"></i>
+                                                        </asp:LinkButton>
+                                                        <asp:TextBox ID="txtQty" runat="server" Text='<%# Eval("Quantity") %>'
+                                                            CssClass="qty-input" ReadOnly="true"
+                                                            style="pointer-events: none;" />
+                                                        <asp:LinkButton ID="btnIncrease" runat="server" CommandName="Increase"
+                                                            CommandArgument='<%# Eval("CartId") %>' CssClass="qty-btn">
+                                                            <i class="fas fa-plus"></i>
+                                                        </asp:LinkButton>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <span
+                                                        style="font-weight: 700; color: var(--primary-color); font-size: 1.1rem;">
+                                                        <%# Eval("TotalPrice", "{0:F2}" ) %> MAD
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <asp:LinkButton ID="btnRemove" runat="server" CommandName="Remove"
+                                                        CommandArgument='<%# Eval("CartId") %>' CssClass="btn-remove">
+                                                        <i class="fas fa-trash"></i> Supprimer
+                                                    </asp:LinkButton>
+                                                </td>
+                                            </tr>
+                                        </ItemTemplate>
+                                    </asp:Repeater>
+                                </tbody>
+                            </table>
 
-                    <div style="display: grid; grid-template-columns: 1fr 350px; gap: 2rem;">
-                        <div>
-                            <a href="Shop.aspx" class="btn btn-outline">
-                                <i class="fas fa-arrow-left"></i> Continuer vos achats
-                            </a>
-                        </div>
-                        <div class="cart-summary">
-                            <h3 style="margin-bottom: 1.5rem;">Récapitulatif</h3>
-                            <div class="summary-row">
-                                <span>Sous-total</span>
-                                <span>
-                                    <asp:Label ID="lblSubTotal" runat="server"></asp:Label> MAD
-                                </span>
+                            <div style="display: grid; grid-template-columns: 1fr 350px; gap: 2rem;">
+                                <div>
+                                    <a href="Shop.aspx" class="btn btn-outline">
+                                        <i class="fas fa-arrow-left"></i> Continuer vos achats
+                                    </a>
+                                </div>
+                                <div class="cart-summary">
+                                    <h3 style="margin-bottom: 1.5rem;">Récapitulatif</h3>
+                                    <div class="summary-row">
+                                        <span>Sous-total</span>
+                                        <span>
+                                            <asp:Label ID="lblSubTotal" runat="server"></asp:Label> MAD
+                                        </span>
+                                    </div>
+                                    <div class="summary-row">
+                                        <span>Livraison</span>
+                                        <span>
+                                            <asp:Label ID="lblShipping" runat="server"></asp:Label>
+                                        </span>
+                                    </div>
+                                    <div class="summary-row total-row">
+                                        <span>Total</span>
+                                        <span>
+                                            <asp:Label ID="lblTotal" runat="server"></asp:Label> MAD
+                                        </span>
+                                    </div>
+                                    <asp:Button ID="btnCheckout" runat="server" Text="Passer la commande"
+                                        CssClass="btn btn-primary"
+                                        Style="width: 100%; padding: 15px; font-size: 16px; margin-top: 1.5rem;"
+                                        OnClick="btnCheckout_Click" />
+                                </div>
                             </div>
-                            <div class="summary-row">
-                                <span>Livraison</span>
-                                <span>
-                                    <asp:Label ID="lblShipping" runat="server"></asp:Label>
-                                </span>
-                            </div>
-                            <div class="summary-row total-row">
-                                <span>Total</span>
-                                <span>
-                                    <asp:Label ID="lblTotal" runat="server"></asp:Label> MAD
-                                </span>
-                            </div>
-                            <asp:Button ID="btnCheckout" runat="server" Text="Passer la commande"
-                                CssClass="btn btn-primary"
-                                Style="width: 100%; padding: 15px; font-size: 16px; margin-top: 1.5rem;"
-                                OnClick="btnCheckout_Click" />
-                        </div>
-                    </div>
-                </asp:Panel>
+                        </asp:Panel>
+                    </ContentTemplate>
+                </asp:UpdatePanel>
             </div>
         </div>
     </asp:Content>
